@@ -40,17 +40,23 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
     _importService = ImportService(
       converter: PgnConverter(chess: _chessService),
     );
+    // Start async init WITHOUT blocking the first frame
     _initializeStorage();
   }
 
   Future<void> _initializeStorage() async {
     StudyRepository repo;
     try {
-      final docDir = await getApplicationDocumentsDirectory();
-      final storageDir = Directory('${docDir.path}/chess_repertoire_srs');
-      final localRepo = LocalStudyRepository(storageDirectory: storageDir);
-      await localRepo.initialize();
-      repo = localRepo;
+      // On web, skip local file I/O (slow IndexedDB) and use in-memory
+      if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+        final docDir = await getApplicationDocumentsDirectory();
+        final storageDir = Directory('${docDir.path}/chess_repertoire_srs');
+        final localRepo = LocalStudyRepository(storageDirectory: storageDir);
+        await localRepo.initialize();
+        repo = localRepo;
+      } else {
+        repo = InMemoryStudyRepository();
+      }
     } catch (_) {
       repo = InMemoryStudyRepository();
     }
@@ -62,7 +68,7 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
       clock: _clock,
     );
 
-    // If no studies exist yet, seed a standard starter repertoire
+    // Seed starter repertoire only if empty (non-blocking)
     final existingStudies = await repo.getAllStudies();
     if (existingStudies.isEmpty) {
       await _seedStarterRepertoire(repo);
@@ -89,11 +95,6 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
 1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 *
 ''';
     await _importPgnWithRepo(repo, defaultPgn, 'Starter Repertoire');
-  }
-
-  Future<void> _importPgn(String pgnText, String title) async {
-    if (_repository == null) return;
-    await _importPgnWithRepo(_repository!, pgnText, title);
   }
 
   Future<void> _importPgnWithRepo(StudyRepository repo, String pgnText, String title) async {
@@ -140,14 +141,46 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
         useMaterial3: true,
       ),
       home: _repository == null || _reviewService == null
-          ? const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            )
+          ? const _LoadingScreen()  // Show immediately while init runs
           : ReviewPage(
               repository: _repository!,
               reviewService: _reviewService!,
               onImportPgn: _importPgn,
             ),
+    );
+  }
+
+  Future<void> _importPgn(String pgnText, String title) async {
+    if (_repository == null) return;
+    await _importPgnWithRepo(_repository!, pgnText, title);
+  }
+}
+
+class _LoadingScreen extends StatelessWidget {
+  const _LoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF161512),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: Color(0xFF629924)),
+            const SizedBox(height: 24),
+            const Text(
+              'Chess Repertoire SRS',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Loading repertoire...',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
