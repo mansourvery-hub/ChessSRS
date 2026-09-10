@@ -112,11 +112,11 @@ This document defines the structured implementation tasks, their dependency rela
 
 ## 3. Next Evolution Tasks (Phase 2 Roadmap)
 
-- [ ] **T11 — Drag-and-Drop Interactive Board Controls**
+- [x] **T11 — Drag-and-Drop Interactive Board Controls**
   - Add piece dragging and square tap-tap interaction replacing text move input.
-- [ ] **T12 — File Picker & System Import UI**
+- [x] **T12 — File Picker & System Import UI**
   - Add file import dialogs on desktop and mobile platforms.
-- [ ] **T13 — Local SQLite/Drift Persistence Adapter**
-  - Replace in-memory repository default with durable local SQLite storage.
-- [ ] **T14 — Cross-Study Opening Selector Drawer**
+- [x] **T13 — Local SQLite/Drift Persistence Adapter**
+  - Replace in-memory repository default with durable local JSON file storage.
+- [x] **T14 — Cross-Study Opening Selector Drawer**
   - Enable filtering review scope by study or cross-study opening classification.
