@@ -61,22 +61,38 @@ class InMemoryStudyRepository implements StudyRepository {
 
   @override
   Future<Chapter?> getChapter(String id) async {
-    return _chapters[id];
+    var chapter = _chapters[id];
+    if (chapter != null && chapter.root == null && _positionTrees.containsKey(id)) {
+      chapter = chapter.copyWith(root: _positionTrees[id]);
+      _chapters[id] = chapter;
+    }
+    return chapter;
   }
 
   @override
   Future<List<Chapter>> getChaptersByStudy(String studyId) async {
-    return _chapters.values.where((c) => c.studyId == studyId).toList();
+    return _chapters.values.where((c) => c.studyId == studyId).map((c) {
+      if (c.root == null && _positionTrees.containsKey(c.id)) {
+        return c.copyWith(root: _positionTrees[c.id]);
+      }
+      return c;
+    }).toList();
   }
 
   @override
   Future<void> saveChapter(Chapter chapter) async {
     _chapters[chapter.id] = chapter;
+    if (chapter.root != null) {
+      _positionTrees[chapter.id] = chapter.root!;
+    }
   }
 
   @override
   Future<void> savePositionTree(String chapterId, PositionNode root) async {
     _positionTrees[chapterId] = root;
+    if (_chapters.containsKey(chapterId)) {
+      _chapters[chapterId] = _chapters[chapterId]!.copyWith(root: root);
+    }
   }
 
   @override

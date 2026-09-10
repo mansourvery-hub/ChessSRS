@@ -23,21 +23,34 @@ class ReviewService {
   final Scheduler scheduler;
   final Clock clock;
 
-  /// Get all due repertoire decisions across all studies.
-  Future<List<RepertoireDecision>> getDueDecisions() async {
-    final studies = await studyRepository.getAllStudies();
-    final decisions = <RepertoireDecision>[];
+  /// Get all due repertoire decisions, optionally scoped to a specific [studyId].
+  Future<List<RepertoireDecision>> getDueDecisions({String? studyId}) async {
+    final now = clock.now();
+    final studies = studyId != null
+        ? [await studyRepository.getStudy(studyId)]
+        : await studyRepository.getAllStudies();
+
+    final allDecisions = <RepertoireDecision>[];
 
     for (final study in studies) {
+      if (study == null) continue;
       final chapters = await studyRepository.getChaptersByStudy(study.id);
       for (final chapter in chapters) {
         if (chapter.root != null) {
-          _collectDueDecisions(chapter.root!, study.id, chapter.id, decisions);
+          _collectDueDecisions(chapter.root!, study.id, chapter.id, allDecisions);
         }
       }
     }
 
-    return decisions;
+    final dueDecisions = <RepertoireDecision>[];
+    for (final d in allDecisions) {
+      final state = await studyRepository.getReviewState(d.id);
+      if (state == null || state.isDueAt(now)) {
+        dueDecisions.add(d);
+      }
+    }
+
+    return dueDecisions;
   }
 
   void _collectDueDecisions(
@@ -46,8 +59,8 @@ class ReviewService {
     String chapterId,
     List<RepertoireDecision> list,
   ) {
-    // Create decision at positions where it's the user's turn and there are children
-    if (!node.isLeaf && node.incomingMove != null) {
+    // Create decision at non-leaf positions with repertoire moves
+    if (!node.isLeaf && node.childMoves.isNotEmpty) {
       final decision = RepertoireDecision.create(
         studyId: studyId,
         chapterId: chapterId,

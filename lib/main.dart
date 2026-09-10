@@ -1,14 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:chess_repertoire_srs/application/review_service.dart';
 import 'package:chess_repertoire_srs/chess/chess_service.dart';
 import 'package:chess_repertoire_srs/chess/pgn_converter.dart';
 import 'package:chess_repertoire_srs/domain/clock.dart';
 import 'package:chess_repertoire_srs/domain/entities/position_node.dart';
 import 'package:chess_repertoire_srs/domain/entities/repertoire_move.dart';
+import 'package:chess_repertoire_srs/domain/entities/study.dart';
 import 'package:chess_repertoire_srs/domain/repertoire_decision.dart';
 import 'package:chess_repertoire_srs/domain/srs/simple_scheduler.dart';
 import 'package:chess_repertoire_srs/import/import_service.dart';
 import 'package:chess_repertoire_srs/persistence/in_memory_study_repository.dart';
+import 'package:chess_repertoire_srs/persistence/local_study_repository.dart';
 import 'package:chess_repertoire_srs/persistence/study_repository.dart';
 
 void main() {
@@ -23,30 +27,56 @@ class ChessRepertoireApp extends StatefulWidget {
 }
 
 class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
-  late final StudyRepository repository;
-  late final ReviewService reviewService;
-  late final ImportService importService;
-  late final ChessService chessService;
-  final Clock clock = const SystemClock();
+  StudyRepository? _repository;
+  ReviewService? _reviewService;
+  late final ImportService _importService;
+  late final ChessService _chessService;
+  final Clock _clock = const SystemClock();
 
   @override
   void initState() {
     super.initState();
-    repository = InMemoryStudyRepository();
-    chessService = const ChessService();
-    reviewService = ReviewService(
-      studyRepository: repository,
-      chessService: chessService,
-      scheduler: const SimpleScheduler(),
-      clock: clock,
+    _chessService = const ChessService();
+    _importService = ImportService(
+      converter: PgnConverter(chess: _chessService),
     );
-    importService = ImportService(
-      converter: PgnConverter(chess: chessService),
-    );
-    _seedDefaultRepertoire();
+    _initializeStorage();
   }
 
-  Future<void> _seedDefaultRepertoire() async {
+  Future<void> _initializeStorage() async {
+    StudyRepository repo;
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final storageDir = Directory('${docDir.path}/chess_repertoire_srs');
+      final localRepo = LocalStudyRepository(storageDirectory: storageDir);
+      await localRepo.initialize();
+      repo = localRepo;
+    } catch (_) {
+      repo = InMemoryStudyRepository();
+    }
+
+    final service = ReviewService(
+      studyRepository: repo,
+      chessService: _chessService,
+      scheduler: const SimpleScheduler(),
+      clock: _clock,
+    );
+
+    // If no studies exist yet, seed a standard starter repertoire
+    final existingStudies = await repo.getAllStudies();
+    if (existingStudies.isEmpty) {
+      await _seedStarterRepertoire(repo);
+    }
+
+    if (mounted) {
+      setState(() {
+        _repository = repo;
+        _reviewService = service;
+      });
+    }
+  }
+
+  Future<void> _seedStarterRepertoire(StudyRepository repo) async {
     const defaultPgn = '''
 [Event "Italian Game: Main Line"]
 [Site "Chess Study"]
@@ -58,24 +88,29 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
 
 1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 *
 ''';
-    await _importPgn(defaultPgn, 'Starter Repertoire');
+    await _importPgnWithRepo(repo, defaultPgn, 'Starter Repertoire');
   }
 
   Future<void> _importPgn(String pgnText, String title) async {
-    final result = importService.importPgn(pgnText, studyTitle: title);
+    if (_repository == null) return;
+    await _importPgnWithRepo(_repository!, pgnText, title);
+  }
+
+  Future<void> _importPgnWithRepo(StudyRepository repo, String pgnText, String title) async {
+    final result = _importService.importPgn(pgnText, studyTitle: title);
     if (result.study.id.isNotEmpty) {
-      await repository.saveStudy(result.study);
+      await repo.saveStudy(result.study);
       for (final chapter in result.chapters) {
-        await repository.saveChapter(chapter);
+        await repo.saveChapter(chapter);
         if (chapter.root != null) {
-          await repository.savePositionTree(chapter.id, chapter.root!);
-          _saveDecisionsRecursive(result.study.id, chapter.id, chapter.root!);
+          await repo.savePositionTree(chapter.id, chapter.root!);
+          _saveDecisionsRecursive(repo, result.study.id, chapter.id, chapter.root!);
         }
       }
     }
   }
 
-  void _saveDecisionsRecursive(String studyId, String chapterId, PositionNode node) {
+  void _saveDecisionsRecursive(StudyRepository repo, String studyId, String chapterId, PositionNode node) {
     if (!node.isLeaf && node.childMoves.isNotEmpty) {
       final decision = RepertoireDecision.create(
         studyId: studyId,
@@ -83,10 +118,10 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
         nodeId: node.id,
         expectedMoves: node.childMoves,
       );
-      repository.saveDecision(decision);
+      repo.saveDecision(decision);
     }
     for (final child in node.children) {
-      _saveDecisionsRecursive(studyId, chapterId, child);
+      _saveDecisionsRecursive(repo, studyId, chapterId, child);
     }
   }
 
@@ -104,11 +139,15 @@ class _ChessRepertoireAppState extends State<ChessRepertoireApp> {
         ),
         useMaterial3: true,
       ),
-      home: ReviewPage(
-        repository: repository,
-        reviewService: reviewService,
-        onImportPgn: _importPgn,
-      ),
+      home: _repository == null || _reviewService == null
+          ? const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            )
+          : ReviewPage(
+              repository: _repository!,
+              reviewService: _reviewService!,
+              onImportPgn: _importPgn,
+            ),
     );
   }
 }
@@ -138,6 +177,10 @@ class _ReviewPageState extends State<ReviewPage> {
   bool _isLoading = true;
   int _dueCount = 0;
 
+  String? _scopedStudyId; // null = All studies
+  List<Study> _allStudies = [];
+  Map<String, int> _studyDueCounts = {};
+
   @override
   void initState() {
     super.initState();
@@ -146,7 +189,17 @@ class _ReviewPageState extends State<ReviewPage> {
 
   Future<void> _loadInitialDecision() async {
     setState(() => _isLoading = true);
-    final decisions = await widget.reviewService.getDueDecisions();
+    _allStudies = await widget.repository.getAllStudies();
+
+    // Compute due counts per study
+    final counts = <String, int>{};
+    for (final study in _allStudies) {
+      final studyDue = await widget.reviewService.getDueDecisions(studyId: study.id);
+      counts[study.id] = studyDue.length;
+    }
+    _studyDueCounts = counts;
+
+    final decisions = await widget.reviewService.getDueDecisions(studyId: _scopedStudyId);
     _dueCount = decisions.length;
 
     if (decisions.isNotEmpty) {
@@ -213,7 +266,7 @@ class _ReviewPageState extends State<ReviewPage> {
         _expectedMove = null;
       });
       await widget.reviewService.processReviewResult(_currentDecision!.id, true);
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 250));
       await _loadInitialDecision();
     } else {
       setState(() {
@@ -281,9 +334,13 @@ class _ReviewPageState extends State<ReviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final activeStudyTitle = _scopedStudyId != null
+        ? _allStudies.firstWhere((s) => s.id == _scopedStudyId, orElse: () => const Study(id: '', title: '')).title
+        : 'All Studies';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chess Repertoire Review'),
+        title: Text(activeStudyTitle.isNotEmpty ? activeStudyTitle : 'Review'),
         actions: [
           if (_dueCount > 0)
             Padding(
@@ -302,6 +359,75 @@ class _ReviewPageState extends State<ReviewPage> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Color(0xFF262421)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Chess Repertoire SRS',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Total studies: ${_allStudies.length}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.all_inclusive),
+              title: const Text('All Studies'),
+              trailing: Chip(
+                label: Text('${_studyDueCounts.values.fold(0, (a, b) => a + b)}'),
+              ),
+              selected: _scopedStudyId == null,
+              onTap: () {
+                Navigator.of(context).pop();
+                setState(() => _scopedStudyId = null);
+                _loadInitialDecision();
+              },
+            ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'STUDIES',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+              ),
+            ),
+            for (final study in _allStudies)
+              ListTile(
+                leading: const Icon(Icons.book_outlined),
+                title: Text(study.title),
+                trailing: Chip(
+                  label: Text('${_studyDueCounts[study.id] ?? 0}'),
+                ),
+                selected: _scopedStudyId == study.id,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  setState(() => _scopedStudyId = study.id);
+                  _loadInitialDecision();
+                },
+              ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('Import Study'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _showImportDialog();
+              },
+            ),
+          ],
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _currentDecision == null
@@ -316,9 +442,11 @@ class _ReviewPageState extends State<ReviewPage> {
                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'No positions currently due for review.',
-                        style: TextStyle(color: Colors.grey),
+                      Text(
+                        _scopedStudyId != null
+                            ? 'No positions currently due for this study.'
+                            : 'No positions currently due for review.',
+                        style: const TextStyle(color: Colors.grey),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(

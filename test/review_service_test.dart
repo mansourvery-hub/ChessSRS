@@ -85,5 +85,58 @@ void main() {
       expect(persisted, isNotNull);
       expect(persisted!.repetitionCount, 1);
     });
+
+    test('filters due decisions by study scope', () async {
+      final studyA = await repo.createStudy('Study A');
+      final chapterA = await repo.createChapter(studyId: studyA.id, sourceOrder: 0);
+      final nodeA = PositionNode.create(
+        positionKey: PositionKey.fromFen(ChessService.initialFen),
+        fen: ChessService.initialFen,
+      );
+      final childA = PositionNode(
+        id: 'nA1',
+        positionKey: PositionKey.fromFen('fenA'),
+        fen: 'fenA',
+        incomingMove: const RepertoireMove(from: 'e2', to: 'e4', san: 'e4'),
+        children: const [],
+      );
+      final treeA = PositionNode(
+        id: nodeA.id,
+        positionKey: nodeA.positionKey,
+        fen: nodeA.fen,
+        children: [childA],
+      );
+      await repo.savePositionTree(chapterA.id, treeA);
+
+      final studyB = await repo.createStudy('Study B');
+      final chapterB = await repo.createChapter(studyId: studyB.id, sourceOrder: 0);
+      final nodeB = PositionNode.create(
+        positionKey: PositionKey.fromFen(ChessService.initialFen),
+        fen: ChessService.initialFen,
+      );
+      final childB = PositionNode(
+        id: 'nB1',
+        positionKey: PositionKey.fromFen('fenB'),
+        fen: 'fenB',
+        incomingMove: const RepertoireMove(from: 'd2', to: 'd4', san: 'd4'),
+        children: const [],
+      );
+      final treeB = PositionNode(
+        id: nodeB.id,
+        positionKey: nodeB.positionKey,
+        fen: nodeB.fen,
+        children: [childB],
+      );
+      await repo.savePositionTree(chapterB.id, treeB);
+
+      // All studies
+      final allDue = await reviewService.getDueDecisions();
+      expect(allDue, hasLength(2));
+
+      // Filtered to study A only
+      final studyADue = await reviewService.getDueDecisions(studyId: studyA.id);
+      expect(studyADue, hasLength(1));
+      expect(studyADue.first.studyId, studyA.id);
+    });
   });
 }
