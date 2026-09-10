@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+# Use FVM if available on path, else standard flutter
+if [ -d "$HOME/fvm/default/bin" ]; then
+  export PATH="$HOME/fvm/default/bin:$PATH"
+fi
+
+echo "========================================="
+echo " Chess Repertoire SRS - Quality Gate"
+echo "========================================="
+
+echo ""
+echo "▶ 1. Static Analysis (flutter analyze)..."
+flutter analyze
+
+echo ""
+echo "▶ 2. Automated Test Suite (flutter test)..."
+flutter test
+
+echo ""
+echo "✅ All Quality Gates Passed Successfully!"
+echo "========================================="
