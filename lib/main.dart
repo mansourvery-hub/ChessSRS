@@ -10,6 +10,7 @@ import 'package:chess_repertoire_srs/domain/entities/repertoire_move.dart';
 import 'package:chess_repertoire_srs/domain/entities/study.dart';
 import 'package:chess_repertoire_srs/domain/repertoire_decision.dart';
 import 'package:chess_repertoire_srs/domain/srs/simple_scheduler.dart';
+import 'package:chess_repertoire_srs/domain/review_engine.dart';
 import 'package:chess_repertoire_srs/import/import_service.dart';
 import 'package:chess_repertoire_srs/persistence/in_memory_study_repository.dart';
 import 'package:chess_repertoire_srs/persistence/local_study_repository.dart';
@@ -286,27 +287,77 @@ class _ReviewPageState extends State<ReviewPage> {
   Future<void> _submitMove(String from, String to, String? promotion) async {
     if (_currentDecision == null || _currentNode == null) return;
 
-    final outcome = await widget.reviewService.validateMove(
-      _currentDecision!.id,
-      from,
-      to,
-      promotion,
+    final result = await widget.reviewService.processAnswer(
+      currentNode: _currentNode!,
+      decision: _currentDecision!,
+      from: from,
+      to: to,
+      promotion: promotion,
     );
+
+    final outcome = result.outcome;
+    final continuation = result.continuation;
 
     if (outcome.correct) {
       setState(() {
         _feedback = '✓ Correct';
         _expectedMove = null;
       });
-      await widget.reviewService.processReviewResult(_currentDecision!.id, true);
-      await Future.delayed(const Duration(milliseconds: 250));
-      await _loadInitialDecision();
+      
+      // Handle automatic continuation
+      if (continuation != null && continuation.autoPlayedMoves.isNotEmpty) {
+        _showAutoPlayedMoves(continuation.autoPlayedMoves);
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      
+      if (continuation?.nextPrompt != null) {
+        // There's a next due decision - load it
+        final nextPrompt = continuation!.nextPrompt!;
+        final chapter = await widget.repository.getChapter(
+          _currentDecision!.chapterId
+        );
+        if (chapter != null && chapter.root != null) {
+          _currentNode = _findNodeById(chapter.root!, nextPrompt.nodeId);
+          _currentDecision = RepertoireDecision.create(
+            studyId: _currentDecision!.studyId,
+            chapterId: _currentDecision!.chapterId,
+            nodeId: nextPrompt.nodeId,
+            expectedMoves: nextPrompt.expectedMoves,
+          );
+        }
+        setState(() {
+          _feedback = '✓ Correct';
+          _selectedSquare = null;
+        });
+      } else {
+        // No more due decisions - reload
+        await _loadInitialDecision();
+      }
     } else {
+      // Incorrect answer - show expected move
       setState(() {
         _feedback = '✗ Not in repertoire';
         _expectedMove = outcome.expectedMove;
       });
+      // Still process the review result for SRS
       await widget.reviewService.processReviewResult(_currentDecision!.id, false);
+      
+      // After showing error, auto-continue to next due decision
+      await Future.delayed(const Duration(milliseconds: 1500));
+      await _loadInitialDecision();
+    }
+  }
+
+  Future<void> _showAutoPlayedMoves(List<AutoPlayedMove> moves) async {
+    if (!mounted) return;
+    for (final move in moves) {
+      if (!mounted) return;
+      setState(() {
+        _feedback = move.isUserMove 
+            ? '✓ Auto: ${move.san}' 
+            : '✓ Opponent: ${move.san}';
+      });
+      await Future.delayed(const Duration(milliseconds: 400));
     }
   }
 
