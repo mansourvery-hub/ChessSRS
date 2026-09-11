@@ -1,11 +1,15 @@
 import 'package:chess_repertoire_srs/chess/chess_service.dart';
 import 'package:chess_repertoire_srs/domain/repertoire_decision.dart';
-import 'package:chess_repertoire_srs/domain/entities/repertoire_move.dart';
-import 'package:chess_repertoire_srs/domain/srs/scheduler.dart';
-import 'package:chess_repertoire_srs/domain/srs/review_state.dart';
 import 'package:chess_repertoire_srs/domain/entities/chapter.dart';
 import 'package:chess_repertoire_srs/domain/entities/position_node.dart';
+import 'package:chess_repertoire_srs/domain/entities/repertoire_move.dart';
+import 'package:chess_repertoire_srs/domain/srs/review_result.dart';
+import 'package:chess_repertoire_srs/domain/srs/review_outcome.dart';
+import 'package:chess_repertoire_srs/domain/srs/review_state.dart';
+import 'package:chess_repertoire_srs/domain/srs/scheduler.dart';
 import 'package:chess_repertoire_srs/domain/clock.dart';
+
+export 'package:chess_repertoire_srs/domain/srs/review_outcome.dart';
 
 /// The next review prompt: a position with expected repertoire moves.
 class ReviewPrompt {
@@ -26,18 +30,51 @@ class ReviewPrompt {
   final int? currentMoveNumber;
 }
 
-/// The outcome of a review step: whether the answer was correct and any feedback.
-class ReviewOutcome {
-  const ReviewOutcome({
-    required this.correct,
-    this.expectedMove,
+/// What happens after a review answer.
+class ReviewContinuation {
+  const ReviewContinuation({
+    required this.nextPrompt,
+    this.autoPlayedMoves = const [],
   });
 
-  final bool correct;
-  final RepertoireMove? expectedMove;
+  /// The next prompt to show (null if review session ends).
+  final ReviewPrompt? nextPrompt;
+
+  /// Moves that were automatically played during continuation.
+  final List<AutoPlayedMove> autoPlayedMoves;
 }
 
-/// Main review orchestration engine.
+/// A move that was automatically played during continuation.
+class AutoPlayedMove {
+  const AutoPlayedMove({
+    required this.from,
+    required this.to,
+    this.promotion,
+    required this.san,
+    required this.isUserMove,
+  });
+
+  final String from;
+  final String to;
+  final String? promotion;
+  final String san;
+  final bool isUserMove; // true if it was the user's move, false if opponent's
+}
+
+/// Result of a review step.
+class ReviewStepResult {
+  const ReviewStepResult({
+    required this.outcome,
+    required this.newState,
+    this.continuation,
+  });
+
+  final ReviewOutcome outcome;
+  final ReviewState newState;
+  final ReviewContinuation? continuation;
+}
+
+/// Main review orchestration engine with proper state machine.
 class ReviewEngine {
   ReviewEngine({
     required this.chess,
@@ -49,64 +86,78 @@ class ReviewEngine {
   final Scheduler scheduler;
   final Clock clock;
 
-  /// Determine all due decisions for a given scope.
-  List<RepertoireDecision> getDueDecisions(List<Chapter> chapters) {
+  // Provider for review state (set by ReviewService)
+  Future<ReviewState?> Function(String) _getReviewState = (id) async => null;
+  Future<void> Function(String, ReviewState) _saveReviewState = (id, state) async {};
+
+  void setReviewStateProvider(Future<ReviewState?> Function(String) provider) {
+    _getReviewState = provider;
+  }
+
+  void setReviewStateSaver(Future<void> Function(String, ReviewState) saver) {
+    _saveReviewState = saver;
+  }
+
+  Future<List<RepertoireDecision>> getDueDecisions(
+    List<Chapter> chapters, {
+    DateTime? now,
+  }) async {
     final decisions = <RepertoireDecision>[];
+    final currentTime = now ?? clock.now();
 
     for (final chapter in chapters) {
       if (chapter.root == null) continue;
-      _collectDecisions(chapter.root!, decisions);
+      _collectDecisions(chapter.root!, decisions, chapterId: chapter.id, studyId: '');
     }
 
-    return decisions;
-  }
-
-  void _collectDecisions(PositionNode node, List<RepertoireDecision> list) {
-    // Only create a decision at positions where it's the user's turn and there
-    // are children to choose from. For MVP we assume the user's side is white
-    // (orientation can be extended later).
-    final sideToMove = chess.turn(node.fen);
-
-    // If this is the root (no incoming move), it's the first move. Usually
-    // this is a user-side move (white to move), but could be black if the
-    // chapter starts with a black-to-move position.
-    if (node.incomingMove != null || sideToMove == 'w') {
-      if (!node.isLeaf) {
-        final decision = RepertoireDecision.create(
-          studyId: '', // Will be set by caller
-          chapterId: '', // Will be set by caller
-          nodeId: node.id,
-          expectedMoves: node.childMoves,
-        );
-        list.add(decision);
+    // Filter to only due decisions
+    final dueDecisions = <RepertoireDecision>[];
+    for (final decision in decisions) {
+      final state = await _getReviewState(decision.id);
+      if (state == null || state.isDueAt(currentTime)) {
+        dueDecisions.add(decision);
       }
     }
 
-    for (final child in node.children) {
-      _collectDecisions(child, list);
-    }
+    return dueDecisions;
   }
 
-  /// Convert due decisions into a map keyed by nodeId for fast lookup.
-  Map<String, RepertoireDecision> decisionsByNode(
-    List<RepertoireDecision> decisions,
-  ) {
-    final map = <String, RepertoireDecision>{};
-    for (final d in decisions) {
-      map[d.nodeId] = d;
+  void _collectDecisions(PositionNode node, List<RepertoireDecision> list,
+      {required String chapterId, required String studyId}) {
+    // Only create a decision at positions where it's the user's turn and there
+    // are children to choose from.
+    // For MVP we assume the user's side is white (orientation can be extended later).
+    final sideToMove = chess.turn(node.fen);
+
+    // If this is the root (no incoming move), it's the first move.
+    // This is typically a user-side move (white to move), but could be black
+    // if the chapter starts with a black-to-move position.
+    final isUserTurn = node.incomingMove != null || sideToMove == 'w';
+
+    if (isUserTurn && !node.isLeaf && node.childMoves.isNotEmpty) {
+      final decision = RepertoireDecision.create(
+        studyId: studyId,
+        chapterId: chapterId,
+        nodeId: node.id,
+        expectedMoves: node.childMoves,
+      );
+      list.add(decision);
     }
-    return map;
+
+    for (final child in node.children) {
+      _collectDecisions(child, list, chapterId: chapterId, studyId: studyId);
+    }
   }
 
   /// Build the first review prompt from the current position.
-  ReviewPrompt buildPrompt(PositionNode node) {
+  ReviewPrompt buildPrompt(PositionNode node, {required String decisionId}) {
     return ReviewPrompt(
       positionFen: node.fen,
       expectedMoves: node.childMoves,
-      decisionId: '', // Caller will set
+      decisionId: decisionId,
       nodeId: node.id,
       sideToMove: chess.turn(node.fen),
-      currentMoveNumber: null, // Derived from node depth
+      currentMoveNumber: null,
     );
   }
 
@@ -118,32 +169,142 @@ class ReviewEngine {
         return ReviewOutcome(correct: true, expectedMove: move);
       }
     }
-    return const ReviewOutcome(correct: false);
+    return ReviewOutcome(correct: false, expectedMove: node.childMoves.firstOrNull);
   }
 
-  /// Apply a correct move and compute the next review state.
-  ReviewState applyMoveAndAdvance(
-    PositionNode node,
-    RepertoireMove move,
-    ReviewState previousState,
-  ) {
-    // The move leads to a child node - find it
-    final child = node.childForMove(move);
-    if (child == null) {
-      return previousState;
-    }
+  /// Process a review answer and return the next step.
+  Future<ReviewStepResult> processAnswer({
+    required PositionNode currentNode,
+    required RepertoireDecision decision,
+    required String from,
+    required String to,
+    required String? promotion,
+    required ReviewState previousState,
+  }) async {
+    final now = clock.now();
+    final move = RepertoireMove(from: from, to: to, promotion: promotion);
+    final isCorrect = decision.accepts(move);
 
-    // Determine if this child node is a due decision
-    if (!child.isLeaf) {
-      // If the next node is a decision point and due, return it as the next prompt
-      // This is handled by the caller which will fetch the next due decision.
-    }
+    // Update SRS state
+    final reviewResult = isCorrect
+        ? const ReviewResult.correct()
+        : const ReviewResult.incorrect();
 
-    return previousState;
+    final newState = scheduler.schedule(
+      previous: previousState,
+      result: ReviewResult(correct: isCorrect),
+      now: clock.now(),
+    );
+
+    await _saveReviewState(decision.id, newState);
+
+    ReviewContinuation? continuation;
+
+    if (isCorrect) {
+      // Correct answer: advance and auto-continue through non-due positions
+      final continuation = await _advanceAndContinue(
+        currentNode: currentNode,
+        move: move,
+        decision: decision,
+      );
+      return ReviewStepResult(
+        outcome: ReviewOutcome(correct: true, expectedMove: move),
+        newState: newState,
+        continuation: continuation,
+      );
+    } else {
+      // Incorrect answer: reveal expected move, record failure
+      final expectedMove = decision.expectedMoves.firstOrNull;
+      return ReviewStepResult(
+        outcome: ReviewOutcome(correct: false, expectedMove: expectedMove),
+        newState: newState,
+        continuation: null, // UI should show feedback, then continue
+      );
+    }
   }
 
-  /// Get the next node to display after a correct answer.
-  PositionNode nextNodeAfter(PositionNode currentNode, RepertoireMove move) {
-    return currentNode.childForMove(move) ?? currentNode;
+  /// Advance after a correct answer and auto-continue through non-due positions.
+  Future<ReviewContinuation> _advanceAndContinue({
+    required PositionNode currentNode,
+    required RepertoireMove move,
+    required RepertoireDecision decision,
+  }) async {
+    final autoPlayedMoves = <AutoPlayedMove>[];
+    var currentNodeAfterMove = currentNode.childForMove(move);
+
+    // If the move leads to a child, we're now at the opponent's position
+    while (currentNodeAfterMove != null) {
+      // Check if this node has a due decision
+      final isUserTurn = _isUserTurn(currentNodeAfterMove);
+      final hasDueDecision = isUserTurn && 
+          !currentNodeAfterMove.isLeaf && 
+          currentNodeAfterMove.childMoves.isNotEmpty;
+
+      if (hasDueDecision) {
+        // Check if this decision is due
+        final decision = RepertoireDecision.create(
+          studyId: '',
+          chapterId: '',
+          nodeId: currentNodeAfterMove.id,
+          expectedMoves: currentNodeAfterMove.childMoves,
+        );
+        final state = await _getReviewState(decision.id);
+        final now = clock.now();
+        
+        if (state == null || state.isDueAt(now)) {
+          // This is a due decision - stop here and show prompt
+          final prompt = ReviewPrompt(
+            positionFen: currentNodeAfterMove.fen,
+            expectedMoves: currentNodeAfterMove.childMoves,
+            decisionId: decision.id,
+            nodeId: currentNodeAfterMove.id,
+            sideToMove: chess.turn(currentNodeAfterMove.fen),
+          );
+          return ReviewContinuation(nextPrompt: prompt, autoPlayedMoves: autoPlayedMoves);
+        }
+      }
+
+      // Not a due decision point - auto-continue
+      if (!currentNodeAfterMove.isLeaf) {
+        // Auto-play the next move
+        RepertoireMove nextMove;
+        final sideToMove = chess.turn(currentNodeAfterMove.fen);
+        final isUserTurn = sideToMove == 'w'; // Assuming white is user for now
+
+        if (isUserTurn) {
+          // User's turn but not due - play the first repertoire move
+          final bestMove = currentNodeAfterMove.childMoves.first;
+          autoPlayedMoves.add(AutoPlayedMove(
+            from: bestMove.from,
+            to: bestMove.to,
+            promotion: bestMove.promotion,
+            san: bestMove.san,
+            isUserMove: true,
+          ));
+          currentNodeAfterMove = currentNodeAfterMove.childForMove(bestMove)!;
+        } else {
+          // Opponent's turn - auto-play their move (first child)
+          final opponentMove = currentNodeAfterMove.childMoves.first;
+          autoPlayedMoves.add(AutoPlayedMove(
+            from: opponentMove.from,
+            to: opponentMove.to,
+            promotion: opponentMove.promotion,
+            san: opponentMove.san,
+            isUserMove: false,
+          ));
+          currentNodeAfterMove = currentNodeAfterMove.childForMove(opponentMove)!;
+        }
+      } else {
+        // End of line - no more moves
+        break;
+      }
+    }
+
+    return const ReviewContinuation(nextPrompt: null, autoPlayedMoves: []);
+  }
+
+  bool _isUserTurn(PositionNode node) {
+    final sideToMove = chess.turn(node.fen);
+    return sideToMove == 'w'; // Assuming white is user for MVP
   }
 }

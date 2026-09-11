@@ -3,11 +3,11 @@ import 'package:chess_repertoire_srs/domain/entities/position_node.dart';
 import 'package:chess_repertoire_srs/domain/entities/repertoire_move.dart';
 import 'package:chess_repertoire_srs/domain/repertoire_decision.dart';
 import 'package:chess_repertoire_srs/domain/srs/review_result.dart';
-import 'package:chess_repertoire_srs/domain/srs/review_outcome.dart';
 import 'package:chess_repertoire_srs/domain/srs/review_state.dart';
 import 'package:chess_repertoire_srs/domain/srs/scheduler.dart';
-import 'package:chess_repertoire_srs/persistence/study_repository.dart';
 import 'package:chess_repertoire_srs/domain/clock.dart';
+import 'package:chess_repertoire_srs/domain/review_engine.dart';
+import 'package:chess_repertoire_srs/persistence/study_repository.dart';
 
 /// Application service that orchestrates the review process.
 class ReviewService {
@@ -16,12 +16,30 @@ class ReviewService {
     required this.chessService,
     required this.scheduler,
     required this.clock,
-  });
+  }) {
+    _engine = ReviewEngine(
+      chess: chessService,
+      scheduler: scheduler,
+      clock: clock,
+    );
+    _engine.setReviewStateProvider(getReviewState);
+    _engine.setReviewStateSaver(_saveReviewStateInternal);
+  }
 
   final StudyRepository studyRepository;
   final ChessService chessService;
   final Scheduler scheduler;
   final Clock clock;
+
+  late final ReviewEngine _engine;
+
+  Future<ReviewState?> getReviewState(String decisionId) async {
+    return await studyRepository.getReviewState(decisionId);
+  }
+
+  Future<void> _saveReviewStateInternal(String decisionId, ReviewState state) async {
+    await studyRepository.saveReviewState(state);
+  }
 
   /// Get all due repertoire decisions, optionally scoped to a specific [studyId].
   Future<List<RepertoireDecision>> getDueDecisions({String? studyId}) async {
@@ -59,7 +77,7 @@ class ReviewService {
     String chapterId,
     List<RepertoireDecision> list,
   ) {
-    // Create decision at non-leaf positions with repertoire moves
+    // Create decision at positions where it's the user's turn and there are children
     if (!node.isLeaf && node.childMoves.isNotEmpty) {
       final decision = RepertoireDecision.create(
         studyId: studyId,
@@ -111,12 +129,31 @@ class ReviewService {
 
     final newState = scheduler.schedule(
       previous: previousState,
-      result: reviewResult,
+      result: ReviewResult(correct: correct),
       now: now,
     );
 
     await studyRepository.saveReviewState(newState);
     return newState;
+  }
+
+  /// Process a review answer with full continuation logic.
+  Future<ReviewStepResult> processAnswer({
+    required PositionNode currentNode,
+    required RepertoireDecision decision,
+    required String from,
+    required String to,
+    required String? promotion,
+  }) async {
+    return await _engine.processAnswer(
+      currentNode: currentNode,
+      decision: decision,
+      from: from,
+      to: to,
+      promotion: promotion,
+      previousState: await studyRepository.getReviewState(decision.id) ??
+          ReviewState.initial(itemId: decision.id, decisionId: decision.id),
+    );
   }
 
   /// Get the next node to display after a correct move.
@@ -127,15 +164,13 @@ class ReviewService {
     final decision = await studyRepository.getDecision(decisionId);
     if (decision == null) return null;
 
-    // Get the chapter to access the position tree
     final chapter = await studyRepository.getChapter(decision.chapterId);
     if (chapter == null || chapter.root == null) return null;
 
-    // Find the node and get its child for the move
     final node = _findNodeById(chapter.root!, decision.nodeId);
     if (node == null) return null;
 
-    return node.childForMove(move);
+    return node.childForMove(RepertoireMove(from: move.from, to: move.to, promotion: move.promotion));
   }
 
   PositionNode? _findNodeById(PositionNode root, String targetId) {
@@ -146,4 +181,7 @@ class ReviewService {
     }
     return null;
   }
+
+  /// Get the review engine for advanced usage.
+  ReviewEngine get engine => _engine;
 }
