@@ -110,7 +110,7 @@ This document defines the structured implementation tasks, their dependency rela
 
 ---
 
-## 3. Next Evolution Tasks (Phase 2 Roadmap)
+## 3. Next Evolution Tasks (Phase 2 & UIX Polish Roadmap)
 
 - [x] **T11 — Drag-and-Drop Interactive Board Controls**
   - Add piece dragging and square tap-tap interaction replacing text move input.
@@ -120,3 +120,9 @@ This document defines the structured implementation tasks, their dependency rela
   - Replace in-memory repository default with durable local JSON file storage.
 - [x] **T14 — Cross-Study Opening Selector Drawer**
   - Enable filtering review scope by study or cross-study opening classification.
+- [ ] **T15 — Lichess-Inspired Professional UIX & Design Overhaul**
+  - Adapt Lichess / `chessground` board styling (calm wood/green color palettes, piece drag highlights, crisp coordinate labels, smooth animations).
+- [ ] **T16 — Listudy-Inspired Interactive PGN Study Tree Sidebar**
+  - Adapt `listudy` & `chessrs` study tree exploration UI: collapsible notation tree view, variation tabs, move comments, NAG badges, and branching branch selection during review.
+- [ ] **T17 — SRS Review Session Stats & Interval Heatmap**
+  - Add review summary statistics (due queue counts, retention rate, interval distribution bars inspired by `chessrs`/`listudy`).
