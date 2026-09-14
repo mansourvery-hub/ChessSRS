@@ -48,9 +48,17 @@ before the core review loop is in the owner's hands.
       desktop targets); fixed fail-soft. Final: **zero startup errors**,
       analyze 0 issues, tests 1570/1570, home tab renders with board +
       navigation. Evidence: `docs/phase1_runtime_evidence.png` (2026-09-14).
-- [ ] **F4: App identity** — rename app (pubspec name, display name, Android
-      namespace/ios bundle later), launcher icons, remove upstream-only
-      tooling where trivial. Gate: verify + launch.
+- [x] **F4: App identity** — renamed to **ChessSRS**: Dart package
+      `chess_srs` (566 files), Linux binary/GTK id `org.chesssrs.chess_srs`,
+      Android namespace/applicationId `org.chesssrs.app` (Kotlin moved),
+      iOS bundle ids/display name/app groups, user agent, README with GPL
+      fork attribution. Gate: analyze 0, tests 1570/1570, Linux launch zero
+      startup errors. Evidence: `docs/phase1_f4_identity_evidence.png`.
+- [x] **F-github: Repository setup** — GitHub fork of `lichess-org/mobile`
+      named `ChessSRS`; `main` grafted onto both the old
+      `chess-repertoire-srs` history (first-parent) and lichess upstream
+      (merge), so the repo descends from both; old repo pushed fast-forward;
+      `legacy` branch + `legacy/pre-reset` tag pushed.
 - [ ] **F5+: Staged cuts** — execute `CUT_PROPOSALS.md` in the order of its
       §6 (one subsystem per commit; verify + launch after each):
       Firebase/notifications → auth → online play/game → puzzles/learn/watch/
