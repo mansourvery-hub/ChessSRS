@@ -1,112 +1,182 @@
 # Technical Architecture
 
-## 1. Architectural Style
+> **Foundation reset**: this application is built on a fork of
+> [lichess-org/mobile](https://github.com/lichess-org/mobile) (GPL-3.0).
+> The previous standalone Flutter implementation is archived at git tag
+> `legacy/pre-reset`. It is reference material only — the product and domain
+> knowledge lives in the Markdown specifications, not in the old code.
 
-Chess Repertoire SRS is built as a **local-first, layered, modular system** designed for zero perceived latency during review and forward-compatibility with asynchronous cloud synchronization.
+## 1. What this application is
 
----
-
-## 2. Layer Hierarchy & Boundaries
-
-```text
-┌────────────────────────────────────────────────────────┐
-│                   Presentation / UI                    │
-│            (Flutter Widgets, Board, Prompts)           │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                   Application Layer                    │
-│             (ReviewService, ImportService)             │
-└─────────────┬────────────────────────────┬─────────────┘
-              │                            │
-┌─────────────▼──────────────┐ ┌───────────▼─────────────┐
-│        Domain Layer        │ │       Chess Layer       │
-│  (Study, Chapter, Tree,    │ │ (ChessService, Parser,  │
-│   Decisions, SRS States)   │ │  PGN Normalization)     │
-└─────────────▲──────────────┘ └───────────▲─────────────┘
-              │                            │
-┌─────────────┴────────────────────────────┴─────────────┐
-│                   Persistence Layer                    │
-│      (StudyRepository, InMemory, Local File Store)     │
-└────────────────────────────────────────────────────────┘
-```
-
-### Boundary Invariants
-
-1. **Pure Domain**: The domain layer (`lib/domain/`) contains pure Dart logic and entity models. It has **zero dependencies** on Flutter UI packages (`flutter/material.dart`, widgets) and zero dependencies on database engines or external chess package internals.
-2. **Encapsulated Chess Engine**: External chess rule packages (e.g. `package:chess`) are strictly encapsulated within `lib/chess/chess_service.dart`. Domain entities and UI components interact only via normalized value objects (`PositionKey`, `RepertoireMove`, `ChessMove`).
-3. **Local-First Critical Path**: The move-validation loop (`user move -> legality -> repertoire match -> SRS update -> board update`) is executed completely in memory and synchronously saved locally. Network access is never placed on this path.
-
----
-
-## 3. Component Responsibilities
-
-### Domain Layer (`lib/domain/`)
-- **`Study` & `Chapter`**: Root content containers representing imported repertoire collections and individual chapters/lines.
-- **`PositionNode`**: Nodes in the position tree containing normalized FEN keys, incoming moves, annotations, comments, and recursive child branches.
-- **`RepertoireDecision`**: The primary learning unit representing a position where the player must recall their prepared repertoire move.
-- **`ReviewState` & `ReviewEvent`**: Spaced repetition tracking (streak, lapses, stability, next due timestamp) and immutable review logs.
-- **`Scheduler` & `SimpleScheduler`**: Contract and default interval ladder for computing SRS transitions.
-- **`Clock`**: Time abstraction enabling deterministic testing of time-dependent review intervals.
-
-### Chess Layer (`lib/chess/`)
-- **`ChessService`**: Adapter wrapping the rules engine. Performs SAN resolution, legal move generation, coordinate conversions (from/to/promotion), and FEN generation without leaking package types.
-- **`PgnParser`**: Tokenizer and recursive-descent parser for raw PGN movetext supporting multi-game files, comments, NAGs, and recursive variations (RAV).
-- **`PgnConverter`**: Walks parsed PGN ASTs with `ChessService` to produce validated `PositionNode` trees.
-
-### Import Layer (`lib/import/`)
-- **`ImportService`**: Orchestrates raw PGN splitting, parsing, tree normalization, and chapter generation with detailed error/warning accumulation.
-
-### Persistence Layer (`lib/persistence/`)
-- **`StudyRepository`**: Interface defining contracts for persisting studies, chapters, position trees, decisions, review states, and review events.
-- **`InMemoryStudyRepository`**: Fast in-memory implementation for test suites and initial state management.
-
-### Application Layer (`lib/application/`)
-- **`ReviewService`**: Application coordinator that queries due decisions across studies, validates submitted user moves, updates SRS records, and determines next positions.
-
----
-
-## 4. Entity Identity & Position Model
-
-- **Stable Entity IDs**: All entities (`Study`, `Chapter`, `PositionNode`, `RepertoireDecision`, `ReviewState`) use UUID v4 strings for globally unique, sync-ready identification.
-- **Position Key Normalization**: Position keys are derived from normalized 4-field FEN segments (piece placement, side-to-move, castling rights, and en-passant square) ensuring full chess state fidelity.
-
----
-
-## 5. Review Engine State Machine
+**A local-first chess repertoire + spaced-repetition trainer** built on the
+Lichess Mobile application foundation. It is *not* "Lichess with modifications":
+Lichess Mobile provides the technical/UI foundation (board, theme, navigation,
+state management, persistence patterns); our product provides the domain
+(repertoire, review, SRS).
 
 ```text
-               ┌───────────────┐
-               │ Select Scope  │
-               └───────┬───────┘
-                       │
-                       ▼
-               ┌───────────────┐
-               │ Due Decision? ├─── No ───► Show Idle Screen
-               └───────┬───────┘
-                       │ Yes
-                       ▼
-               ┌───────────────┐
-               │ Show Position │
-               └───────┬───────┘
-                       │
-                       ▼
-               ┌───────────────┐
-               │ User Plays SAN│
-               └───────┬───────┘
-                       │
-         ┌─────────────┴─────────────┐
-         ▼                           ▼
-   [Correct Move]             [Incorrect Move]
-         │                           │
-  • Record success            • Record lapse
-  • Update SRS (+interval)    • Update SRS (reset streak)
-  • Auto-traverse non-due     • Reveal expected move
-         │                           │
-         └─────────────┬─────────────┘
-                       │
-                       ▼
-               ┌───────────────┐
-               │ Next Due Node │
-               └───────────────┘
+Lichess Mobile foundation (GPL-3.0 fork)
+        |
+        +-- application/product modules (Riverpod providers)
+        |
+        +-- OUR domain boundary (pure Dart: repertoire, review, SRS)
+        |       |
+        |       +-- Listudy-derived training semantics
+        |       +-- chessrs-derived SRS/review semantics
+        |
+        +-- local persistence / import infrastructure (sqflite, dartchess PGN)
 ```
+
+## 2. Layer boundaries
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│ Presentation — Lichess Mobile shell (Flutter + Riverpod)    │
+│   Review scene (primary) · Repertoire selector · Import ·  │
+│   Settings (Lichess settings framework)                    │
+└──────────────────────────┬─────────────────────────────────┘
+                           │ talks only to application providers
+┌──────────────────────────▼─────────────────────────────────┐
+│ Application — Riverpod providers/services orchestrating    │
+│   use-cases (import study, start review, submit move)      │
+└──────────────────────────┬─────────────────────────────────┘
+                           │ repository interfaces only
+┌──────────────────────────▼─────────────────────────────────┐
+│ DOMAIN (ours) — pure Dart, no Flutter/chessground imports   │
+│   Study · Chapter · repertoire tree · RepertoireDecision   │
+│   ReviewSession engine · ReviewState · Scheduler contract  │
+└──────────────────────────┬─────────────────────────────────┘
+                           │ adapters only
+┌──────────────────────────▼─────────────────────────────────┐
+│ Infrastructure — Lichess-derived:                          │
+│   dartchess (rules, FEN, SAN, PGN) · chessground widgets   │
+│   sqflite local DB · settings/preferences · file import   │
+│   (no network on any critical path)                        │
+└────────────────────────────────────────────────────────────┘
+```
+
+### Boundary invariants
+
+1. **Pure domain**: our domain code (`lib/src/domain/` or a dedicated package)
+   contains pure Dart logic and entities. Zero imports of
+   `package:flutter/...` widgets, chessground, or sqflite. Testable without a
+   widget tree.
+2. **One chess representation**: `dartchess` is *the* chess rules engine.
+   Do not introduce a second chess library or reimplement move generation.
+   Domain code may consume dartchess core types (`Position`, `Move`, `San`)
+   through thin adapters; UI consumes chessground. Never create competing
+   representations of moves/positions/games.
+3. **Lichess UI is not our domain model**: Lichess `model/` classes for online
+   features are presentation/application concerns of the foundation, not
+   domain entities of our product. Our entities live in our domain module.
+4. **Local-first critical path**: user move → legality (dartchess) → repertoire
+   lookup → SRS update → board update runs entirely in memory, locally.
+   Network access is never on this path.
+5. **Isolated integrations**: Listudy-derived and chessrs-derived behavior
+   live in isolated domain modules behind our contracts (see
+   `docs/INTEGRATION_MAP.md`). No cross-cutting merges.
+
+## 3. Component responsibilities
+
+### Domain (ours)
+
+- **`Study` / `Chapter`**: repertoire content containers (source PGN file →
+  study; PGN game → chapter, honoring FEN headers).
+- **Repertoire tree**: branching move tree of positions. Reuses the
+  Lichess `Node`/`Branch` tree *pattern* where practical, but decision
+  semantics are ours.
+- **`RepertoireDecision`**: THE scheduled unit — a position (from the player's
+  perspective) plus the expected repertoire move(s). Every branch the player
+  must recall is a decision; opponent moves are not scheduled independently.
+- **`ReviewState` / `ReviewEvent`**: SRS tracking — first/last review, next
+  due, repetition count, lapses, stability — plus immutable review log.
+- **`Scheduler`** (contract): interval computation. Replaceable
+  (SimpleScheduler ladder → chessrs-style ease/scaling → FSRS later) without
+  redesigning anything else.
+- **`ReviewSession` engine**: due-decision selection, move validation against
+  *repertoire* (not engine truth), auto-traversal of non-due material,
+  opponent-reply auto-play, correct/incorrect feedback semantics.
+- **`Clock`** abstraction: deterministic time in tests.
+
+### Infrastructure (Lichess-derived)
+
+- **dartchess**: legality, SAN/UCI, FEN, and PGN parsing (`PgnParser`) —
+  used by the import pipeline; PGN is an *input format*, never the domain model.
+- **chessground**: board rendering, drag & drop, animation — presentation only.
+- **sqflite (`db/`)**: local persistence for studies, trees, decisions, review
+  states, events. Incremental writes; full study tree never rewritten per move.
+- **settings/preferences**: board theme, piece set, sound — Lichess framework.
+- **import**: PGN file import (multi-game, RAV variations, comments, NAGs,
+  starting FENs) with graceful, structured degradation — never silent corruption.
+
+### Presentation (Lichess-derived)
+
+- App shell, tab navigation (reduced to: **Review** primary, repertoire
+  selector, settings), theming (`styles/`), reusable `widgets/`.
+- **Review scene**: board-dominant screen; the board is the product.
+
+## 4. Review state machine (preserved product semantics)
+
+```text
+                ┌───────────────┐
+                │ Select Scope  │  (all / one study / one opening)
+                └───────┬───────┘
+                        ▼
+                ┌───────────────┐
+                │ Due Decision? ├─── No ──► calm idle state ("up to date")
+                └───────┬───────┘
+                        │ Yes
+                        ▼
+                ┌───────────────┐
+                │ Show Position │  (board oriented to repertoire side)
+                └───────┬───────┘
+                        ▼
+                  User plays move
+                        │
+          ┌─────────────┴─────────────┐
+          ▼                           ▼
+    [Repertoire move]           [Other move]
+          │                           │
+   • record success           • record lapse
+   • SRS +interval            • SRS reset streak, short relearn
+   • auto-traverse non-due    • reveal expected move (no modal)
+   • opponent auto-reply      • allow observing line
+          │                           │
+          └─────────────┬─────────────┘
+                        ▼
+                Next Due Decision      (until nothing due)
+```
+
+Key semantics (from PRODUCT/QUALITY + reference projects):
+- Any valid repertoire branch is accepted; the played branch is followed.
+- Auto-traversal is **never permanent exclusion** — learned moves return when due.
+- No session-complete screen; review is an ongoing utility.
+- Wrong-move feedback shows the expected move and continues (chessrs pattern).
+
+## 5. Identity & determinism
+
+- Entities use stable unique IDs (sync-ready).
+- Position identity = normalized 4-field FEN (placement, side to move,
+  castling, en-passant) — the "clean FEN" concept.
+- All time-dependent logic takes an abstract `Clock` for deterministic tests.
+
+## 6. Licensing constraints (binding)
+
+- The whole application remains **GPL-3.0** as a fork of Lichess Mobile.
+  Preserve `LICENSE`, `COPYING.md`, and copyright notices verbatim when
+  trimming code.
+- chessrs (GPL-3.0): adaptation permitted with attribution; default is
+  reimplementation.
+- listudy (AGPL-3.0): **no code copying**; behavioral reference only.
+- See `docs/INTEGRATION_MAP.md` for the extraction rules.
+
+## 7. Related documents
+
+- `PRODUCT.md` — product definition (authoritative)
+- `MVP.md` — current scope
+- `QUALITY.md` — invariants
+- `TEST_STRATEGY.md` — how invariants are proven
+- `CUT_PROPOSALS.md` — Lichess foundation trim map & status
+- `docs/INTEGRATION_MAP.md` — Listudy/chessrs extraction plan
+- `docs/decisions.md` — durable decision log
+- `Chess_Repertoire_SRS_Product_Blueprint.md` — deep product philosophy (consult on demand)

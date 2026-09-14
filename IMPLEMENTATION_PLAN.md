@@ -1,128 +1,113 @@
-# Implementation Plan & Task Graph
+# Implementation Plan & Phase Status
 
-This document defines the structured implementation tasks, their dependency relationships, and the current execution state for the Chess Repertoire SRS application.
+> Reset plan (post Lichess-Mobile foundation decision). The previous task
+> graph (T1–T17, standalone implementation) is archived at git tag
+> `legacy/pre-reset` and is closed.
 
----
-
-## 1. First-Class Task Dependency Graph
+## Phase strategy
 
 ```text
-               ┌──────────────────────────────┐
-               │ T1: Project Shell & Tooling  │
-               └──────────────┬───────────────┘
-                              │
-               ┌──────────────┴──────────────┐
-               │                             │
-               ▼                             ▼
-┌──────────────────────────────┐ ┌──────────────────────────────┐
-│     T2: Core Domain Model    │ │  T3: Chess Rules Adapter     │
-│   (Study, Chapter, Tree)     │ │   (Legal moves, FEN, SAN)    │
-└──────────────┬───────────────┘ └───────────┬──────────────────┘
-               │                             │
-               └──────────────┬──────────────┘
-                              │
-               ┌──────────────┴──────────────┐
-               │                             │
-               ▼                             ▼
-┌──────────────────────────────┐ ┌──────────────────────────────┐
-│  T4: PGN Parser (RAV Trees)  │ │  T5: SRS Scheduling Engine   │
-│  (Tokenization, variations)  │ │   (Scheduler, ReviewState)   │
-└──────────────┬───────────────┘ └───────────┬──────────────────┘
-               │                             │
-               └──────────────┬──────────────┘
-                              │
-                              ▼
-               ┌──────────────────────────────┐
-               │  T6: PGN Import Normalizer   │
-               │   (Study graph generation)   │
-               └──────────────┬───────────────┘
-                              │
-                              ▼
-               ┌──────────────────────────────┐
-               │    T7: Review Application    │
-               │ (Due selection, validation)  │
-               └──────────────┬───────────────┘
-                              │
-                              ▼
-               ┌──────────────────────────────┐
-               │ T8: Local Persistence Store  │
-               │  (Repository interfaces/impl)│
-               └──────────────┬───────────────┘
-                              │
-                              ▼
-               ┌──────────────────────────────┐
-               │     T9: Review-First UI      │
-               │  (Chessboard, Recall Loop)   │
-               └──────────────┬───────────────┘
-                              │
-                              ▼
-               ┌──────────────────────────────┐
-               │  T10: Complete Verification  │
-               │   (Test suites & ./verify)   │
-               └──────────────────────────────┘
+Phase 0 — Repository archaeology          (documentation/reset — no product code)
+Phase 1 — Lichess Mobile foundation        (fork runs, identity, staged cuts)
+Phase 2 — Minimal product vertical slice   (study → position → review → answer
+                                             → feedback → local persistence)
+Phase 3 — Beta                            (owner uses it; cluster feedback)
+Phase 4 — Listudy integration             (training/study-tree behavior)
+Phase 5 — chessrs integration              (SRS/review queue behavior)
+Phase 6 — Refinement                      (polish, perf, remaining cuts)
 ```
 
----
-
-## 2. Task Definitions & Status
-
-### Completed MVP Slices
-
-- [x] **T1 — Project Shell & Tooling Baseline**
-  - **Contract**: Scaffold Flutter project with FVM (Flutter 3.47.2 / Dart 3.13.2) supporting mobile, desktop, and web; configure `analysis_options.yaml` and dependencies (`chess`, `uuid`, `equatable`, `clock`, `path_provider`, `shared_preferences`).
-  - **Verification**: `flutter analyze` passes.
-
-- [x] **T2 — Core Domain Model**
-  - **Contract**: Define immutable domain entities (`Study`, `Chapter`, `PositionNode`, `PositionKey`, `RepertoireMove`, `RepertoireDecision`) with zero Flutter/third-party package dependencies.
-  - **Verification**: Type system validation and constructor immutability checks.
-
-- [x] **T3 — Chess Rules Adapter**
-  - **Contract**: Build `ChessService` encapsulating chess rules, legal move generation, coordinate conversions, and resilient SAN resolution.
-  - **Verification**: `test/chess_service_test.dart` (7/7 tests passed).
-
-- [x] **T4 — PGN Parser with Recursive Variations**
-  - **Contract**: Build `PgnParser` tokenizing movetext, parsing multi-game splits, headers, comments, NAGs, and recursive variation subtrees.
-  - **Verification**: `test/pgn_parser_test.dart` (6/6 tests passed).
-
-- [x] **T5 — SRS Scheduling Engine**
-  - **Contract**: Implement `Scheduler` abstraction and `SimpleScheduler` with exponential interval growth, lapse recovery, and injectable `Clock` for deterministic testing.
-  - **Verification**: `test/srs_scheduler_test.dart` (4/4 tests passed).
-
-- [x] **T6 — PGN Import Normalization Pipeline**
-  - **Contract**: Implement `PgnConverter` and `ImportService` to normalize parsed PGN games into complete `Study` hierarchies with position nodes and structured error reporting.
-  - **Verification**: `test/import_service_test.dart` (4/4 tests passed).
-
-- [x] **T7 — Review Application Coordinator**
-  - **Contract**: Implement `ReviewService` and `ReviewEngine` managing due decision discovery, answer verification, auto-continuation through learned moves, and SRS state progression.
-  - **Verification**: `test/review_service_test.dart` (2/2 tests passed).
-
-- [x] **T8 — Local Persistence Store**
-  - **Contract**: Implement `StudyRepository` interface and `InMemoryStudyRepository` storing studies, position trees, decisions, and review state/event histories.
-  - **Verification**: Service integration tests with persistence assertions.
-
-- [x] **T9 — Review-First UI Scene**
-  - **Contract**: Implement Flutter application startup directly into the Review scene with responsive board rendering, algebraic move input, feedback display, and progression.
-  - **Verification**: `test/widget_test.dart` smoke test.
-
-- [x] **T10 — Quality Gate & Automated Verification**
-  - **Contract**: Create executable `./verify` script running full static analysis and automated test suite.
-  - **Verification**: `./verify` passes with 0 issues and 24/24 tests passed.
+Development is beta-first: the owner is the beta tester. Nothing gold-plates
+before the core review loop is in the owner's hands.
 
 ---
 
-## 3. Next Evolution Tasks (Phase 2 & UIX Polish Roadmap)
+## Phase 0 — Repository archaeology (current)
 
-- [x] **T11 — Drag-and-Drop Interactive Board Controls**
-  - Add piece dragging and square tap-tap interaction replacing text move input.
-- [x] **T12 — File Picker & System Import UI**
-  - Add file import dialogs on desktop and mobile platforms.
-- [x] **T13 — Local SQLite/Drift Persistence Adapter**
-  - Replace in-memory repository default with durable local JSON file storage.
-- [x] **T14 — Cross-Study Opening Selector Drawer**
-  - Enable filtering review scope by study or cross-study opening classification.
-- [ ] **T15 — Lichess-Inspired Professional UIX & Design Overhaul**
-  - Adapt Lichess / `chessground` board styling (calm wood/green color palettes, piece drag highlights, crisp coordinate labels, smooth animations).
-- [ ] **T16 — Listudy-Inspired Interactive PGN Study Tree Sidebar**
-  - Adapt `listudy` & `chessrs` study tree exploration UI: collapsible notation tree view, variation tabs, move comments, NAG badges, and branching branch selection during review.
-- [ ] **T17 — SRS Review Session Stats & Interval Heatmap**
-  - Add review summary statistics (due queue counts, retention rate, interval distribution bars inspired by `chessrs`/`listudy`).
+- [x] Inspect old repository (docs + lib + tests); classify documentation
+- [x] Inspect Lichess Mobile architecture (model/view/network/db, CLAUDE.md,
+      study subsystem, chessground/dartchess)
+- [x] Inspect Listudy (study.js training loop, tree_utils, chapter/FEN model)
+- [x] Inspect chessrs (Move entity, SpacedRepetitionService, practice queue UX)
+- [x] Legacy checkpoint: commit WIP, tag `legacy/pre-reset`, branch `legacy`
+- [x] `CUT_PROPOSALS.md` (Lichess trim map + owner sign-off list)
+- [x] `docs/INTEGRATION_MAP.md` (Listudy/chessrs extraction + license rules)
+- [x] Rewrite `ARCHITECTURE.md`, `AGENTS.md`, `IMPLEMENTATION_PLAN.md`
+- [x] Handoff report delivered (A–I)
+
+## Phase 1 — Lichess Mobile foundation
+
+- [ ] **F1: Hard reset of working tree** — remove old `lib/`, `test/`,
+      `pubspec.*`, platform dirs, `start.sh`; copy Lichess Mobile source
+      (LICENSE + COPYING.md preserved). **No feature removal yet.**
+- [ ] **F2: Tooling baseline** — `fvm flutter pub get`, `build_runner build`,
+      recreate `./verify` (analyze + test), `.gitignore` adapted.
+      Gate: verify green.
+- [ ] **F3: Build & launch** — `fvm flutter run -d linux` launches; manual
+      smoke run; record runtime evidence. Gate: runtime pass.
+- [ ] **F4: App identity** — rename app (pubspec name, display name, Android
+      namespace/ios bundle later), launcher icons, remove upstream-only
+      tooling where trivial. Gate: verify + launch.
+- [ ] **F5+: Staged cuts** — execute `CUT_PROPOSALS.md` in the order of its
+      §6 (one subsystem per commit; verify + launch after each):
+      Firebase/notifications → auth → online play/game → puzzles/learn/watch/
+      social/blog → engine/explorer/analysis/board-editor → socket/HTTP →
+      tab reduction (Review primary) → final rename polish.
+- [ ] **F-end: Foundation stable** — a clean, coherent, Lichess-derived
+      offline application shell with our tabs. Owner reviews cut result.
+
+## Phase 2 — Minimal product vertical slice
+
+- [ ] **V1: Domain module** — pure-Dart domain (Study, Chapter, repertoire
+      tree, RepertoireDecision, ReviewState, Scheduler + SimpleScheduler,
+      Clock) with unit tests. Contract-first; no UI.
+- [ ] **V2: Import pipeline** — PGN file → dartchess `PgnParser` →
+      normalized Study/Chapter/tree (RAVs preserved, FEN headers honored);
+      structured error reporting. Tests: legacy contract references
+      translated (variation preservation, multi-chapter).
+- [ ] **V3: Local persistence** — sqflite store for studies/decisions/review
+      states; incremental writes. Tests: durability across restart.
+- [ ] **V4: Review session engine** — due selection, move validation against
+      repertoire, auto-traversal of non-due material, opponent auto-reply,
+      feedback state machine. Deterministic Clock tests.
+- [ ] **V5: Review scene UI** — board-dominant Review screen on chessground,
+      oriented to repertoire side, quiet correct/incorrect feedback,
+      due-count indicator, scope drawer (all/one study). First launch with
+      no studies → import action.
+- [ ] **V6: Vertical slice gate** — full loop proven at runtime on device:
+      import real PGN → review → correct/incorrect → state persisted across
+      restart. Runtime validation + screenshots. **Beta-ready.**
+
+## Phase 3 — Beta
+
+- [ ] Deliver build to owner for daily use.
+- [ ] Collect UX problems, missing workflows, visual issues, performance
+      problems (cluster feedback before building).
+- [ ] Fix blocking issues only.
+
+## Phase 4 — Listudy integration (isolated modules)
+
+Per `docs/INTEGRATION_MAP.md`: training-loop semantics (sibling reset on
+error, weighted-random opponent replies), chapter/FEN behaviors, tree caching
+by PGN hash. Optional where flagged (hints, arrows, comments) — only with
+beta-feedback justification.
+
+## Phase 5 — chessrs integration (isolated modules)
+
+Per `docs/INTEGRATION_MAP.md`: ease/scaling scheduler as second `Scheduler`
+implementation (user-tunable), queue prefetch behavior, opening grouping
+cross-study. FSRS remains a later option — never a redesign.
+
+## Phase 6 — Refinement
+
+Workflow polish, information architecture, performance, onboarding/import
+improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only
+then differentiation features justified by specs or beta feedback.
+
+---
+
+## Recording rule
+
+Every completed task records: what shipped, verification evidence (verify +
+runtime), and date. Boundary changes update ARCHITECTURE.md/QUALITY.md in the
+same commit.

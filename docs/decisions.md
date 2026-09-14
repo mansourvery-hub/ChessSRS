@@ -76,3 +76,37 @@ Reason: They provide relevant prior art for chess SRS and study/tree training be
 Decision: New features need a product justification tied to repertoire retention/review.
 
 Reason: The product's differentiation depends on focus and speed.
+
+## D012 — Architectural reset to the Lichess Mobile foundation
+
+Decision: The application is rebuilt as a fork of `lichess-org/mobile`
+(GPL-3.0). The previous standalone implementation is archived at git tag
+`legacy/pre-reset` and is reference material only.
+
+Reason: The old implementation's UI/UX quality could not reach the product's
+Lichess-standard requirements without reinventing what Lichess Mobile already
+provides (board, theme, navigation, settings, persistence patterns).
+
+Implication: Domain contracts are specified by the Markdown documents and
+reimplemented cleanly inside the Lichess architecture. Old code is never
+resurrected because class names look familiar.
+
+## D013 — dartchess is the single chess representation
+
+Decision: Use dartchess (the chess library of the Lichess ecosystem) for all
+rules, FEN, SAN, UCI, and PGN parsing. chessground renders boards.
+
+Reason: QUALITY.md forbids duplicated chess logic; the old `package:chess`
+adapter is obsolete in the new foundation.
+
+## D014 — Listudy behavior only, never code (AGPL)
+
+Decision: Listudy (AGPL-3.0) serves as behavioral reference only. chessrs
+(GPL-3.0) permits attributed adaptation, but reimplementation is preferred.
+
+Reason: License incompatibility with our GPL-3.0 fork for direct AGPL reuse.
+
+Links:
+
+- `docs/INTEGRATION_MAP.md`
+- `CUT_PROPOSALS.md`
