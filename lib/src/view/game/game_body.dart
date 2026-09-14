@@ -26,7 +26,6 @@ import 'package:chess_srs/src/view/game/game_player.dart';
 import 'package:chess_srs/src/view/game/game_result_dialog.dart';
 import 'package:chess_srs/src/view/game/game_screen_providers.dart';
 import 'package:chess_srs/src/view/game/game_settings.dart';
-import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/board.dart';
 import 'package:chess_srs/src/widgets/bottom_bar.dart';
@@ -1035,13 +1034,6 @@ class _GameBottomBar extends ConsumerWidget {
           BottomSheetAction(
             makeLabel: (context) => Text(context.l10n.newOpponent),
             onPressed: () => onNewOpponentCallback(gameState.game),
-          ),
-        if (gameState.tournament != null)
-          BottomSheetAction(
-            makeLabel: (context) => Text(context.l10n.backToTournament),
-            onPressed: () {
-              Navigator.of(context).push(TournamentScreen.buildRoute(gameState.tournament!.id));
-            },
           ),
         if (gameState.game.playable && gameState.game.meta.speed == Speed.correspondence ||
             gameState.game.finished)

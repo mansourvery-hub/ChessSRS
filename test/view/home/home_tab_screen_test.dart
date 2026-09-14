@@ -14,7 +14,6 @@ import 'package:chess_srs/src/view/game/game_list_tile.dart';
 import 'package:chess_srs/src/view/home/games_carousel.dart';
 import 'package:chess_srs/src/view/home/home_tab_screen.dart';
 import 'package:chess_srs/src/view/play/quick_game_matrix.dart';
-import 'package:chess_srs/src/view/tournament/tournament_list_screen.dart';
 import 'package:chess_srs/src/widgets/buttons.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
@@ -234,73 +233,6 @@ void main() {
       expect(find.text('Recent games'), findsNothing);
       expect(find.text('1 game in play'), findsOneWidget);
       expect(find.byType(OngoingGameCarouselItem), findsOneWidget);
-    });
-
-    group('home widgets edit mode', () {
-      testWidgets('featured tournaments checkbox is hidden when there are none to show', (
-        tester,
-      ) async {
-        final mockClient = MockClient((request) {
-          if (request.url.path == '/tournament/featured') {
-            return mockResponse('{"featured":[]}', 200);
-          }
-          return mockResponse('', 200);
-        });
-        final app = await makeTestProviderScope(
-          tester,
-          child: const Application(),
-          defaultPreferences: {kWelcomeMessageShownKey: true},
-          overrides: {
-            httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
-              (ref) => FakeHttpClientFactory(() => mockClient),
-            ),
-          },
-        );
-        await tester.pumpWidget(app);
-
-        // wait for connectivity
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Customize'));
-        await tester.pumpAndSettle(); // wait for settings screen to open
-
-        expect(find.widgetWithText(PlatformAppBar, 'Home widgets'), findsOneWidget);
-        expect(find.byType(FeaturedTournamentsWidget), findsNothing);
-      });
-
-      testWidgets('featured tournaments checkbox is shown when there are some to show', (
-        tester,
-      ) async {
-        final mockClient = MockClient((request) {
-          if (request.url.path == '/tournament/featured') {
-            return mockResponse(mockFeaturedTournamentsResponse, 200);
-          }
-          return mockResponse('', 200);
-        });
-        final app = await makeTestProviderScope(
-          tester,
-          child: const Application(),
-          defaultPreferences: {kWelcomeMessageShownKey: true},
-          overrides: {
-            httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
-              (ref) => FakeHttpClientFactory(() => mockClient),
-            ),
-          },
-        );
-        await tester.pumpWidget(app);
-
-        // wait for connectivity
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Customize'));
-        await tester.pumpAndSettle(); // wait for settings screen to open
-
-        expect(find.widgetWithText(PlatformAppBar, 'Home widgets'), findsOneWidget);
-        expect(find.byType(FeaturedTournamentsWidget), findsOneWidget);
-        expect(find.text('Open tournaments'), findsOneWidget);
-      });
     });
   });
 

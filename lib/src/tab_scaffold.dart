@@ -6,7 +6,6 @@ import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/home/home_tab_screen.dart';
 import 'package:chess_srs/src/view/more/more_tab_screen.dart';
 import 'package:chess_srs/src/view/puzzle/puzzle_tab_screen.dart';
-import 'package:chess_srs/src/view/watch/watch_tab_screen.dart';
 import 'package:chess_srs/src/widgets/background.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/foundation.dart';
@@ -87,8 +86,6 @@ class MainTabScaffold extends ConsumerWidget {
             homeTabInteraction.notifyItemTapped();
           case BottomTab.puzzles:
             puzzlesTabInteraction.notifyItemTapped();
-          case BottomTab.watch:
-            watchTabInteraction.notifyItemTapped();
           case BottomTab.more:
             moreTabInteraction.notifyItemTapped();
         }
@@ -113,12 +110,6 @@ class MainTabScaffold extends ConsumerWidget {
           builder: (context) => const PuzzleTabScreen(),
         );
       case 2:
-        return _MaterialTabView(
-          navigatorKey: watchNavigatorKey,
-          tab: BottomTab.watch,
-          builder: (context) => const WatchTabScreen(),
-        );
-      case 3:
         return _MaterialTabView(
           navigatorKey: moreNavigatorKey,
           tab: BottomTab.more,

@@ -7,12 +7,9 @@ import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_controller.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
 import 'package:chess_srs/src/model/game/playable_game.dart';
-import 'package:chess_srs/src/model/tournament/tournament_controller.dart';
-import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/game/status_l10n.dart';
-import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,31 +75,6 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
       };
     }
     return null;
-  }
-
-  /// Navigates back to the tournament this game belongs to.
-  ///
-  /// If we came from the tournament screen (the usual case: we were on the
-  /// tournament, the game was pushed on top and we played it), it is still in
-  /// the navigation stack, so we close the dialog and pop back to it. Otherwise
-  /// (e.g. the game was opened from the home recent games list) there is no
-  /// tournament screen to go back to, so we push a fresh one.
-  void _backToTournament(TournamentId tournamentId) {
-    final navigator = Navigator.of(context);
-    if (rootNavRouteStackObserver.containsRoute(
-      TournamentScreen.routeName,
-      arguments: tournamentId.value,
-    )) {
-      navigator.popUntil(
-        (route) =>
-            route.settings.name == TournamentScreen.routeName &&
-            route.settings.arguments == tournamentId.value,
-      );
-    } else {
-      // Close the dialog first, then push the tournament screen.
-      navigator.popUntil((route) => route is! PopupRoute);
-      navigator.push(TournamentScreen.buildRoute(tournamentId));
-    }
   }
 
   @override
@@ -226,24 +198,6 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                     : null,
                 child: Text(context.l10n.newOpponent, textAlign: TextAlign.center),
               ),
-            if (value.tournament?.isOngoing == true) ...[
-              FilledButton.icon(
-                icon: const Icon(Icons.play_arrow),
-                onPressed: () => _backToTournament(value.tournament!.id),
-                label: Text(context.l10n.backToTournament, textAlign: TextAlign.center),
-              ),
-              FilledButton.tonalIcon(
-                icon: const Icon(Icons.pause),
-                onPressed: () {
-                  // Pause the tournament
-                  ref
-                      .read(tournamentControllerProvider(value.tournament!.id).notifier)
-                      .joinOrPause();
-                  _backToTournament(value.tournament!.id);
-                },
-                label: Text(context.l10n.pause, textAlign: TextAlign.center),
-              ),
-            ],
             if (value.game.userAnalysable)
               FilledButton.tonal(
                 onPressed: () {

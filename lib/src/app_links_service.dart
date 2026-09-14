@@ -13,21 +13,15 @@ import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
 import 'package:chess_srs/src/model/puzzle/puzzle_providers.dart';
 import 'package:chess_srs/src/model/puzzle/puzzle_repository.dart';
 import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
-import 'package:chess_srs/src/model/tv/tv_channel.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_player_results_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_round_screen.dart';
 import 'package:chess_srs/src/view/puzzle/puzzle_screen.dart';
 import 'package:chess_srs/src/view/study/study_screen.dart';
-import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
 import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
-import 'package:chess_srs/src/view/watch/tv_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/rich_link_text.dart';
 import 'package:dartchess/dartchess.dart';
@@ -141,34 +135,6 @@ class AppLinksService {
             initialChapter: chapter != null ? StudyChapterId(chapter) : null,
           )),
         ];
-      case 'broadcast':
-        final roundId = BroadcastRoundId(appLinkUri.pathSegments[3]);
-        if (appLinkUri.pathSegments.length > 4) {
-          final gameId = BroadcastGameId(appLinkUri.pathSegments[4]);
-          return [
-            BroadcastRoundScreenLoading.buildRoute(roundId, initialTab: BroadcastRoundTab.boards),
-            BroadcastGameScreen.buildRoute(roundId: roundId, gameId: gameId),
-          ];
-        } else {
-          final fragment = appLinkUri.fragment;
-          final tab = BroadcastRoundTab.tabOrNullFromString(fragment.split('/').first);
-          if (tab == BroadcastRoundTab.players && fragment.length > 'players/'.length) {
-            final playerId = Uri.decodeComponent(fragment.substring('players/'.length));
-            return [
-              BroadcastRoundScreenLoading.buildRoute(
-                roundId,
-                initialTab: BroadcastRoundTab.players,
-              ),
-              BroadcastPlayerResultsScreenLoading.buildRoute(roundId, playerId),
-            ];
-          }
-          return [BroadcastRoundScreenLoading.buildRoute(roundId, initialTab: tab)];
-        }
-      case 'tournament':
-        final tournamentId = TournamentId(appLinkUri.pathSegments[1]);
-        final playerName = appLinkUri.queryParameters['player'];
-        final playerId = playerName != null ? UserId.fromUserName(playerName) : null;
-        return [TournamentScreen.buildRoute(tournamentId, initialPlayerId: playerId)];
       case 'training':
         final id = appLinkUri.pathSegments[1];
         return [PuzzleScreen.buildRoute(angle: PuzzleAngle.fromKey('mix'), puzzleId: PuzzleId(id))];
@@ -195,23 +161,8 @@ class AppLinksService {
             initialOrientation: orientation,
           )),
         ];
-      case 'tv':
-        if (appLinkUri.pathSegments.length < 2) return null;
-        final channel = TvChannel.nameMap.entryOrNull(appLinkUri.pathSegments[1]);
-        if (channel != null) {
-          return [TvScreen.buildRoute(channel: channel.value)];
-        } else {
-          if (!context.mounted) return null;
-          showSnackBar(
-            context,
-            'Invalid TV channel: ${appLinkUri.pathSegments[1]}',
-            type: SnackBarType.error,
-          );
-          return [];
-        }
       case '@':
-        final isTv = appLinkUri.pathSegments.getOrNull(2) == 'tv';
-        if (appLinkUri.pathSegments.length > 2 && !isTv) {
+        if (appLinkUri.pathSegments.length > 2) {
           return null;
         }
         try {
@@ -220,9 +171,7 @@ class AppLinksService {
               .getUser(UserId.fromUserName(appLinkUri.pathSegments[1]));
           if (!context.mounted) return null;
 
-          return isTv
-              ? [TvScreen.buildRoute(user: user.lightUser)]
-              : [UserOrProfileScreen.buildRoute(user.lightUser)];
+          return [UserOrProfileScreen.buildRoute(user.lightUser)];
         } catch (e) {
           if (!context.mounted) return null;
           showSnackBar(
@@ -337,11 +286,6 @@ class AppLinksService {
             ),
           ),
         ];
-      }
-
-      final user = game.playerOf(orientation).user;
-      if (user != null) {
-        return [TvScreen.buildRoute(gameId: gameId, user: user, orientation: orientation)];
       }
     } catch (e, st) {
       _logger.info('Not a game link:', e, st);

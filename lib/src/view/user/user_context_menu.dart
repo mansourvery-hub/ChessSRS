@@ -8,7 +8,6 @@ import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
 import 'package:chess_srs/src/view/user/user_screen.dart';
-import 'package:chess_srs/src/view/watch/tv_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/list.dart';
@@ -67,16 +66,6 @@ class UserContextMenu extends ConsumerWidget {
                   },
                   icon: Icons.person,
                   child: Text(context.l10n.profile),
-                ),
-                BottomSheetContextMenuAction(
-                  icon: Icons.live_tv_outlined,
-                  onPressed: () {
-                    Navigator.of(
-                      context,
-                      rootNavigator: true,
-                    ).push(TvScreen.buildRoute(user: value.lightUser));
-                  },
-                  child: Text(context.l10n.watchGames),
                 ),
                 if (authUser != null && value.canChallenge != null)
                   BottomSheetContextMenuAction(

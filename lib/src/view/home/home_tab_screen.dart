@@ -17,8 +17,6 @@ import 'package:chess_srs/src/model/engine/weights_service.dart';
 import 'package:chess_srs/src/model/game/game_history.dart';
 import 'package:chess_srs/src/model/message/message_repository.dart';
 import 'package:chess_srs/src/model/relation/following_user.dart';
-import 'package:chess_srs/src/model/tournament/tournament.dart';
-import 'package:chess_srs/src/model/tournament/tournament_providers.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
@@ -45,7 +43,6 @@ import 'package:chess_srs/src/view/play/play_bottom_sheet.dart';
 import 'package:chess_srs/src/view/play/play_menu.dart';
 import 'package:chess_srs/src/view/play/quick_game_matrix.dart';
 import 'package:chess_srs/src/view/settings/engine_settings_screen.dart';
-import 'package:chess_srs/src/view/tournament/tournament_list_screen.dart';
 import 'package:chess_srs/src/view/user/challenge_requests_screen.dart';
 import 'package:chess_srs/src/view/user/recent_games.dart';
 import 'package:chess_srs/src/widgets/buttons.dart';
@@ -168,9 +165,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
             final hasServerContent = isOnline && !isServerUnavailable;
             final showOutage = isServerUnavailable && !widget.editModeEnabled;
 
-            final featuredTournaments = hasServerContent
-                ? ref.watch(featuredTournamentsProvider)
-                : const AsyncValue.data(IListConst<LightTournament>([]));
             final blogPosts = hasServerContent
                 ? ref.watch(blogCarouselProvider)
                 : const AsyncValue.data(IListConst<BlogPost>([]));
@@ -178,12 +172,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                 ? ref.watch(followingCarouselProvider)
                 : const AsyncValue.data(IListConst<FollowingUser>([]));
 
-            // Widgets whose content can be empty should not show a checkbox in
-            // edit mode when there is nothing to display next to it.
-            final hasFeaturedTournaments = featuredTournaments.maybeWhen(
-              data: (tournaments) => tournaments.any((t) => t.isSupportedInApp),
-              orElse: () => true,
-            );
             final hasFollowing = followingAsync.maybeWhen(
               data: (following) => following.isNotEmpty,
               orElse: () => true,
@@ -231,7 +219,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                           ],
                         ),
                       ),
-                      Expanded(child: FeaturedTournamentsWidget(featured: featuredTournaments)),
                     ],
                   )
                 else ...[
@@ -242,11 +229,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                       shouldShow: true,
                       child: Padding(padding: Styles.bodySectionPadding, child: QuickGameMatrix()),
                     ),
-                  _EditableWidget(
-                    widget: HomeEditableWidget.featuredTournaments,
-                    shouldShow: hasServerContent && hasFeaturedTournaments,
-                    child: FeaturedTournamentsWidget(featured: featuredTournaments),
-                  ),
                   if (_worker != null && !isKidMode)
                     _EditableWidget(
                       widget: HomeEditableWidget.blogCarousel,
@@ -299,7 +281,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           const SizedBox(height: 8.0),
-                          FeaturedTournamentsWidget(featured: featuredTournaments),
                           if (_worker != null && !isKidMode)
                             _EditableWidget(
                               widget: HomeEditableWidget.blogCarousel,
@@ -366,11 +347,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                   child: hasServerContent
                       ? _OngoingGamesCarousel(ongoingGames, maxGamesToShow: 20)
                       : _OfflineCorrespondenceCarousel(offlineCorresGames, maxGamesToShow: 20),
-                ),
-                _EditableWidget(
-                  widget: HomeEditableWidget.featuredTournaments,
-                  shouldShow: hasServerContent && hasFeaturedTournaments,
-                  child: FeaturedTournamentsWidget(featured: featuredTournaments),
                 ),
                 if (_worker != null && !isKidMode)
                   _EditableWidget(
@@ -473,7 +449,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
         if (isOnline) ref.refresh(unreadMessagesProvider.future),
         if (isOnline) ref.refresh(accountProvider.future),
         if (isOnline) ref.refresh(ongoingGamesProvider.future),
-        if (isOnline) ref.refresh(featuredTournamentsProvider.future),
         if (isOnline) ref.refresh(followingCarouselProvider.future),
       ]);
     } catch (_) {

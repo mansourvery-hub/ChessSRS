@@ -1,12 +1,10 @@
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
-import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
 import 'package:chess_srs/src/view/play/correspondence_challenges_screen.dart';
 import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:chess_srs/src/view/play/create_game_widget.dart';
-import 'package:chess_srs/src/view/tournament/tournament_list_screen.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -55,17 +53,6 @@ class PlayMenu extends ConsumerWidget {
               },
               leading: Icon(Perf.correspondence.icon),
               title: Text(context.l10n.correspondence),
-            ),
-            ListTile(
-              enabled: connectionStatus == LichessConnectionStatus.online,
-              onTap: () {
-                // Pops the play bottom sheet
-                Navigator.of(context).popUntil((route) => route is! ModalBottomSheetRoute);
-
-                Navigator.of(context).push(TournamentListScreen.buildRoute());
-              },
-              leading: const Icon(LichessIcons.tournament_cup),
-              title: Text(context.l10n.arenaArenaTournaments),
             ),
             ListTile(
               onTap: () {

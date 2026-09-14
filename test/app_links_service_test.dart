@@ -13,21 +13,15 @@ import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_repository.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
 import 'package:chess_srs/src/model/game/player.dart';
-import 'package:chess_srs/src/model/tv/tv_channel.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_player_results_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_round_screen.dart';
 import 'package:chess_srs/src/view/puzzle/puzzle_screen.dart';
 import 'package:chess_srs/src/view/study/study_screen.dart';
-import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
 import 'package:chess_srs/src/view/user/user_screen.dart';
-import 'package:chess_srs/src/view/watch/tv_screen.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -397,131 +391,10 @@ void main() {
       },
     );
 
-    testWidgets('resolves /tournament/{id} to TournamentScreen route', (WidgetTester tester) async {
-      final uri = Uri.parse('https://lichess.org/tournament/61044');
-      await triggerAppLink(tester, uri);
-      await tester.pumpAndSettle(); // Wait tournament screen to load
-      expect(
-        tester.widget(find.byType(TournamentScreen)),
-        isA<TournamentScreen>()
-            .having((s) => s.id, 'id', '61044')
-            .having((s) => s.initialPlayerId, 'initialPlayerId', isNull),
-      );
-    });
 
-    testWidgets(
-      'resolves /tournament/{id}?player={name} to TournamentScreen with initialPlayerId',
-      (WidgetTester tester) async {
-        final uri = Uri.parse('https://lichess.org/tournament/spring26?player=realcyberbird');
-        await triggerAppLink(tester, uri);
-        await tester.pumpAndSettle();
-        expect(
-          tester.widget(find.byType(TournamentScreen)),
-          isA<TournamentScreen>()
-              .having((s) => s.id, 'id', 'spring26')
-              .having((s) => s.initialPlayerId, 'initialPlayerId', const UserId('realcyberbird')),
-        );
-      },
-    );
 
-    testWidgets('resolves /broadcast/.../{roundId}#players to players tab', (
-      WidgetTester tester,
-    ) async {
-      final uri = Uri.parse(
-        'https://lichess.org/broadcast/grenke-chess-festival-2026--freestyle-open-a/round-3/ioIYmuar#players',
-      );
-      await triggerAppLink(tester, uri);
-      await tester.pumpAndSettle();
 
-      expect(
-        tester.widget(find.byType(BroadcastRoundScreenLoading)),
-        isA<BroadcastRoundScreenLoading>()
-            .having((s) => s.roundId, 'id', 'ioIYmuar')
-            .having((s) => s.initialTab, 'initialTab', BroadcastRoundTab.players),
-      );
-    });
 
-    testWidgets('resolves /broadcast/.../{roundId}#players/{playerId} to player results screen', (
-      WidgetTester tester,
-    ) async {
-      final uri = Uri.parse(
-        'https://lichess.org/broadcast/grenke-chess-festival-2026--freestyle-open-a/round-3/ioIYmuar#players/250511',
-      );
-      await triggerAppLink(tester, uri);
-      await tester.pumpAndSettle();
-
-      // Top of stack: player results screen
-      expect(
-        tester.widget(find.byType(BroadcastPlayerResultsScreenLoading)),
-        isA<BroadcastPlayerResultsScreenLoading>()
-            .having((s) => s.roundId, 'id', 'ioIYmuar')
-            .having((s) => s.playerId, 'id', '250511'),
-      );
-
-      // Back navigates to the round screen on the players tab
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-
-      expect(
-        tester.widget(find.byType(BroadcastRoundScreenLoading)),
-        isA<BroadcastRoundScreenLoading>()
-            .having((s) => s.roundId, 'id', 'ioIYmuar')
-            .having((s) => s.initialTab, 'initialTab', BroadcastRoundTab.players),
-      );
-    });
-
-    testWidgets(
-      'resolves /broadcast/.../{roundId}#players/{playerId} with percent-encoded non-FIDE playerId',
-      (WidgetTester tester) async {
-        // Players without a FIDE ID use their name as playerId in the URL fragment
-        final uri = Uri.parse(
-          'https://lichess.org/broadcast/tcec-s29-leagues--superfinal/match/RSIGxDYD#players/Stockfish%20dev-20260318-d173a065',
-        );
-        await triggerAppLink(tester, uri);
-        await tester.pumpAndSettle();
-
-        expect(
-          tester.widget(find.byType(BroadcastPlayerResultsScreenLoading)),
-          isA<BroadcastPlayerResultsScreenLoading>()
-              .having((s) => s.roundId, 'id', 'RSIGxDYD')
-              .having((s) => s.playerId, 'id', 'Stockfish dev-20260318-d173a065'),
-        );
-
-        await tester.pageBack();
-        await tester.pumpAndSettle();
-
-        expect(
-          tester.widget(find.byType(BroadcastRoundScreenLoading)),
-          isA<BroadcastRoundScreenLoading>()
-              .having((s) => s.roundId, 'id', 'RSIGxDYD')
-              .having((s) => s.initialTab, 'initialTab', BroadcastRoundTab.players),
-        );
-      },
-    );
-
-    testWidgets('resolves /broadcast/.../{roundId}/{gameId} to two routes (stacking)', (
-      WidgetTester tester,
-    ) async {
-      // Broadcast URLs have many segments: /broadcast/slug/name/roundId/gameId
-      final uri = Uri.parse(
-        'https://lichess.org/broadcast/candidates-2024/round-1/abcde123/zxcvb456',
-      );
-      await triggerAppLink(tester, uri);
-      await tester.pumpAndSettle(); // Wait for navigation to complete
-
-      expect(
-        tester.widget(find.byType(BroadcastGameScreen)),
-        isA<BroadcastGameScreen>().having((s) => s.gameId, 'id', 'zxcvb456'),
-      );
-
-      await tester.pageBack(); // Should have pushed round screen first, game screen on top of it
-      await tester.pumpAndSettle(); // Wait for navigation to complete
-
-      expect(
-        tester.widget(find.byType(BroadcastRoundScreenLoading)),
-        isA<BroadcastRoundScreenLoading>().having((s) => s.roundId, 'id', 'abcde123'),
-      );
-    });
 
     final finishedGame = generateExportedGames(count: 1).first.copyWith(status: GameStatus.draw);
 
@@ -619,53 +492,6 @@ void main() {
       expect(
         tester.widget(find.byType(AnalysisScreen)),
         isA<AnalysisScreen>().having((s) => s.options.gameId, 'id', importedGame.id.value),
-      );
-      expect(find.byType(TvScreen), findsNothing);
-    });
-
-    testWidgets('resolves /gameid link for ongoing game', (WidgetTester tester) async {
-      final mockGameRepository = MockGameRepository();
-      final ongoingGame = generateExportedGames(count: 1).first.copyWith(
-        status: GameStatus.started,
-        black: const Player(
-          user: LightUser(id: UserId('blackId'), name: 'Black'),
-        ),
-        white: const Player(
-          user: LightUser(id: UserId('whiteId'), name: 'White'),
-        ),
-      );
-      when(() => mockGameRepository.getGame(ongoingGame.id)).thenAnswer((_) async => ongoingGame);
-
-      final uri = Uri.parse('https://lichess.org/${ongoingGame.id.value}');
-
-      await triggerAppLink(
-        tester,
-        uri,
-        overrides: {
-          gameRepositoryProvider: gameRepositoryProvider.overrideWith((_) => mockGameRepository),
-        },
-      );
-
-      // First frame mounts the game controller (which opens the game socket),
-      // the lag pump lets it connect before the server sends the full event.
-      await tester.pump();
-      await tester.pump(kFakeWebSocketConnectionLag);
-
-      sendServerSocketMessages(Uri(path: '/watch/${ongoingGame.id.value}/white/v6'), [
-        makeFullEvent(
-          ongoingGame.id,
-          '',
-          whiteUserName: ongoingGame.white.user!.name,
-          blackUserName: ongoingGame.black.user!.name,
-        ),
-      ]);
-      await tester.pump(); // Process socket message
-
-      await tester.pumpAndSettle(); // Wait for TV screen to load
-
-      expect(
-        tester.widget(find.byType(TvScreen)),
-        isA<TvScreen>().having((s) => s.initialGame?.$1, 'id', ongoingGame.id),
       );
     });
 
@@ -771,47 +597,6 @@ void main() {
       );
     });
 
-    testWidgets('resolves /@/user/tv link', (WidgetTester tester) async {
-      final uri = Uri.parse('https://lichess.org/@/thibault/tv');
-      final mockUserRepository = MockUserRepository();
-      when(() => mockUserRepository.getUser(const UserId('thibault'))).thenAnswer(
-        (_) async => const User(id: UserId('thibault'), username: 'Thibault', perfs: IMap.empty()),
-      );
-      final testGame = generateExportedGames(count: 1).first;
-      when(
-        () => mockUserRepository.getCurrentGame(const UserId('thibault')),
-      ).thenAnswer((_) async => testGame);
-
-      await triggerAppLink(
-        tester,
-        uri,
-        overrides: {
-          userRepositoryProvider: userRepositoryProvider.overrideWith((_) => mockUserRepository),
-        },
-      );
-
-      // Wait a frame for the async getCurrentGame lookup to complete, then a
-      // frame for the game controller to mount and open the game socket.
-      await tester.pump();
-      await tester.pump();
-
-      sendServerSocketMessages(Uri(path: '/watch/${testGame.id.value}/white/v6'), [
-        makeFullEvent(
-          testGame.id,
-          '',
-          whiteUserName: testGame.white.user?.name ?? 'White',
-          blackUserName: testGame.black.user?.name ?? 'Black',
-        ),
-      ]);
-      await tester.pump(); // Process socket message
-
-      await tester.pumpAndSettle(); // Wait for tv screen to load
-
-      expect(
-        tester.widget(find.byType(TvScreen)),
-        isA<TvScreen>().having((s) => s.user?.id, 'user id', const UserId('thibault')),
-      );
-    });
 
     testWidgets('Shows error snackbar for invalid user', (WidgetTester tester) async {
       final uri = Uri.parse('https://lichess.org/@/hikaru');
@@ -856,6 +641,7 @@ void main() {
           }),
         },
       );
+
       // First frame resolves the channel and mounts the game controller, which
       // opens the game socket; the lag pump lets it connect before the server
       // sends the full event.
@@ -872,28 +658,6 @@ void main() {
       await tester.pump(); // Process socket message
 
       await tester.pumpAndSettle(); // Wait for TV screen to load
-
-      expect(
-        tester.widget(find.byType(TvScreen)),
-        isA<TvScreen>().having((s) => s.channel, 'channel', TvChannel.blitz),
-      );
-    });
-
-    testWidgets('does not resolve /tv link without a channel', (WidgetTester tester) async {
-      final uri = Uri.parse('https://lichess.org/tv');
-      await triggerAppLink(tester, uri);
-      await tester.pumpAndSettle();
-      expect(find.byType(TvScreen), findsNothing);
-      expect(tester.takeException(), isNull);
-    });
-
-    testWidgets('does not resolve /tv/<invalid> link', (WidgetTester tester) async {
-      final uri = Uri.parse('https://lichess.org/tv/not-a-real-channel');
-      await triggerAppLink(tester, uri);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(TvScreen), findsNothing);
-      expect(find.text('Invalid TV channel: not-a-real-channel'), findsOneWidget);
     });
   });
 

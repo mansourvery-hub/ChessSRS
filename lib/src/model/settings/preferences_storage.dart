@@ -28,7 +28,6 @@ enum PrefCategory {
   openingExplorer('preferences.opening_explorer'),
   gameHistory('preferences.gameHistory'),
   puzzle('preferences.puzzle'),
-  broadcast('preferences.broadcast'),
   engineEvaluation('preferences.engineEvaluation'),
   offlineComputerGame('preferences.offlineComputerGame'),
   account('preferences.account'),

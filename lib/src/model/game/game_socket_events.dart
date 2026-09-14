@@ -259,3 +259,28 @@ String _nagToJugdmentName(int nag) => switch (nag) {
 typedef ServerAnalysis = ({GameId id, PlayerAnalysis white, PlayerAnalysis black});
 
 typedef GameDivision = ({int? middle, int? end});
+
+@freezed
+sealed class FenSocketEvent with _$FenSocketEvent {
+  const factory FenSocketEvent({
+    required GameId id,
+    required String fen,
+    required Move lastMove,
+    required Duration whiteClock,
+    required Duration blackClock,
+  }) = _FenSocketEvent;
+
+  factory FenSocketEvent.fromJson(Map<String, dynamic> json) {
+    return _fenEventFromPick(pick(json).required());
+  }
+}
+
+FenSocketEvent _fenEventFromPick(RequiredPick pick) {
+  return FenSocketEvent(
+    id: pick('id').asGameIdOrThrow(),
+    fen: pick('fen').asStringOrThrow(),
+    lastMove: pick('lm').asUciMoveOrThrow(),
+    whiteClock: pick('wc').asDurationFromSecondsOrThrow(),
+    blackClock: pick('bc').asDurationFromSecondsOrThrow(),
+  );
+}

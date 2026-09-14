@@ -1,6 +1,5 @@
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/study/study_controller.dart';
-import 'package:chess_srs/src/model/tv/tv_game_controller.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -33,35 +32,6 @@ abstract class GameChatOptions extends ChatOptions with _$GameChatOptions {
 
   @override
   bool get writeable => true;
-}
-
-@freezed
-abstract class TvChatOptions extends ChatOptions with _$TvChatOptions {
-  const TvChatOptions._();
-  const factory TvChatOptions(TvGameControllerParams params, {required bool writeable}) =
-      _TvChatOptions;
-
-  @override
-  GameId get id => params.gameId;
-
-  @override
-  LightUser? get opponent => null;
-
-  @override
-  bool get isPublic => true;
-}
-
-@freezed
-abstract class TournamentChatOptions extends ChatOptions with _$TournamentChatOptions {
-  const TournamentChatOptions._();
-  const factory TournamentChatOptions({required TournamentId id, required bool writeable}) =
-      _TournamentChatOptions;
-
-  @override
-  LightUser? get opponent => null;
-
-  @override
-  bool get isPublic => true;
 }
 
 @freezed

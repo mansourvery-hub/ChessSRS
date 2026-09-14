@@ -4,7 +4,6 @@ import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/user/leaderboard.dart';
-import 'package:chess_srs/src/model/user/streamer.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/aggregator.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -122,13 +121,6 @@ class UserRepository {
 
   Future<IList<UserActivity>> getActivity(UserId id) {
     return client.readJsonList(Uri(path: '/api/user/$id/activity'), mapper: _userActivityFromJson);
-  }
-
-  Future<IList<Streamer>> getLiveStreamers() {
-    return aggregator.readJsonList(
-      Uri(path: '/api/streamer/live'),
-      mapper: Streamer.fromServerJson,
-    );
   }
 
   Future<IMap<Perf, LeaderboardUser>> getTop1() {

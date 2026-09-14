@@ -89,7 +89,7 @@ void main() {
 
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Puzzles'), findsOneWidget);
-    expect(find.text('Watch'), findsOneWidget);
+    expect(find.text('More'), findsOneWidget);
   });
 
   testWidgets('language support', (tester) async {

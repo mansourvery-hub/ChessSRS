@@ -16,7 +16,6 @@ import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/game/game_common_widgets.dart';
 import 'package:chess_srs/src/view/game/gif_export_dialog.dart';
 import 'package:chess_srs/src/view/game/status_l10n.dart';
-import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:chess_srs/src/widgets/board_thumbnail.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -268,14 +267,6 @@ class GameContextMenu extends ConsumerWidget {
                     },
               child: Text(context.l10n.analysis),
             ),
-            if (game.arenaTournamentId != null)
-              BottomSheetContextMenuAction(
-                icon: LichessIcons.tournament_cup,
-                onPressed: () {
-                  Navigator.of(context).push(TournamentScreen.buildRoute(game.arenaTournamentId!));
-                },
-                child: Text(context.l10n.viewTournament),
-              ),
             if (isLoggedIn && onPressedBookmark != null)
               BottomSheetContextMenuAction(
                 onPressed: () => onPressedBookmark?.call(context),

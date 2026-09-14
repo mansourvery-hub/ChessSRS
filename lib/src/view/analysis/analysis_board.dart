@@ -12,7 +12,6 @@ import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/view/analysis/game_analysis_board.dart';
 import 'package:chess_srs/src/view/analysis/retro_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
 import 'package:chess_srs/src/view/study/study_screen.dart';
 import 'package:chess_srs/src/widgets/board.dart';
 import 'package:chess_srs/src/widgets/pgn.dart';
@@ -22,9 +21,8 @@ import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// An abstract widget that provides the common interface for three types of analysis boards:
+/// An abstract widget that provides the common interface for analysis boards:
 /// - [GameAnalysisBoard]
-/// - [BroadcastAnalysisBoard]
 /// - [StudyAnalysisBoard]
 /// - [RetroAnalysisBoard]
 abstract class AnalysisBoard extends ConsumerStatefulWidget {

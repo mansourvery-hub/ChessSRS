@@ -10,7 +10,6 @@ import 'package:chess_srs/src/view/message/conversation_screen.dart';
 import 'package:chess_srs/src/view/relation/friend_screen.dart';
 import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
 import 'package:chess_srs/src/view/user/user_screen.dart';
-import 'package:chess_srs/src/view/watch/tv_screen.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/platform_context_menu_button.dart';
 import 'package:chess_srs/src/widgets/shimmer.dart';
@@ -132,26 +131,9 @@ class _FollowingWidgetState extends ConsumerState<FollowingCarousel> {
 }
 
 Widget _buildActionButtons(BuildContext context, WidgetRef ref, FollowingUser friend) {
-  final compactStyle = IconButton.styleFrom(
-    visualDensity: VisualDensity.compact,
-    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-  );
-
-  const iconSize = 20.0;
-
   return Row(
     mainAxisAlignment: .spaceBetween,
     children: [
-      if (friend.playing == true)
-        IconButton.filledTonal(
-          onPressed: () {
-            Navigator.of(context, rootNavigator: true).push(TvScreen.buildRoute(user: friend.user));
-          },
-          icon: const Icon(Icons.live_tv_outlined),
-          iconSize: iconSize,
-          tooltip: context.l10n.watchGames,
-          style: compactStyle,
-        ),
       const Spacer(),
       ContextMenuIconButton(
         consumeOutsideTap: true,

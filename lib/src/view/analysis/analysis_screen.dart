@@ -25,7 +25,6 @@ import 'package:chess_srs/src/view/engine/engine_lines.dart';
 import 'package:chess_srs/src/view/explorer/explorer_view.dart';
 import 'package:chess_srs/src/view/game/exported_game_title.dart';
 import 'package:chess_srs/src/view/game/game_common_widgets.dart';
-import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
 import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
@@ -501,15 +500,6 @@ class _BottomBar extends ConsumerWidget {
             ),
             onPressed: () =>
                 ref.read(analysisControllerProvider(options).notifier).toggleEngineThreatMode(),
-          ),
-        if (analysisState.archivedGame?.data.arenaTournamentId != null)
-          BottomSheetAction(
-            makeLabel: (context) => Text(context.l10n.viewTournament),
-            onPressed: () {
-              Navigator.of(context).push(
-                TournamentScreen.buildRoute(analysisState.archivedGame!.data.arenaTournamentId!),
-              );
-            },
           ),
         if (options case ArchivedGame())
           if (analysisState.canRequestServerAnalysis)

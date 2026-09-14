@@ -24,7 +24,6 @@ import 'package:chess_srs/src/model/game/game_repository_providers.dart';
 import 'package:chess_srs/src/model/game/game_socket_events.dart';
 import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:chess_srs/src/model/game/player.dart';
-import 'package:chess_srs/src/model/tv/tv_socket_events.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/network/socket.dart';

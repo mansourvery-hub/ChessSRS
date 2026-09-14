@@ -3,7 +3,6 @@ import 'dart:math' show max;
 
 import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
 import 'package:chess_srs/src/model/analysis/analysis_preferences.dart';
-import 'package:chess_srs/src/model/broadcast/broadcast_preferences.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
@@ -11,13 +10,11 @@ import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/network/socket.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
-import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 
 import '../../binding.dart';
-import '../../model/broadcast/example_data.dart';
 import '../../model/engine/fake_engine.dart';
 import '../../network/fake_websocket_channel.dart';
 import '../../test_helpers.dart';
@@ -28,7 +25,6 @@ Future<void> makeEngineTestApp(
   WidgetTester tester, {
   GameId? gameId,
   String? pgn,
-  (BroadcastTournamentId, BroadcastRoundId, BroadcastGameId)? broadcastGame,
   int numEvalLines = 1,
 
   /// Whether the computer analysis is allowed (only for analysis screen)
@@ -70,14 +66,6 @@ Future<void> makeEngineTestApp(
             )
             .toJson(),
       ),
-      PrefCategory.broadcast.storageKey: jsonEncode(
-        BroadcastPrefs.defaults
-            .copyWith(
-              enableServerAnalysis: isServerAnalysisEnabled,
-              showBestMoveArrow: showBestMoveArrow,
-            )
-            .toJson(),
-      ),
     },
     overrides: {
       if (gameId != null)
@@ -85,28 +73,6 @@ Future<void> makeEngineTestApp(
           final client = MockClient((request) {
             if (request.url.path == '/game/export/$gameId' && gameResponses.containsKey(gameId)) {
               return mockResponse(gameResponses[gameId]!, 200);
-            }
-            return mockResponse('', 404);
-          });
-
-          return LichessClient(client, ref);
-        })
-      else if (broadcastGame != null)
-        lichessClientProvider: lichessClientProvider.overrideWith((ref) {
-          final client = MockClient((request) {
-            if (request.url.path == '/api/broadcast/-/-/${broadcastGame.$2}') {
-              return mockResponse(
-                broadcastRoundMockResponses[(broadcastGame.$1, broadcastGame.$2)]!,
-                200,
-                headers: {'content-type': 'application/json; charset=utf-8'},
-              );
-            }
-            if (request.url.path == '/api/study/${broadcastGame.$2}/${broadcastGame.$3}.pgn') {
-              return mockResponse(
-                broadcastGamePgnResponses[broadcastGame.$3]!,
-                200,
-                headers: {'content-type': 'application/x-chess-pgn'},
-              );
             }
             return mockResponse('', 404);
           });
@@ -141,33 +107,20 @@ Future<void> makeEngineTestApp(
         ),
       ),
     },
-    home: broadcastGame != null
-        ? BroadcastGameScreen(
-            tournamentId: broadcastGame.$1,
-            roundId: broadcastGame.$2,
-            gameId: broadcastGame.$3,
-          )
-        : AnalysisScreen(
-            options: gameId != null
-                ? AnalysisOptions.archivedGame(orientation: Side.white, gameId: gameId)
-                : AnalysisOptions.pgn(
-                    id: const StringId('standalone'),
-                    orientation: Side.white,
-                    pgn: pgn ?? '',
-                    isComputerAnalysisAllowed: isComputerAnalysisAllowed,
-                    variant: Variant.standard,
-                  ),
-          ),
+    home: AnalysisScreen(
+      options: gameId != null
+          ? AnalysisOptions.archivedGame(orientation: Side.white, gameId: gameId)
+          : AnalysisOptions.pgn(
+              id: const StringId('standalone'),
+              orientation: Side.white,
+              pgn: pgn ?? '',
+              isComputerAnalysisAllowed: isComputerAnalysisAllowed,
+              variant: Variant.standard,
+            ),
+    ),
   );
 
   await tester.pumpWidget(app);
-
-  if (broadcastGame != null) {
-    // Load the broadcast analysis controller
-    await tester.pump();
-    // Load the broadcast round game provider
-    await tester.pump();
-  }
 }
 
 const Map<GameId, String> gameResponses = {

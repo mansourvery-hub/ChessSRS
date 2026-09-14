@@ -1,7 +1,6 @@
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/user/leaderboard.dart';
-import 'package:chess_srs/src/model/user/streamer.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -20,13 +19,6 @@ final userPerfStatsProvider = FutureProvider.autoDispose.family<UserPerfStats, (
 ) {
   return ref.read(userRepositoryProvider).getPerfStats(params.$1, params.$2);
 }, name: 'UserPerfStatsProvider');
-
-final liveStreamersProvider = FutureProvider.autoDispose<IList<Streamer>>((Ref ref) {
-  return ref.withAggregatorCacheFor(
-    (client, aggregator) => UserRepository(client, aggregator).getLiveStreamers(),
-    const Duration(minutes: 1),
-  );
-}, name: 'LiveStreamersProvider');
 
 final top1Provider = FutureProvider.autoDispose<Top1Leaderboard>((Ref ref) {
   return ref.withAggregatorCacheFor(

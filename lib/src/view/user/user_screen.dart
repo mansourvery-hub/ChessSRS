@@ -20,13 +20,11 @@ import 'package:chess_srs/src/view/user/perf_cards.dart';
 import 'package:chess_srs/src/view/user/recent_games.dart';
 import 'package:chess_srs/src/view/user/user_activity.dart';
 import 'package:chess_srs/src/view/user/user_profile.dart';
-import 'package:chess_srs/src/view/watch/tv_screen.dart';
 import 'package:chess_srs/src/widgets/buttons.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
-import 'package:chess_srs/src/widgets/text_badge.dart';
 import 'package:chess_srs/src/widgets/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' show ClientException;
@@ -226,17 +224,6 @@ class _UserProfileListView extends ConsumerWidget {
                   );
                 }(),
               ],
-              ListTile(
-                title: Text(context.l10n.watchGames),
-                leading: const Icon(Icons.live_tv_outlined),
-                trailing: isPlayingLive == true ? const TextBadge(text: 'LIVE') : null,
-                onTap: () {
-                  Navigator.of(
-                    context,
-                    rootNavigator: true,
-                  ).push(TvScreen.buildRoute(user: user.lightUser));
-                },
-              ),
               if (authUser != null) ...[
                 if (user.canChallenge != null)
                   ListTile(
