@@ -99,12 +99,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('libre, no-ads, open source chess server.', findRichText: true),
-        findsOneWidget,
-      );
       expect(find.text('Sign in'), findsOneWidget);
-      expect(find.text('About Lichess...'), findsOneWidget);
     });
 
     testWidgets('authUser, no played game: do not show welcome screen', (tester) async {
@@ -340,12 +335,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('libre, no-ads, open source chess server.', findRichText: true),
-        findsOneWidget,
-      );
       expect(find.text('Sign in'), findsOneWidget);
-      expect(find.text('About Lichess...'), findsOneWidget);
     });
 
     testWidgets('no authUser, with stored games: shows list of recent games', (tester) async {

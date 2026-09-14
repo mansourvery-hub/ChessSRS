@@ -10,7 +10,6 @@ import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/blog/blog.dart';
 import 'package:chess_srs/src/model/blog/blog_repository.dart';
 import 'package:chess_srs/src/model/challenge/challenges.dart';
-import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/correspondence/correspondence_game_storage.dart';
 import 'package:chess_srs/src/model/correspondence/offline_correspondence_game.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
@@ -20,7 +19,6 @@ import 'package:chess_srs/src/model/message/message_repository.dart';
 import 'package:chess_srs/src/model/relation/following_user.dart';
 import 'package:chess_srs/src/model/tournament/tournament.dart';
 import 'package:chess_srs/src/model/tournament/tournament_providers.dart';
-import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
@@ -42,7 +40,6 @@ import 'package:chess_srs/src/view/game/offline_correspondence_games_screen.dart
 import 'package:chess_srs/src/view/home/blog_carousel.dart';
 import 'package:chess_srs/src/view/home/following_carousel.dart';
 import 'package:chess_srs/src/view/home/games_carousel.dart';
-import 'package:chess_srs/src/view/message/conversation_screen.dart';
 import 'package:chess_srs/src/view/play/ongoing_games_screen.dart';
 import 'package:chess_srs/src/view/play/play_bottom_sheet.dart';
 import 'package:chess_srs/src/view/play/play_menu.dart';
@@ -64,7 +61,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/experimental/mutation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Number of cold app starts before hiding the home customization tip.
 const kColdAppStartsHideCustomizationTipThreshold = 5;
@@ -155,7 +151,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
           data: (connectivity) {
             final isOnline = connectivity.isOnline;
             final authUser = ref.watch(authControllerProvider);
-            final unreadLichessMessage = ref.watch(unreadMessagesProvider).value?.lichess == true;
             final ongoingGames = ref.watch(ongoingGamesProvider);
             final offlineCorresGames = ref.watch(offlineOngoingCorrespondenceGamesProvider);
             final recentGames = ref.watch(myRecentGamesProvider);
@@ -213,36 +208,10 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                 ),
                 if (showOutage) const ServerOutageDisplay(),
                 if (!widget.editModeEnabled) ...[
-                  Padding(
-                    padding: Styles.bodySectionPadding,
-                    child: LichessMessage(style: TextTheme.of(context).bodyLarge),
-                  ),
-                  const SizedBox(height: 8.0),
                   if (authUser == null) ...[
                     const Center(child: _SignInWidget()),
                     const SizedBox(height: 16.0),
                   ],
-                  if (Theme.of(context).platform != TargetPlatform.iOS &&
-                      (authUser == null || authUser.user.isPatron != true)) ...[
-                    Center(
-                      child: FilledButton.tonal(
-                        onPressed: () {
-                          launchUrl(Uri.parse('https://lichess.org/patron'));
-                        },
-                        child: Text(context.l10n.patronDonate),
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                  ],
-                  Center(
-                    child: FilledButton.tonal(
-                      onPressed: () {
-                        launchUrl(Uri.parse('https://lichess.org/about'));
-                      },
-                      child: Text(context.l10n.aboutX('Lichess...')),
-                    ),
-                  ),
-                  const _WelcomeMessageCard(),
                   const _HomeCustomizationTip(),
                 ],
               ];
@@ -421,10 +390,7 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
               ];
             }
 
-            final content = ListView(
-              controller: homeScrollController,
-              children: [if (unreadLichessMessage) const _LichessMessageBanner(), ...widgets],
-            );
+            final content = ListView(controller: homeScrollController, children: widgets);
 
             return FocusDetector(
               onFocusLost: () {
@@ -515,48 +481,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
       // provider surfaces its own error, and the failed responses are what keep
       // the server status up to date, so there is nothing to do here.
     }
-  }
-}
-
-class _LichessMessageBanner extends ConsumerWidget {
-  const _LichessMessageBanner();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.tertiaryContainer,
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context, rootNavigator: true)
-              .push(
-                ConversationScreen.buildRoute(
-                  user: const LightUser(id: UserId('lichess'), name: 'lichess'),
-                ),
-              )
-              .then((_) => ref.invalidate(unreadMessagesProvider));
-        },
-        child: Padding(
-          padding: Styles.bodyPadding,
-          child: Column(
-            children: [
-              Text(
-                context.l10n.showUnreadLichessMessage,
-                style: TextStyle(
-                  color: theme.colorScheme.onTertiaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4.0),
-              Text(
-                context.l10n.clickHereToReadIt,
-                style: TextStyle(color: theme.colorScheme.onTertiaryContainer),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -1023,46 +947,6 @@ class _TipCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _WelcomeMessageCard extends StatefulWidget {
-  const _WelcomeMessageCard();
-
-  @override
-  State<_WelcomeMessageCard> createState() => _WelcomeMessageCardState();
-}
-
-class _WelcomeMessageCardState extends State<_WelcomeMessageCard> {
-  bool _shouldDisplay() {
-    return LichessBinding.instance.sharedPreferences.getBool(kWelcomeMessageShownKey) != true;
-  }
-
-  void _dismiss() {
-    LichessBinding.instance.sharedPreferences.setBool(kWelcomeMessageShownKey, true);
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_shouldDisplay()) {
-      return const SizedBox.shrink();
-    }
-
-    return _TipCard(
-      content: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: '${context.l10n.mobileWelcomeToLichessApp}\n\n',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            TextSpan(text: context.l10n.mobileNotAllFeaturesAreAvailable),
-          ],
-        ),
-      ),
-      actions: [TextButton(onPressed: _dismiss, child: Text(context.l10n.ok))],
     );
   }
 }

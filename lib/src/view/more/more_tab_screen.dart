@@ -5,7 +5,6 @@ import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/message/message_repository.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
-import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/account/account_menu.dart';
@@ -24,12 +23,10 @@ import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/misc.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:chess_srs/src/widgets/settings.dart';
-import 'package:chess_srs/src/widgets/user.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MoreTabScreen extends ConsumerWidget {
   const MoreTabScreen({super.key});
@@ -181,32 +178,6 @@ class _Body extends ConsumerWidget {
             ],
           ),
           const _AccountSection(),
-          if (Theme.of(context).platform == TargetPlatform.android)
-            ListSection(
-              hasLeading: true,
-              children: [
-                ListTile(
-                  leading: PatronIcon(color: 10, size: IconTheme.of(context).size),
-                  title: Text(context.l10n.patronDonate),
-                  subtitle: Text(context.l10n.patronBecomePatron),
-                  enabled: isOnline,
-                  onTap: () {
-                    launchUrl(Uri.parse('https://lichess.org/patron'));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: Text(context.l10n.about),
-                  onTap: () {
-                    Navigator.of(context, rootNavigator: true).push(AboutScreen.buildRoute());
-                  },
-                ),
-              ],
-            ),
-          Padding(
-            padding: Styles.bodySectionPadding,
-            child: LichessMessage(style: TextTheme.of(context).bodyMedium),
-          ),
         ],
       ),
     );

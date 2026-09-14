@@ -59,11 +59,24 @@ before the core review loop is in the owner's hands.
       `chess-repertoire-srs` history (first-parent) and lichess upstream
       (merge), so the repo descends from both; old repo pushed fast-forward;
       `legacy` branch + `legacy/pre-reset` tag pushed.
-- [ ] **F5+: Staged cuts** — execute `CUT_PROPOSALS.md` in the order of its
-      §6 (one subsystem per commit; verify + launch after each):
-      Firebase/notifications → auth → online play/game → puzzles/learn/watch/
-      social/blog → engine/explorer/analysis/board-editor → socket/HTTP →
-      tab reduction (Review primary) → final rename polish.
+- [~] **F5+: Staged cuts** — execute `CUT_PROPOSALS.md` execution order
+      (one subsystem per commit; verify + launch after each). Owner has
+      reviewed and approved/rejected each cut — see `CUT_PROPOSALS.md`
+      §Owner decisions for the full record. Current ordered plan:
+      1. `[x]` C9  — Learn tab + coordinate training  *(done: f74627873)*
+      2. `[x]` UI  — Lichess branding (donate, about, LichessMessage, welcome card)
+      3. `[ ]` C7  — Watch tab (TV / tournaments / broadcasts)
+      4. `[ ]` C6  — Puzzles tab
+      5. `[ ]` C11 — Over-the-board game (clock tool is kept)
+      6. `[ ]` C10 — Blog / recap / announce (home carousels + model)
+      7. `[ ]` C4  — Online play: lobby / seek / challenges
+      8. `[ ]` C5  — Server game lifecycle + correspondence
+      9. `[ ]` C8  — Social navigation entry points from More tab
+      10. `[ ]` C17 — WebSocket
+      11. `[ ]` C18 — HTTP repositories (online only; auth HTTP kept)
+      12. `[ ]` Tab reduction → Home + Settings (future: + Review tab)
+      Grey/undecided (do NOT touch without owner approval): C1, C2, C13, C15.
+      Kept by owner decision: C3, C11-clock, C14, C16.
 - [ ] **F-end: Foundation stable** — a clean, coherent, Lichess-derived
       offline application shell with our tabs. Owner reviews cut result.
 

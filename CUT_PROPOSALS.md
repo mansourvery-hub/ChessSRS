@@ -2,209 +2,293 @@
 
 Status: **ACTIVE — Phase 1 F5+ staged cuts in progress.**
 
-This document lists what should be removed from the Lichess Mobile fork to turn
-it into the Chess Repertoire SRS foundation. Nothing here is executed silently;
-cuts happen one subsystem per commit, with build + launch verification after
-each step.
+This document is the authoritative record of what is removed, what is kept,
+and why. Update it before executing any cut. Future agents: read this entire
+file before touching anything.
 
-The guiding rule from the reset directive:
+The guiding rule:
 
-> The objective is not to preserve Lichess functionality for its own sake.
-> The objective is to preserve its excellent foundation and remove unrelated
-> product functionality.
+> Trim the Lichess **product**. Preserve the Lichess **technical foundation**.
+> When uncertain: keep it. Delete less, verify more.
 
 ---
 
 ## Execution status key
 
-- `[ ]` — not started
-- `[~]` — in progress
-- `[x]` — completed (verified: analyze + tests + launch)
-- `[!]` — BLOCKED (see notes)
-- `[T]` — deferred to later phase (TRIM-LATER)
+- `[ ]` not started
+- `[~]` in progress
+- `[x]` DONE — verified (analyze 0 + all tests pass + app launches)
+- `[K]` KEEP — owner decision: do not remove
+- `[G]` GREY — owner undecided; leave untouched until explicit approval
+- `[T]` TRIM-LATER — defer to Phase 6 refinement
 
 ---
 
-## 1. Lichess features that are clearly unnecessary (cut in Phase 1)
+## Owner decisions (recorded 2026-09-14)
 
-| # | Status | Area | Location(s) | Why cut | Dependency notes |
-|---|---|---|---|---|---|
-| C1 | `[ ]` | Firebase (core, crashlytics, messaging) | `pubspec.yaml`, `lib/src/binding.dart`, gradle plugins, `google-services.json` | Local-first app; no telemetry/cloud push | Isolated behind `LichessBinding` — replace with no-op test binding; remove gradle plugin IDs + google-services files |
-| C2 | `[ ]` | Local notifications + home-screen widgets | `lib/src/model/notifications/`, `home_widget` usage in `app.dart`, `ios/LichessWidgets/`, `flutter_local_notifications` | Only make sense for online Lichess events | Remove service init in `app.dart`; iOS extension is native & separable; keep `flutter_native_splash` |
-| C3 | `[ ]` | Authentication (OAuth, sign-in) | `lib/src/model/auth/`, `lib/src/view/auth/`, `flutter_appauth` | No accounts in our product (explicit non-goal) | Unblocks removal of C4–C8; `session`/`auth` providers in `model/auth` feed account, challenge, messages |
-| C4 | `[ ]` | Online play (lobby, seek, create game, challenges) | `lib/src/view/play/`, `model/challenge/`, `model/lobby/` | Product is a trainer, not an online chess server | Depends on C3; `play` bottom tab removed from `tab_navigation.dart` |
-| C5 | `[ ]` | Server game lifecycle (real-time games, correspondence) | `lib/src/view/game/` (online parts), `model/game/` (online lifecycle), `model/correspondence/` | No server games | Depends on C3; the *offline* game-frame widgets (`game_layout`, `board`, bottom bars, move list) must survive — they serve the Review scene |
-| C6 | `[ ]` | Puzzles (all types: storm, streak, racer, theme training) | `lib/src/view/puzzle/`, `model/puzzle/` | Unrelated product (tactics trainer is an explicit non-goal) | Self-contained tab; removes `fl_chart` ACPL usage? no — acpl_chart stays in analysis; puzzle removal removes its own DB tables |
-| C7 | `[ ]` | Watch (TV, tournaments, broadcasts, streamers) | `lib/src/view/watch/`, `model/tv/`, `model/tournament/`, `model/broadcast/` | Unrelated browsing/discovery | Self-contained tab |
-| C8 | `[ ]` | Social (chat, messages, inbox, following/relations, player search) | `model/chat/`, `model/message/`, `model/relation/`, `view/chat/`, `view/message/`, `view/relation/` | Explicit non-goals | Depends on C3 |
-| C9 | `[x]` | Learn section (coordinate training) | `lib/src/view/learn/`, `model/coordinate_training/` | Practice-with-server content; coordinate training is a separate product | See detailed plan below |
-| C10 | `[ ]` | Blog, recap, announce | `model/blog/`, `model/recap/`, `model/announce/` + home carousels | Server content feeds | Remove home carousel widgets with them — home_tab_screen is heavily coupled; defer until home screen is redesigned |
-| C11 | `[ ]` | Over-the-board play & pass-and-play clock | `lib/src/view/over_the_board/`, `model/over_the_board/`, `model/clock/` view parts | Different product (local two-player play) | **Owner decision**: chessrs/listudy don't have it; cut proposed, flag for review |
-| C12 | `[ ]` | Offline computer play (play vs Stockfish) | `lib/src/view/offline_computer/`, `model/offline_computer/`, `multistockfish` | Not our product; engine only returns later as isolated advisory import checker | Depends on engine layer C13 |
-| C13 | `[ ]` | Engine integration (Stockfish) | `model/engine/`, `view/engine/` | No engine in the review loop (explicit product rule) | Reintroduce *later*, isolated behind import pipeline, if advisory health-check is built |
-| C14 | `[ ]` | Explorer (opening explorer) | `model/explorer/`, `view/explorer/` | Server-dependent; repertoire comes from PGN, not lichess DBs | Small |
-| C15 | `[ ]` | Analysis screen (game analysis w/ evals) | `view/analysis/`, `model/analysis/` (parts) | Engine cockpit is a non-goal; *study screen shares its tree-view/PGN widgets* — extract those first | Depends on C13; the study chapter/PGN tree view code we want lives adjacent to analysis code — careful surgical cut |
-| C16 | `[x]` | Board editor | `view/board_editor/`, `model/board_editor/` | Not needed for repertoire training | See detailed plan below |
-| C17 | `[ ]` | WebSocket + online socket events | `network/socket.dart` | No real-time server features survive C4–C8 | After C3–C10 the socket has no consumers |
-| C18 | `[ ]` | HTTP network layer (Lichess API repos) | `network/http.dart`, `model/*/*_repository.dart` (online) | Local-first: no Lichess server calls on any path | Keep `lichessUri` infra if we later add "import from Lichess study URL" (post-MVP horizon); otherwise strip to offline |
+These are the authoritative decisions from the owner. Do not override them.
 
----
-
-## 2. Useful during initial development — remove later (Phase 6)
-
-| # | Item | Why keep for now |
+| # | Decision | Rationale |
 |---|---|---|
-| D1 | Study subsystem UI/controller (`view/study/`, `model/study/`) | Closest prior art to our review/study scene; adapt before deleting the online repository parts |
-| D2 | `network/http.dart` offline/outage UI (`server_outage_display.dart`) | Provides graceful no-network behavior while we transition |
-| D3 | Endgame/TV/etc. `more` tab screens | Removal of the `more` tab content can be batched with the settings reorganization |
-| D4 | `deep_pick`, `fl_chart` | Used by surviving widgets (charts for review stats may be useful later — but only if justified by review UX, else cut with C15) |
-| D5 | `over_the_board` clock widget (`widgets/clock.dart`) | Potentially useful board-time patterns; decide at Phase 6 |
+| C1 Firebase | `[G]` GREY | Undecided — leave untouched |
+| C2 Notifications | `[G]` GREY | May be needed for SRS review reminders (like Anki) — leave untouched |
+| C3 Auth/login | `[K]` KEEP | Login is optional but enables importing Lichess/chess.com studies; app is 100% functional offline without it |
+| C4 Online play | `[ ]` REMOVE | Approved |
+| C5 Server games | `[ ]` REMOVE | Approved — preserve offline game-frame widgets (board, move list) |
+| C6 Puzzles tab | `[ ]` REMOVE | Approved |
+| C7 Watch tab | `[ ]` REMOVE | Approved |
+| C8 Social | `[ ]` REMOVE | Approved (depends on C3 staying; see notes below) |
+| C9 Learn tab + coord training | `[x]` DONE | Removed 2026-09-14 |
+| C10 Blog/recap/announce | `[ ]` REMOVE | Approved |
+| C11 Over-the-board game | `[ ]` REMOVE | Approved — OTB = local 2-player pass-and-play; not our product |
+| C11 Chess clock tool | `[K]` KEEP | Clock tool is a standalone utility; distinct from OTB game; keep |
+| C12 Offline computer play | `[ ]` REMOVE | Approved (follows from C13) |
+| C13 Engine (Stockfish) | `[G]` GREY | May be useful as optional import advisor — undecided |
+| C14 Opening explorer | `[K]` KEEP | Owner decision |
+| C15 Analysis screen | `[G]` GREY | Undecided — shares widgets with study; leave untouched |
+| C16 Board editor | `[K]` KEEP | Owner decision |
+| C17 WebSocket | `[ ]` REMOVE | Follows from C4–C10 |
+| C18 HTTP repos | `[ ]` REMOVE | Follows from C4–C10; keep auth HTTP for C3 |
+| UI-A Donate / patron links | `[ ]` REMOVE | Lichess branding; not our product |
+| UI-B "About Lichess" in More tab | `[ ]` REMOVE | Replace with ChessSRS about if needed later |
+| UI-C "Lichess is a free…" message (LichessMessage widget) | `[ ]` REMOVE | Lichess brand copy |
+| UI-D "Welcome to the Lichess app" card | `[ ]` REMOVE | Lichess brand copy |
+| UI-E "Not all features available" text | `[ ]` REMOVE | Part of Lichess welcome card |
+
+**C8 Social note**: Friends list, inbox, player search, and relations all
+depend on C3 (auth) staying. Since C3 is kept, these screens remain loadable
+for logged-in users. However they are Lichess social features not relevant to
+ChessSRS. Remove the navigation entry points from More tab; the underlying
+model code can stay until a later cleanup pass when the HTTP layer is trimmed.
 
 ---
 
-## 3. Infrastructure unnecessary once local-first
+## Safe execution order
 
-| # | Item | Notes |
-|---|---|---|
-| I1 | Firebase gradle files, `fastlane`, `crowdin.yml`, widget scripts | Tooling for services removed above |
-| I2 | `connectivity_plus` reconnect flows | No network path remains in core product |
-| I3 | `app_links` deep links to lichess.org | No lichess URLs to handle |
-| I4 | `share_plus`/social sharing | Depends on C-cuts; keep only if study export uses it (PGN export is ours, decide in Phase 2) |
-| I5 | `dynamic_system_colors` / Material You | Lichess theme is already excellent; keep or cut per owner preference (default: keep — cheap, nice on Android) |
+Each step is ONE logical change, ONE commit. Gate: `fvm flutter analyze` (0
+issues) + `fvm flutter test` (all pass) + `fvm flutter run -d linux` (app
+launches, manual spot-check) before proceeding to the next step.
 
----
+**NEVER batch multiple steps into one commit.**
 
-## 4. Large subsystems that would create needless maintenance
+```
+Step 1  [x]  C9  — Learn tab + coordinate training                  DONE
+Step 2  [x]  UI  — Lichess branding strings from home + more screens DONE
+Step 3  [ ]  C7  — Watch tab (TV / tournaments / broadcasts)
+Step 4  [ ]  C6  — Puzzles tab
+Step 5  [ ]  C11 — Over-the-board game (NOT clock tool)
+Step 6  [ ]  C10 — Blog / recap / announce (home carousels + model)
+Step 7  [ ]  C4  — Online play: lobby / seek / challenges
+              (depends on: home_tab_screen already cleaned of play widgets)
+Step 8  [ ]  C5  — Server game lifecycle + correspondence
+              (depends on: C4 done; preserve game-frame board widgets)
+Step 9  [ ]  C8  — Social navigation entries from More tab
+              (model code stays for now; just remove entry points)
+Step 10 [ ]  C17 — WebSocket (no consumers left after C4–C8)
+Step 11 [ ]  C18 — HTTP repositories (online repos only; keep auth HTTP)
+Step 12 [ ]  Tab reduction: trim to Home + Settings (+ future Review tab)
+              (after C4–C8 the remaining tabs are Home and More/Settings only)
+```
 
-- **The whole `game/` online module**: game lifecycle, rematch, timers synced to server clocks. Keeping any of it invites continuous rebases against upstream lichess-mobile for features we never use.
-- **Puzzle DB + puzzle services**: thousands of lines + DB migrations for a non-goal.
-- **Correspondence gaming**: background service machinery with no purpose here.
-- **Achievements/gamification** (if present in newer upstream): explicit product non-goal; never import.
-
----
-
-## 5. What is explicitly NOT cut
-
-- `dartchess` + `chessground` + piece/board assets — the board foundation
-- `model/common/` (chess.dart, node.dart game tree, eval, id, uci, perf)
-- `styles/`, `widgets/` reusable set, `db/` sqflite pattern, `model/settings/`
-- l10n pipeline (we keep the machinery; content will shrink)
-- `flutter_native_splash`, app shell, tab navigation skeleton (reduced to our tabs)
-- GPL-3.0 LICENSE, COPYING.md, and attribution requirements — preserved verbatim, forever
-
----
-
-## 6. Order of execution (each step gated: analyze → test → build → launch)
-
-1. Strip coordinate_training + learn tab (C9) — **DONE**
-2. Strip board_editor (C16) — **DONE**
-3. Strip Firebase/notifications/widgets (C1, C2) — pure infrastructure
-4. Strip auth (C3) — unlocks the social chain
-5. Strip play/lobby/challenge/correspondence/game-online (C4, C5)
-6. Strip puzzles/watch/blog/social (C6–C8, C10)
-7. Strip engine/offline-computer/explorer/analysis (C12–C15)
-8. Strip socket + HTTP repositories (C17, C18) — app becomes fully offline
-9. Trim tabs to: **Review** (primary) + **Repertoire** + **Settings**
-10. Rename/re-identity the application
-
-Owner sign-off requested on: C11 (over-the-board), C15 (analysis screen), D4 (charts).
+Steps beyond 12 (C12 offline computer, C13 engine) are blocked on owner
+GREY decisions and are not started until explicit approval.
 
 ---
 
-## 7. Detailed cut plans (executed cuts)
+## Detailed cut plans
 
 ---
 
-### C9 — Coordinate training + Learn tab
+### Step 2 — Lichess branding strings (UI-A through UI-E)
 
-#### Why remove
-Coordinate training (board square naming practice) is a standalone product with
-no connection to repertoire building or SRS review. The Learn tab exists solely
-to host it alongside "Lichess" practice materials (server-backed). Neither
-belongs in ChessSRS.
+**Why**: These are Lichess product strings that appear in the ChessSRS UI.
+They confuse users and misrepresent the product.
 
-#### Files — feature-specific (FEATURE-SPECIFIC, delete)
+**What to remove** (surgical edits, no file deletions):
 
-**model/coordinate_training/**
-- `lib/src/model/coordinate_training/coordinate_training_controller.dart`
-- `lib/src/model/coordinate_training/coordinate_training_controller.freezed.dart`
-- `lib/src/model/coordinate_training/coordinate_training_preferences.dart`
-- `lib/src/model/coordinate_training/coordinate_training_preferences.freezed.dart`
-- `lib/src/model/coordinate_training/coordinate_training_preferences.g.dart`
+- `lib/src/view/home/home_tab_screen.dart`
+  - Remove `_WelcomeMessageCard` widget render (the "Welcome to the Lichess
+    app / not all features available" card shown on first launch).
+    The `_WelcomeMessageCard` class and its state can be deleted.
+  - Remove the donate (`https://lichess.org/patron`) `FilledButton.tonal`
+    block in the welcome screen branch.
+  - Remove the "About Lichess" (`https://lichess.org/about`) `FilledButton.tonal`
+    block in the welcome screen branch.
+  - Remove `_LichessMessageBanner` (the unread Lichess server message banner)
+    — this is a Lichess inbox feature that will be removed with C8 anyway;
+    safe to remove from the home screen display now.
+  - Remove `LichessMessage` widget usage from the welcome branch.
+  - Keep `unreadMessagesProvider` watch for now (C8 will clean it up).
 
-**view/coordinate_training/**
-- `lib/src/view/coordinate_training/coordinate_training_screen.dart`
-- `lib/src/view/coordinate_training/coordinate_display.dart`
+- `lib/src/view/more/more_tab_screen.dart`
+  - Remove the Android-only `ListSection` containing patron/donate tile and
+    "About" tile (lines 184–205).
+  - Remove `LichessMessage` widget at the bottom of the More tab list.
+  - Keep `AboutScreen` import removal if the tile is the only caller — check
+    before deleting.
 
-**view/learn/**
-- `lib/src/view/learn/learn_tab_screen.dart`
+**Shared dependencies that must remain**: `LichessMessage` widget class in
+`widgets/misc.dart` — other callers may exist; remove references not the
+widget itself. `AboutScreen` — check if any other caller exists before
+deciding whether to delete the screen.
 
-**tests/**
-- `test/view/coordinate_training/coordinate_training_screen_test.dart`
+**Risk**: LOW — pure UI text/widget removal, no state or routing changes.
 
-#### Files — shared/foundation (SHARED, edit only — do not delete)
-
-- `lib/src/tab_scaffold.dart` — remove Learn tab case (index 2), reindex Watch→2, More→3
-- `lib/src/tab_navigation.dart` — remove `BottomTab.learn` enum value + its 3 globals + interaction object
-
-#### Shared dependencies that must remain
-- `lib/src/model/settings/` — preferences infrastructure (used by all remaining features)
-
-#### Risk: LOW
-- coordinate_training: only referenced from `learn_tab_screen.dart`
-- learn tab: only referenced from `tab_scaffold.dart` + `tab_navigation.dart`
-- No cross-feature dependencies missed
-
-#### Verification
-- `fvm flutter analyze` — zero issues
-- `fvm flutter test` — all tests pass (coordinate_training tests deleted; test count drops by 1 file)
-- App launches, shows 4 bottom tabs (Home, Puzzles, Watch, More)
-- No crash navigating to any remaining tab
+**Tests to update**: `test/app_test.dart` — if it asserts the welcome message
+text, update accordingly.
 
 ---
 
-### C16 — Board editor
+### Step 3 — C7: Watch tab
 
-#### Why remove
-The board editor (FEN/position setup UI) is not needed for repertoire training.
-Repertoire positions come from PGN import. The editor has no role in the SRS
-review loop.
+**Why**: TV, tournaments, broadcasts, and streamers are Lichess server content
+with no relevance to repertoire training.
 
-#### Files — feature-specific (FEATURE-SPECIFIC, delete)
+**Files — FEATURE-SPECIFIC (delete)**:
+- `lib/src/view/watch/` (entire directory)
+- `lib/src/model/tv/` (entire directory)
+- `lib/src/model/tournament/` (entire directory)
+- `lib/src/model/broadcast/` (entire directory)
+- `test/view/watch/` (if exists)
+- `test/model/tv/`, `test/model/tournament/`, `test/model/broadcast/` (if exist)
 
-**model/board_editor/**
-- `lib/src/model/board_editor/board_editor_controller.dart`
-- `lib/src/model/board_editor/board_editor_controller.freezed.dart`
-- `lib/src/model/board_editor/position.dart`
-- `lib/src/model/board_editor/position.freezed.dart`
+**Files — SHARED (edit only)**:
+- `lib/src/tab_scaffold.dart` — remove Watch case, reindex More tab
+- `lib/src/tab_navigation.dart` — remove `BottomTab.watch` + its globals
+- `lib/src/view/home/home_tab_screen.dart` — remove
+  `FeaturedTournamentsWidget`, `featuredTournamentsProvider` usage,
+  `tournament_list_screen` import, `tournament_providers` import
+- `test/app_test.dart` — remove 'Watch' bottom-nav assertion
 
-**view/board_editor/**
-- `lib/src/view/board_editor/board_editor_screen.dart`
-- `lib/src/view/board_editor/board_editor_filters.dart`
-- `lib/src/view/board_editor/board_editor_positions.dart`
+**Shared dependencies to check before deleting**:
+- `model/broadcast/broadcast_preferences.dart` — referenced in `app.dart`
+  `_screenSizeBasedInitialization`; remove that call too.
+- `model/broadcast/broadcast_service.dart` — started in `app.dart`; remove.
+- Tournament model types used in home screen — remove those usages first.
 
-**tests/**
-- `test/view/board_editor/board_editor_screen_test.dart`
+**Risk**: MEDIUM — home screen references tournament widgets; must clean those
+before deleting model files.
 
-#### Files — shared/foundation (SHARED, edit only — do not delete)
+---
 
-- `lib/src/view/more/more_tab_screen.dart` — remove board_editor menu entry + import
-- `lib/src/view/analysis/analysis_actions.dart` — remove `openBoardEditor()` helper + import
-- `lib/src/app_links_service.dart` — remove deep-link route for board editor + import
-- `test/app_links_service_test.dart` — remove board_editor import + related test cases
+### Step 4 — C6: Puzzles tab
 
-#### Shared dependencies that must remain
-- `lib/src/view/more/more_tab_screen.dart` itself (keeps all other More menu items)
-- `lib/src/view/analysis/` (analysis screen retained as TRIM-LATER)
-- `lib/src/app_links_service.dart` (deep-link infra retained for other links)
+**Why**: Tactics training is an explicit non-goal of ChessSRS.
 
-#### Risk: LOW-MEDIUM
-- 3 edit sites in distinct subsystems (more tab, analysis, app_links)
-- analysis_actions.dart must lose `openBoardEditor()` without breaking other actions
-- app_links_service test needs matching edit
+**Files — FEATURE-SPECIFIC (delete)**:
+- `lib/src/view/puzzle/` (entire directory)
+- `lib/src/model/puzzle/` (entire directory)
+- `test/view/puzzle/` (if exists)
+- `test/model/puzzle/` (if exists)
 
-#### Verification
-- `fvm flutter analyze` — zero issues
-- `fvm flutter test` — all tests pass (board_editor tests deleted; app_links test updated)
-- App launches, More tab has no Board Editor entry
-- No crash navigating to any screen
+**Files — SHARED (edit only)**:
+- `lib/src/tab_scaffold.dart` — remove Puzzles case, reindex remaining tabs
+- `lib/src/tab_navigation.dart` — remove `BottomTab.puzzles` + its globals
+- `lib/src/view/home/home_tab_screen.dart` — remove any puzzle references
+  (home_widgets puzzle entry if present)
+- `lib/src/view/more/more_tab_screen.dart` — remove puzzle entry if present
+- `lib/src/app_links_service.dart` — remove puzzle deep-link handling
+- `test/app_test.dart` — remove 'Puzzles' bottom-nav assertion
+- `pubspec.yaml` — check if any puzzle-only packages can be removed
+
+**Risk**: MEDIUM — puzzle tab is a whole tab; check home screen home_widgets
+enum for puzzle references.
+
+---
+
+### Step 5 — C11: Over-the-board game (NOT clock tool)
+
+**Why**: Pass-and-play local two-player chess is a different product. The
+chess clock tool is a separate, standalone utility and is **kept**.
+
+**Files — FEATURE-SPECIFIC (delete)**:
+- `lib/src/view/over_the_board/` (entire directory — 2 files)
+- `lib/src/model/over_the_board/` (entire directory)
+- `lib/src/model/game/over_the_board_game.dart` + generated files
+  — **only if** these are not shared with the game/ online module; verify
+  before deleting.
+- `test/view/over_the_board/` and `test/model/over_the_board/` (if exist)
+
+**Files — SHARED (edit only)**:
+- `lib/src/view/play/play_menu.dart` — remove OTB entry + import
+- `lib/src/view/analysis/analysis_actions.dart` — remove
+  `OverTheBoardScreen.buildRoute()` call + import
+- `lib/src/view/board_editor/board_editor_screen.dart` — remove OTB
+  "play from position" action + import (board editor is kept)
+
+**Clock model stays** (`lib/src/model/clock/` — kept; used by clock tool).
+
+**Risk**: LOW-MEDIUM — 3 edit sites; model isolation straightforward.
+
+---
+
+### Step 6 — C10: Blog / recap / announce
+
+**Why**: Server-pushed content feeds with no relevance to local-first SRS.
+
+**Files — FEATURE-SPECIFIC (delete)**:
+- `lib/src/model/blog/` (entire directory — 3 files)
+- `lib/src/model/recap/recap_service.dart`
+- `lib/src/model/announce/announce_service.dart`
+- `lib/src/view/home/blog_carousel.dart`
+
+**Files — SHARED (edit only)**:
+- `lib/src/app.dart` — remove `recapServiceProvider.start()` and
+  `announceServiceProvider.start()` from `initState`; remove their imports
+- `lib/src/view/home/home_tab_screen.dart` — remove `blogCarouselProvider`
+  watch, `_BlogCarouselWidget` usage, `HomeEditableWidget.blogCarousel`
+  usage, `blog_carousel.dart` import, `blog.dart` + `blog_repository.dart`
+  imports
+- `lib/src/model/account/home_widgets.dart` — remove `blogCarousel` from
+  `HomeEditableWidget` enum and its references
+
+**Risk**: MEDIUM — home_tab_screen has multiple blog reference sites; methodical
+line-by-line removal required.
+
+---
+
+### Steps 7–9 — C4 / C5 / C8: Online play, server games, social entries
+
+These are larger cuts with more cross-cutting references. Detailed plans will
+be written immediately before execution. Key constraint: **C3 (auth) stays**,
+so the auth model and HTTP client infrastructure is preserved.
+
+High-level scope:
+- C4: Remove `view/play/` lobby/seek UI; `model/challenge/`; `model/lobby/`
+- C5: Remove online game lifecycle from `view/game/` and `model/game/`;
+  remove `model/correspondence/`; preserve game-frame board widgets
+- C8: Remove navigation entry points to friends/inbox/players from More tab;
+  model/social code stays for now
+
+---
+
+### Steps 10–11 — C17 / C18: WebSocket + HTTP repositories
+
+Execute only after C4–C9 are done and confirmed to have no remaining socket
+or HTTP consumers outside auth and study-import paths.
+
+---
+
+## What is explicitly NOT cut
+
+- `dartchess` + `chessground` + piece/board assets
+- `model/common/` (chess.dart, node.dart, eval, id, uci, perf, etc.)
+- `styles/`, `widgets/` reusable set, `db/` sqflite, `model/settings/`
+- l10n pipeline
+- `model/auth/` (C3 kept — optional login for study import)
+- `view/study/`, `model/study/` (D1 — closest to our review scene)
+- `view/analysis/`, `model/analysis/` (C15 grey — shared with study)
+- `view/board_editor/`, `model/board_editor/` (C16 kept)
+- `model/explorer/`, `view/explorer/` (C14 kept)
+- `view/clock/`, `model/clock/` (clock tool kept)
+- `network/http.dart` base infra (needed for auth + study import)
+- GPL-3.0 LICENSE, COPYING.md, copyright notices — preserved forever
+
+---
+
+## Completed cuts
+
+| Step | Feature | Commit | Date | Tests before → after |
+|---|---|---|---|---|
+| 1 / C9 | Learn tab + coordinate training | `f74627873` | 2026-09-14 | 1570 → 1564 |
+| 2 / UI | Lichess branding (donate, about, LichessMessage, welcome card) | pending | 2026-09-14 | 1564 → 1564 |

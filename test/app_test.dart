@@ -73,15 +73,6 @@ void main() {
     // wait for the startup requests and animations to complete
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
-    // should see welcome message
-    expect(
-      find.text(
-        'Lichess is a free (really), libre, no-ads, open source chess server.',
-        findRichText: true,
-      ),
-      findsOneWidget,
-    );
-
     // should have made a request to test the token
     expect(tokenTestRequests, 1);
 
