@@ -64,10 +64,10 @@ before the core review loop is in the owner's hands.
       reviewed and approved/rejected each cut — see `CUT_PROPOSALS.md`
       §Owner decisions for the full record. Current ordered plan:
       1. `[x]` C9  — Learn tab + coordinate training  *(done: f74627873)*
-      2. `[x]` UI  — Lichess branding (donate, about, LichessMessage, welcome card)
-      3. `[ ]` C7  — Watch tab (TV / tournaments / broadcasts)
-      4. `[ ]` C6  — Puzzles tab
-      5. `[ ]` C11 — Over-the-board game (clock tool is kept)
+      2. `[x]` UI  — Lichess branding (donate, about, LichessMessage, welcome card) *(done: 1af79eab3 & 72c85e67f)*
+      3. `[x]` C11 — Over-the-board game (clock tool is kept)
+      4. `[ ]` C7  — Watch tab (TV / tournaments / broadcasts)
+      5. `[ ]` C6  — Puzzles tab
       6. `[ ]` C10 — Blog / recap / announce (home carousels + model)
       7. `[ ]` C4  — Online play: lobby / seek / challenges
       8. `[ ]` C5  — Server game lifecycle + correspondence

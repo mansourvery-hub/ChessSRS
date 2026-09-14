@@ -3,7 +3,6 @@ import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
-import 'package:chess_srs/src/view/over_the_board/over_the_board_screen.dart';
 import 'package:chess_srs/src/view/play/correspondence_challenges_screen.dart';
 import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:chess_srs/src/view/play/create_game_widget.dart';
@@ -79,15 +78,6 @@ class PlayMenu extends ConsumerWidget {
               },
               leading: const Icon(Icons.memory),
               title: Text(context.l10n.playAgainstComputer),
-            ),
-            ListTile(
-              onTap: () {
-                // Pops the play bottom sheet
-                Navigator.of(context).popUntil((route) => route is! ModalBottomSheetRoute);
-                Navigator.of(context, rootNavigator: true).push(OverTheBoardScreen.buildRoute());
-              },
-              leading: const Icon(Icons.table_restaurant_outlined),
-              title: Text(context.l10n.mobileOverTheBoard),
             ),
           ],
         ),

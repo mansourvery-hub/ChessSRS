@@ -18,7 +18,6 @@ import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_filters.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_positions.dart';
 import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
-import 'package:chess_srs/src/view/over_the_board/over_the_board_screen.dart';
 import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:chess_srs/src/view/user/pick_player_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
@@ -459,12 +458,6 @@ class _BottomBar extends ConsumerWidget {
           onPressed: () => Navigator.of(
             context,
           ).push(OfflineComputerGameScreen.buildRoute(initialVariant: variant, initialFen: fen)),
-        ),
-        BottomSheetAction(
-          makeLabel: (context) => Text(context.l10n.mobileOverTheBoard),
-          onPressed: () => Navigator.of(
-            context,
-          ).push(OverTheBoardScreen.buildRoute(initialVariant: variant, initialFen: fen)),
         ),
       ],
     );

@@ -606,28 +606,6 @@ void main() {
       // Variant we set previously should be preselected
       expect(find.text('Atomic'), findsOneWidget);
     });
-
-    testWidgets('Continue OTB', (tester) async {
-      final app = await makeTestProviderScopeApp(tester, home: const BoardEditorScreen());
-      await tester.pumpWidget(app);
-
-      await tester.tap(find.bySemanticsLabel('Menu'));
-      await tester.pumpAndSettle(); // wait for menu to open
-      await tester.tap(find.text('Variant'));
-      await tester.pumpAndSettle(); // wait for variant selection dialog to open
-      await tester.tap(find.textContaining('Atomic'));
-      await tester.pumpAndSettle(); // wait for variant to change
-
-      await tester.tap(find.bySemanticsLabel('Menu'));
-      await tester.pumpAndSettle(); // wait for menu to open
-      await tester.tap(find.text('Continue from here'));
-      await tester.pumpAndSettle(); // wait for dialog to open
-
-      await tester.tap(find.text('Over the board'));
-      await tester.pumpAndSettle(); // wait for over the board menu to open
-      // Variant we set previously should be preselected
-      expect(find.textContaining('Atomic'), findsOneWidget);
-    });
   });
   testWidgets('Chess960 position dialog loads valid ID', (tester) async {
     // Boot up the editor directly in Chess960 mode

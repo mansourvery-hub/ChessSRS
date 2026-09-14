@@ -196,29 +196,27 @@ enum for puzzle references.
 
 ---
 
-### Step 5 — C11: Over-the-board game (NOT clock tool)
+### Step 5 — C11: Over-the-board game (NOT clock tool) — COMPLETED
 
 **Why**: Pass-and-play local two-player chess is a different product. The
 chess clock tool is a separate, standalone utility and is **kept**.
 
-**Files — FEATURE-SPECIFIC (delete)**:
-- `lib/src/view/over_the_board/` (entire directory — 2 files)
+**Status**: Completed. Removed `view/over_the_board`, `model/over_the_board`, `over_the_board_game.dart`, `OverTheBoardGameResultDialog`, and OTB navigation entries in `play_menu.dart`, `board_editor_screen.dart`, and `analysis_actions.dart`. All quality gates (`./verify`) passed with 0 warnings.
+
+**Files — FEATURE-SPECIFIC (deleted)**:
+- `lib/src/view/over_the_board/` (entire directory)
 - `lib/src/model/over_the_board/` (entire directory)
 - `lib/src/model/game/over_the_board_game.dart` + generated files
-  — **only if** these are not shared with the game/ online module; verify
-  before deleting.
-- `test/view/over_the_board/` and `test/model/over_the_board/` (if exist)
+- `test/view/over_the_board/`
 
-**Files — SHARED (edit only)**:
-- `lib/src/view/play/play_menu.dart` — remove OTB entry + import
-- `lib/src/view/analysis/analysis_actions.dart` — remove
-  `OverTheBoardScreen.buildRoute()` call + import
-- `lib/src/view/board_editor/board_editor_screen.dart` — remove OTB
-  "play from position" action + import (board editor is kept)
+**Files — SHARED (edited)**:
+- `lib/src/view/play/play_menu.dart` — removed OTB entry + import
+- `lib/src/view/analysis/analysis_actions.dart` — removed `OverTheBoardScreen.buildRoute()` call + import
+- `lib/src/view/board_editor/board_editor_screen.dart` — removed OTB "play from position" action + import
+- `lib/src/view/game/game_result_dialog.dart` — removed unused `OverTheBoardGameResultDialog`
+- `test/model/game/game_test.dart`, `test/view/board_editor/board_editor_screen_test.dart`, `test/view/analysis/analysis_screen_test.dart` — updated tests
 
-**Clock model stays** (`lib/src/model/clock/` — kept; used by clock tool).
-
-**Risk**: LOW-MEDIUM — 3 edit sites; model isolation straightforward.
+**Clock model stays** (`lib/src/model/clock/` & `lib/src/view/clock/` — kept; used by clock tool).
 
 ---
 

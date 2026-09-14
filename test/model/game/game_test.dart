@@ -8,7 +8,7 @@ import 'package:chess_srs/src/model/common/time_increment.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
-import 'package:chess_srs/src/model/game/over_the_board_game.dart';
+import 'package:chess_srs/src/model/game/offline_computer_game.dart';
 import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
@@ -259,7 +259,7 @@ void main() {
   });
 
   group('LocalGame', () {
-    OverTheBoardGame gameWith({required List<Duration?> clocks, TimeIncrement? timeIncrement}) {
+    OfflineComputerGame gameWith({required List<Duration?> clocks, TimeIncrement? timeIncrement}) {
       const sanMoves = ['e4', 'e5', 'Nf3', 'Nc6'];
       Position position = Chess.initial;
       final steps = <GameStep>[GameStep(position: position)];
@@ -274,11 +274,13 @@ void main() {
           ),
         );
       }
-      return OverTheBoardGame(
-        id: const StringId('otb_test'),
+      return OfflineComputerGame(
+        id: const StringId('local_test'),
         steps: steps.lock,
         initialFen: null,
         status: GameStatus.started,
+        playerSide: Side.white,
+        opponentSpec: OpponentSpec.defaultSpec,
         meta: GameMeta(
           createdAt: DateTime.utc(2026),
           rated: false,
@@ -362,7 +364,7 @@ void main() {
         ],
       );
 
-      final restored = OverTheBoardGame.fromJson(
+      final restored = OfflineComputerGame.fromJson(
         jsonDecode(jsonEncode(game.toJson())) as Map<String, dynamic>,
       );
 
@@ -372,7 +374,7 @@ void main() {
     test('a game saved before clocks were recorded still loads', () {
       final game = gameWith(clocks: const [null, null, null, null]);
 
-      final restored = OverTheBoardGame.fromJson(
+      final restored = OfflineComputerGame.fromJson(
         jsonDecode(jsonEncode(game.toJson())) as Map<String, dynamic>,
       );
 

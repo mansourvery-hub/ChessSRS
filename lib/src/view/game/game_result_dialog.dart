@@ -2,12 +2,10 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:chess_srs/src/constants.dart';
-import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_controller.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
-import 'package:chess_srs/src/model/game/over_the_board_game.dart';
 import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:chess_srs/src/model/tournament/tournament_controller.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
@@ -258,47 +256,6 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
       ),
       _ => const Center(child: CircularProgressIndicator.adaptive()),
     };
-  }
-}
-
-class OverTheBoardGameResultDialog extends StatelessWidget {
-  const OverTheBoardGameResultDialog({super.key, required this.game, required this.onRematch});
-
-  final OverTheBoardGame game;
-
-  final void Function() onRematch;
-
-  @override
-  Widget build(BuildContext context) {
-    final content = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        GameResult(game: game),
-        FilledButton(
-          onPressed: onRematch,
-          child: Text(context.l10n.rematch, textAlign: TextAlign.center),
-        ),
-        FilledButton.tonal(
-          onPressed: () {
-            Navigator.of(context).push(
-              AnalysisScreen.buildRoute(
-                AnalysisOptions.pgn(
-                  id: const StringId('otb_finished_game_analysis'),
-                  orientation: Side.white,
-                  pgn: game.makePgn(),
-                  isComputerAnalysisAllowed: true,
-                  variant: game.meta.variant,
-                ),
-              ),
-            );
-          },
-          child: Text(context.l10n.analysis, textAlign: TextAlign.center),
-        ),
-      ],
-    );
-
-    return _ResultDialog(child: content);
   }
 }
 
