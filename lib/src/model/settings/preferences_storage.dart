@@ -32,8 +32,7 @@ enum PrefCategory {
   engineEvaluation('preferences.engineEvaluation'),
   offlineComputerGame('preferences.offlineComputerGame'),
   account('preferences.account'),
-  log('preferences.log'),
-  clockTool('preferences.clockTool');
+  log('preferences.log');
 
   const PrefCategory(this.storageKey);
 

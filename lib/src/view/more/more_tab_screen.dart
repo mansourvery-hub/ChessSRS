@@ -11,7 +11,6 @@ import 'package:chess_srs/src/view/account/account_menu.dart';
 import 'package:chess_srs/src/view/account/profile_screen.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
-import 'package:chess_srs/src/view/clock/clock_tool_screen.dart';
 import 'package:chess_srs/src/view/explorer/opening_explorer_screen.dart';
 import 'package:chess_srs/src/view/message/contacts_screen.dart';
 import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
@@ -135,16 +134,6 @@ class _Body extends ConsumerWidget {
                     initialOrientation: null,
                   )),
                 ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.alarm_outlined),
-                trailing: Theme.of(context).platform == TargetPlatform.iOS
-                    ? const CupertinoListTileChevron()
-                    : null,
-                title: Text(context.l10n.clock),
-                onTap: () {
-                  Navigator.of(context, rootNavigator: true).push(ClockToolScreen.buildRoute());
-                },
               ),
             ],
           ),

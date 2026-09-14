@@ -40,8 +40,8 @@ These are the authoritative decisions from the owner. Do not override them.
 | C8 Social | `[ ]` REMOVE | Approved (depends on C3 staying; see notes below) |
 | C9 Learn tab + coord training | `[x]` DONE | Removed 2026-09-14 |
 | C10 Blog/recap/announce | `[ ]` REMOVE | Approved |
-| C11 Over-the-board game | `[ ]` REMOVE | Approved — OTB = local 2-player pass-and-play; not our product |
-| C11 Chess clock tool | `[K]` KEEP | Clock tool is a standalone utility; distinct from OTB game; keep |
+| C11 Over-the-board game | `[x]` DONE | Removed 2026-09-14 |
+| C11 Chess clock tool | `[x]` DONE | Removed by owner request 2026-09-14 |
 | C12 Offline computer play | `[ ]` REMOVE | Approved (follows from C13) |
 | C13 Engine (Stockfish) | `[G]` GREY | May be useful as optional import advisor — undecided |
 | C14 Opening explorer | `[K]` KEEP | Owner decision |
@@ -196,27 +196,31 @@ enum for puzzle references.
 
 ---
 
-### Step 5 — C11: Over-the-board game (NOT clock tool) — COMPLETED
+### Step 5 — C11: Over-the-board game & Clock tool — COMPLETED
 
-**Why**: Pass-and-play local two-player chess is a different product. The
-chess clock tool is a separate, standalone utility and is **kept**.
+**Why**: Pass-and-play local two-player chess and standalone physical clock simulator are not relevant to local-first SRS.
 
-**Status**: Completed. Removed `view/over_the_board`, `model/over_the_board`, `over_the_board_game.dart`, `OverTheBoardGameResultDialog`, and OTB navigation entries in `play_menu.dart`, `board_editor_screen.dart`, and `analysis_actions.dart`. All quality gates (`./verify`) passed with 0 warnings.
+**Status**: Completed. Removed `view/over_the_board`, `model/over_the_board`, `over_the_board_game.dart`, `OverTheBoardGameResultDialog`, OTB navigation entries in `play_menu.dart`, `board_editor_screen.dart`, and `analysis_actions.dart`. Removed standalone clock tool `view/clock`, `model/clock/clock_tool_*`, `clock_tool_controller_test.dart`, and More tab entry. All quality gates (`./verify`) passed with 0 warnings.
 
 **Files — FEATURE-SPECIFIC (deleted)**:
 - `lib/src/view/over_the_board/` (entire directory)
 - `lib/src/model/over_the_board/` (entire directory)
 - `lib/src/model/game/over_the_board_game.dart` + generated files
+- `lib/src/view/clock/` (entire directory)
+- `lib/src/model/clock/clock_tool_*`
 - `test/view/over_the_board/`
+- `test/model/clock/clock_tool_controller_test.dart`
 
 **Files — SHARED (edited)**:
 - `lib/src/view/play/play_menu.dart` — removed OTB entry + import
 - `lib/src/view/analysis/analysis_actions.dart` — removed `OverTheBoardScreen.buildRoute()` call + import
 - `lib/src/view/board_editor/board_editor_screen.dart` — removed OTB "play from position" action + import
 - `lib/src/view/game/game_result_dialog.dart` — removed unused `OverTheBoardGameResultDialog`
+- `lib/src/view/more/more_tab_screen.dart` — removed Clock tool entry + import
+- `lib/src/model/settings/preferences_storage.dart` — removed `PrefCategory.clockTool`
 - `test/model/game/game_test.dart`, `test/view/board_editor/board_editor_screen_test.dart`, `test/view/analysis/analysis_screen_test.dart` — updated tests
 
-**Clock model stays** (`lib/src/model/clock/` & `lib/src/view/clock/` — kept; used by clock tool).
+**Game clock stays** (`lib/src/model/clock/chess_clock.dart` & `test/model/clock/chess_clock_test.dart` — kept; used by in-game countdown clocks).
 
 ---
 

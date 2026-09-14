@@ -65,7 +65,7 @@ before the core review loop is in the owner's hands.
       §Owner decisions for the full record. Current ordered plan:
       1. `[x]` C9  — Learn tab + coordinate training  *(done: f74627873)*
       2. `[x]` UI  — Lichess branding (donate, about, LichessMessage, welcome card) *(done: 1af79eab3 & 72c85e67f)*
-      3. `[x]` C11 — Over-the-board game (clock tool is kept)
+      3. `[x]` C11 — Over-the-board game and standalone clock tool *(done)*
       4. `[ ]` C7  — Watch tab (TV / tournaments / broadcasts)
       5. `[ ]` C6  — Puzzles tab
       6. `[ ]` C10 — Blog / recap / announce (home carousels + model)
@@ -76,7 +76,7 @@ before the core review loop is in the owner's hands.
       11. `[ ]` C18 — HTTP repositories (online only; auth HTTP kept)
       12. `[ ]` Tab reduction → Home + Settings (future: + Review tab)
       Grey/undecided (do NOT touch without owner approval): C1, C2, C13, C15.
-      Kept by owner decision: C3, C11-clock, C14, C16.
+      Kept by owner decision: C3, C14, C16.
 - [ ] **F-end: Foundation stable** — a clean, coherent, Lichess-derived
       offline application shell with our tabs. Owner reviews cut result.
 
