@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/engine/engine_diagnostics.dart';
+import 'package:chess_srs/src/model/engine/engine_failure.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
 import 'package:lc0/lc0.dart';
-import 'package:lichess_mobile/src/model/engine/engine_diagnostics.dart';
-import 'package:lichess_mobile/src/model/engine/engine_failure.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
 import 'package:logging/logging.dart';
 import 'package:multistockfish/multistockfish.dart';
 

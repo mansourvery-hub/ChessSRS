@@ -1,17 +1,17 @@
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_opening.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_providers.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/puzzle/puzzle_screen.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/platform_context_menu_button.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_opening.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_providers.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/puzzle/puzzle_screen.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/platform_context_menu_button.dart';
 import 'package:material_ui/material_ui.dart';
 
 final _openingsSortProvider = StateProvider.autoDispose<PuzzleOpeningSort>(

@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/offline_computer/practice_comment.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/offline_computer/practice_comment.dart';
 
 part 'computer_analysis.freezed.dart';
 

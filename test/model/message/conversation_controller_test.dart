@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/message/conversation_controller.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/message/conversation_controller.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 
 import '../../network/fake_http_client_factory.dart';
 import '../../network/fake_websocket_channel.dart';

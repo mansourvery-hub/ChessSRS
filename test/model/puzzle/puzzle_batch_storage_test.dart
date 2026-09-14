@@ -1,15 +1,15 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_batch_storage.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/db/database.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_batch_storage.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../test_container.dart';

@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/clock/chess_clock.dart';
+import 'package:chess_srs/src/model/clock/clock_tool_preferences.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
 import 'package:clock/clock.dart' as clock;
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/clock/chess_clock.dart';
-import 'package:lichess_mobile/src/model/clock/clock_tool_preferences.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
 
 part 'clock_tool_controller.freezed.dart';
 

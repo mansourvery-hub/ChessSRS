@@ -1,13 +1,13 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer_preferences.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/user/search_screen.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer_preferences.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/user/search_screen.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:material_ui/material_ui.dart';
 
 class OpeningExplorerSettings extends ConsumerWidget {

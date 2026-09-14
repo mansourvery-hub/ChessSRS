@@ -1,16 +1,16 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/common/speed.dart';
+import 'package:chess_srs/src/model/game/exported_game.dart';
+import 'package:chess_srs/src/model/game/game.dart';
+import 'package:chess_srs/src/model/game/game_status.dart';
+import 'package:chess_srs/src/model/game/player.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/view/game/game_list_tile.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/common/speed.dart';
-import 'package:lichess_mobile/src/model/game/exported_game.dart';
-import 'package:lichess_mobile/src/model/game/game.dart';
-import 'package:lichess_mobile/src/model/game/game_status.dart';
-import 'package:lichess_mobile/src/model/game/player.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/view/game/game_list_tile.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../test_provider_scope.dart';

@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/common/local_game_clock.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/local_game_clock.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 
 part 'over_the_board_preferences.freezed.dart';
 part 'over_the_board_preferences.g.dart';

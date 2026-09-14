@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/analysis/common_analysis_prefs.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/analysis/common_analysis_prefs.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 
 part 'analysis_preferences.freezed.dart';
 part 'analysis_preferences.g.dart';

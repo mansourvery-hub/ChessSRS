@@ -1,6 +1,6 @@
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/platform_context_menu_button.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/platform_context_menu_button.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../test_helpers.dart';

@@ -1,15 +1,15 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/game/game_status.dart';
+import 'package:chess_srs/src/model/game/playable_game.dart';
+import 'package:chess_srs/src/model/game/player.dart';
+import 'package:chess_srs/src/utils/json.dart';
 import 'package:clock/clock.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/game/game_status.dart';
-import 'package:lichess_mobile/src/model/game/playable_game.dart';
-import 'package:lichess_mobile/src/model/game/player.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
 
 part 'game_socket_events.freezed.dart';
 

@@ -1,5 +1,16 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_difficulty.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_opening.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
+import 'package:chess_srs/src/model/puzzle/storm.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/json.dart';
 import 'package:collection/collection.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
@@ -7,17 +18,6 @@ import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_difficulty.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_opening.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
-import 'package:lichess_mobile/src/model/puzzle/storm.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
 
 part 'puzzle_repository.freezed.dart';
 

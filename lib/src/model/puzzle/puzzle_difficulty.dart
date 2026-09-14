@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:flutter/widgets.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
 
 enum PuzzleDifficulty {
   easiest(-600),

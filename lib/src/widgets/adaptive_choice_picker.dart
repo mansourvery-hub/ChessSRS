@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Shows a platform adaptive choice picker dialog

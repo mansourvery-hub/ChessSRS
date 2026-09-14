@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/engine_diagnostics.dart';
+import 'package:chess_srs/src/model/engine/engine_failure.dart';
+import 'package:chess_srs/src/model/engine/engine_slot.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
+import 'package:chess_srs/src/model/engine/engine_transport.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/engine_diagnostics.dart';
-import 'package:lichess_mobile/src/model/engine/engine_failure.dart';
-import 'package:lichess_mobile/src/model/engine/engine_slot.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
-import 'package:lichess_mobile/src/model/engine/engine_transport.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('Engine');

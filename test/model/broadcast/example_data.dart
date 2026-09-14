@@ -1,4 +1,4 @@
-import 'package:lichess_mobile/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/id.dart';
 
 const Map<(BroadcastTournamentId, BroadcastRoundId), String> broadcastRoundMockResponses = {
   (BroadcastTournamentId('RAIoMC7L'), BroadcastRoundId('6VuqTjes')): '''

@@ -1,23 +1,23 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/game/game.dart';
+import 'package:chess_srs/src/model/game/game_controller.dart';
+import 'package:chess_srs/src/model/game/game_status.dart';
+import 'package:chess_srs/src/model/game/over_the_board_game.dart';
+import 'package:chess_srs/src/model/game/playable_game.dart';
+import 'package:chess_srs/src/model/tournament/tournament_controller.dart';
+import 'package:chess_srs/src/tab_navigation.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
+import 'package:chess_srs/src/view/game/status_l10n.dart';
+import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/game/game.dart';
-import 'package:lichess_mobile/src/model/game/game_controller.dart';
-import 'package:lichess_mobile/src/model/game/game_status.dart';
-import 'package:lichess_mobile/src/model/game/over_the_board_game.dart';
-import 'package:lichess_mobile/src/model/game/playable_game.dart';
-import 'package:lichess_mobile/src/model/tournament/tournament_controller.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/analysis/analysis_screen.dart';
-import 'package:lichess_mobile/src/view/game/status_l10n.dart';
-import 'package:lichess_mobile/src/view/tournament/tournament_screen.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
 import 'package:material_ui/material_ui.dart';
 
 class GameResultDialog extends ConsumerStatefulWidget {

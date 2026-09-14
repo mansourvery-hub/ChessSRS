@@ -1,22 +1,22 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
+import 'package:chess_srs/src/model/analysis/server_analysis_service.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/uci.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer.dart';
+import 'package:chess_srs/src/model/game/game_socket_events.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/analysis/retro_screen.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_controller.dart';
-import 'package:lichess_mobile/src/model/analysis/server_analysis_service.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer.dart';
-import 'package:lichess_mobile/src/model/game/game_socket_events.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/analysis/retro_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../network/fake_http_client_factory.dart';

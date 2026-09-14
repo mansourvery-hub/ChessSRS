@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/lobby/correspondence_seek.dart';
+import 'package:chess_srs/src/model/lobby/game_seek.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/lobby/correspondence_seek.dart';
-import 'package:lichess_mobile/src/model/lobby/game_seek.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 final correspondenceSeeksProvider = FutureProvider.autoDispose<IList<CorrespondenceSeek>>((
   Ref ref,

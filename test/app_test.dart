@@ -1,14 +1,14 @@
 import 'dart:convert';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/app.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/tab_scaffold.dart';
+import 'package:chess_srs/src/view/home/home_tab_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/app.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/tab_scaffold.dart';
-import 'package:lichess_mobile/src/view/home/home_tab_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'model/auth/fake_auth_storage.dart';

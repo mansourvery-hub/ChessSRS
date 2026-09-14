@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/puzzle/streak_screen.dart';
+import 'package:chess_srs/src/widgets/bottom_bar.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/puzzle/streak_screen.dart';
-import 'package:lichess_mobile/src/widgets/bottom_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../test_helpers.dart';

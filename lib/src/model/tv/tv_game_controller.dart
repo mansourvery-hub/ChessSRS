@@ -1,25 +1,25 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/chat/chat_mixin.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/game/game.dart';
+import 'package:chess_srs/src/model/game/game_socket_events.dart';
+import 'package:chess_srs/src/model/game/game_status.dart';
+import 'package:chess_srs/src/model/game/material_diff.dart';
+import 'package:chess_srs/src/model/game/playable_game.dart';
+import 'package:chess_srs/src/model/tv/tv_channel.dart';
+import 'package:chess_srs/src/model/tv/tv_controller.dart';
+import 'package:chess_srs/src/model/tv/tv_socket_events.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/chat/chat_mixin.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/game/game.dart';
-import 'package:lichess_mobile/src/model/game/game_socket_events.dart';
-import 'package:lichess_mobile/src/model/game/game_status.dart';
-import 'package:lichess_mobile/src/model/game/material_diff.dart';
-import 'package:lichess_mobile/src/model/game/playable_game.dart';
-import 'package:lichess_mobile/src/model/tv/tv_channel.dart';
-import 'package:lichess_mobile/src/model/tv/tv_controller.dart';
-import 'package:lichess_mobile/src/model/tv/tv_socket_events.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 
 part 'tv_game_controller.freezed.dart';
 

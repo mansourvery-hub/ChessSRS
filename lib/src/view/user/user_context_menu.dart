@@ -1,20 +1,20 @@
+import 'package:chess_srs/src/app_links_service.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/model/user/user_repository_providers.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
+import 'package:chess_srs/src/view/user/user_screen.dart';
+import 'package:chess_srs/src/view/watch/tv_screen.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/rich_link_text.dart';
+import 'package:chess_srs/src/widgets/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/app_links_service.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/model/user/user_repository_providers.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/user/user_or_profile_screen.dart';
-import 'package:lichess_mobile/src/view/user/user_screen.dart';
-import 'package:lichess_mobile/src/view/watch/tv_screen.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/rich_link_text.dart';
-import 'package:lichess_mobile/src/widgets/user.dart';
 import 'package:material_ui/material_ui.dart';
 
 class UserContextMenu extends ConsumerWidget {

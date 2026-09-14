@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/board_editor/position.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:flutter/services.dart';
-import 'package:lichess_mobile/src/model/board_editor/position.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BoardEditorPositionsScreen extends StatelessWidget {

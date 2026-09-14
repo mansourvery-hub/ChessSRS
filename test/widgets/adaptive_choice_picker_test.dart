@@ -1,7 +1,7 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_choice_picker.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../test_helpers.dart';

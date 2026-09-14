@@ -1,23 +1,23 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/account/account_preferences.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/explorer/explorer_view.dart';
+import 'package:chess_srs/src/view/explorer/opening_explorer_view.dart';
+import 'package:chess_srs/src/view/explorer/opening_explorer_widgets.dart';
+import 'package:chess_srs/src/view/explorer/tablebase_view.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/account/account_preferences.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/explorer/explorer_view.dart';
-import 'package:lichess_mobile/src/view/explorer/opening_explorer_view.dart';
-import 'package:lichess_mobile/src/view/explorer/opening_explorer_widgets.dart';
-import 'package:lichess_mobile/src/view/explorer/tablebase_view.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../network/fake_http_client_factory.dart';

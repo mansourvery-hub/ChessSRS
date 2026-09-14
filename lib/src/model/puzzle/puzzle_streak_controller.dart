@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_repository.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_streak.dart';
+import 'package:chess_srs/src/model/puzzle/streak_storage.dart';
+import 'package:chess_srs/src/tab_navigation.dart' show currentNavigatorKeyProvider;
+import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_repository.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_streak.dart';
-import 'package:lichess_mobile/src/model/puzzle/streak_storage.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart' show currentNavigatorKeyProvider;
-import 'package:lichess_mobile/src/widgets/feedback.dart';
 
 /// [PuzzleStreak] with its current [Puzzle].
 typedef StreakState = ({PuzzleStreak streak, Puzzle puzzle, Puzzle? nextPuzzle});

@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_round_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_round_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
 
 typedef BroadcastRoundGameParams = ({BroadcastRoundId roundId, BroadcastGameId gameId});
 

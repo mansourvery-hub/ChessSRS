@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/user/perf_stats_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/user/perf_stats_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../model/auth/fake_auth_repository.dart';

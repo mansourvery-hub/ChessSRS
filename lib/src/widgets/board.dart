@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A widget that displays an interactive chessboard driven by a [ChessboardController].

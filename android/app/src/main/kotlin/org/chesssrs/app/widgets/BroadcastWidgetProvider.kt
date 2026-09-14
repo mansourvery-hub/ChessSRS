@@ -1,4 +1,4 @@
-package org.lichess.mobileV2.widgets
+package org.chesssrs.app.widgets
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -29,8 +29,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.thread
-import org.lichess.mobileV2.R
-import org.lichess.mobileV2.MainActivity
+import org.chesssrs.app.R
+import org.chesssrs.app.MainActivity
 
 class BroadcastWidgetProvider : AppWidgetProvider() {
 

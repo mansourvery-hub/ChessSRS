@@ -1,11 +1,11 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_difficulty.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/model/user/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_difficulty.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
 
 part 'puzzle_preferences.freezed.dart';
 part 'puzzle_preferences.g.dart';

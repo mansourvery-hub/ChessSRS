@@ -1,24 +1,24 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/lobby/lobby_repository.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/socket.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/game/game_screen.dart';
+import 'package:chess_srs/src/view/game/game_screen_providers.dart';
+import 'package:chess_srs/src/view/play/challenge_list_item.dart';
+import 'package:chess_srs/src/view/play/create_correspondence_game_bottom_sheet.dart';
+import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
+import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/lobby/lobby_repository.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/game/game_screen.dart';
-import 'package:lichess_mobile/src/view/game/game_screen_providers.dart';
-import 'package:lichess_mobile/src/view/play/challenge_list_item.dart';
-import 'package:lichess_mobile/src/view/play/create_correspondence_game_bottom_sheet.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_action_sheet.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
-import 'package:lichess_mobile/src/widgets/haptic_refresh_indicator.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
 import 'package:material_ui/material_ui.dart';
 
 class CorrespondenceChallengesScreen extends ConsumerStatefulWidget {

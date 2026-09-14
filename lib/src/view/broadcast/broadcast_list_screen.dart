@@ -1,16 +1,16 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_providers.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_list_tile.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_search_screen.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
+import 'package:chess_srs/src/widgets/buttons.dart';
+import 'package:chess_srs/src/widgets/filter.dart';
+import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/misc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_providers.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_list_tile.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_search_screen.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
-import 'package:lichess_mobile/src/widgets/buttons.dart';
-import 'package:lichess_mobile/src/widgets/filter.dart';
-import 'package:lichess_mobile/src/widgets/haptic_refresh_indicator.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/misc.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum _BroadcastFilter {

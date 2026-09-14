@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/widgets/network_image.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/widgets/network_image.dart';
 import 'package:material_ui/material_ui.dart';
 
 class EmojiItem extends StatelessWidget {

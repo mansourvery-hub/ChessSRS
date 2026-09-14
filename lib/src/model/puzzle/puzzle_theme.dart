@@ -1,10 +1,10 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/localizations.dart';
+import 'package:chess_srs/src/styles/puzzle_icons.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/localizations.dart';
-import 'package:lichess_mobile/src/styles/puzzle_icons.dart';
 
 part 'puzzle_theme.freezed.dart';
 

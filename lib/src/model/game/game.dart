@@ -1,24 +1,24 @@
 import 'dart:convert';
 
+import 'package:chess_srs/l10n/l10n.dart' show AppLocalizations;
+import 'package:chess_srs/src/model/account/account_preferences.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/common/speed.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/model/game/game_status.dart';
+import 'package:chess_srs/src/model/game/material_diff.dart';
+import 'package:chess_srs/src/model/game/player.dart';
+import 'package:chess_srs/src/model/offline_computer/computer_analysis.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:collection/collection.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/l10n/l10n.dart' show AppLocalizations;
-import 'package:lichess_mobile/src/model/account/account_preferences.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/common/speed.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/model/game/game_status.dart';
-import 'package:lichess_mobile/src/model/game/material_diff.dart';
-import 'package:lichess_mobile/src/model/game/player.dart';
-import 'package:lichess_mobile/src/model/offline_computer/computer_analysis.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 part 'game.freezed.dart';
 part 'game.g.dart';

@@ -1,26 +1,26 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/common/service/move_feedback.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/common/uci.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_difficulty.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_preferences.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_providers.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_queue_filler.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_repository.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_service.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_session.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_controller.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/common/service/move_feedback.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_difficulty.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_preferences.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_providers.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_queue_filler.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_repository.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_service.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_session.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 part 'puzzle_controller.freezed.dart';
 

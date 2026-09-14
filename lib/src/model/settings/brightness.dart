@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:flutter/foundation.dart' show Brightness;
 import 'package:flutter/widgets.dart' show WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
 
 final currentBrightnessProvider = NotifierProvider<CurrentBrightness, Brightness>(
   CurrentBrightness.new,

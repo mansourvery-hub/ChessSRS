@@ -1,21 +1,21 @@
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/model/user/user_repository_providers.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
+import 'package:chess_srs/src/view/play/challenge_odd_bots_screen.dart';
+import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
+import 'package:chess_srs/src/view/user/user_context_menu.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/user.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/model/user/user_repository_providers.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/account/rating_pref_aware.dart';
-import 'package:lichess_mobile/src/view/play/challenge_odd_bots_screen.dart';
-import 'package:lichess_mobile/src/view/play/create_challenge_bottom_sheet.dart';
-import 'package:lichess_mobile/src/view/user/user_context_menu.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/user.dart';
 import 'package:material_ui/material_ui.dart';
 
 class OnlineBotsScreen extends StatelessWidget {

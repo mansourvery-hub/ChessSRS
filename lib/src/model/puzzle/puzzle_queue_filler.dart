@@ -1,14 +1,14 @@
 import 'dart:math' show max;
 
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_batch_storage.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_preferences.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_repository.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_batch_storage.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_preferences.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_repository.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 import 'package:logging/logging.dart';
 
 /// The server caps each batch request at 50 puzzles regardless of the requested

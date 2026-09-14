@@ -1,15 +1,15 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/challenge/challenge.dart';
+import 'package:chess_srs/src/model/challenge/challenge_preferences.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/game/game_screen.dart';
+import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_preferences.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/game/game_screen.dart';
-import 'package:lichess_mobile/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../mock_server_responses.dart';

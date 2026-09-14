@@ -1,14 +1,14 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/notifications/notification_service.dart';
+import 'package:chess_srs/src/model/notifications/notifications.dart';
+import 'package:chess_srs/src/tab_navigation.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_round_screen.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/notifications/notification_service.dart';
-import 'package:lichess_mobile/src/model/notifications/notifications.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_game_screen.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_round_screen.dart';
 
 /// A provider for [BroadcastService].
 final broadcastServiceProvider = Provider<BroadcastService>((Ref ref) {

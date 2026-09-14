@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Displays a [TextButton] for Android and a [CupertinoDialogAction] for iOS.

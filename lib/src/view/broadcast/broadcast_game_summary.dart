@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/broadcast/broadcast_analysis_controller.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_preferences.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/widgets/acpl_chart.dart';
+import 'package:chess_srs/src/widgets/game_summary_table.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_analysis_controller.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_preferences.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/widgets/acpl_chart.dart';
-import 'package:lichess_mobile/src/widgets/game_summary_table.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BroadcastGameSummary extends ConsumerWidget {

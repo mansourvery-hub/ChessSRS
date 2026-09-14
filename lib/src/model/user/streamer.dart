@@ -1,7 +1,6 @@
+import 'package:chess_srs/src/model/common/id.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-
-import 'package:lichess_mobile/src/model/common/id.dart';
 
 part 'streamer.freezed.dart';
 

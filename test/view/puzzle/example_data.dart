@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_batch_storage.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_batch_storage.dart';
 
 final puzzle = Puzzle(
   puzzle: PuzzleData(

@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
 
 /// A provider for [MoveFeedbackService].
 final moveFeedbackServiceProvider = Provider<MoveFeedbackService>((Ref ref) {

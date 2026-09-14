@@ -1,11 +1,11 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/common/uci.dart';
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
 import 'package:collection/collection.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
 
 /// Interface for Analysis's State.
 abstract class CommonAnalysisState {

@@ -1,14 +1,14 @@
+import 'package:chess_srs/src/model/challenge/challenge.dart';
+import 'package:chess_srs/src/model/challenge/challenge_repository.dart';
+import 'package:chess_srs/src/model/challenge/challenge_service.dart';
+import 'package:chess_srs/src/model/challenge/challenges.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/play/challenge_list_item.dart';
+import 'package:chess_srs/src/widgets/list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_repository.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_service.dart';
-import 'package:lichess_mobile/src/model/challenge/challenges.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/play/challenge_list_item.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ChallengeRequestsScreen extends StatelessWidget {

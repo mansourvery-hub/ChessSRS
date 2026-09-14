@@ -1,6 +1,6 @@
+import 'package:chess_srs/src/utils/cache.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/utils/cache.dart';
 
 void main() {
   const key = 'key0';

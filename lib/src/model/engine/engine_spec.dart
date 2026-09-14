@@ -1,4 +1,4 @@
-import 'package:lichess_mobile/src/model/engine/engine_slot.dart';
+import 'package:chess_srs/src/model/engine/engine_slot.dart';
 import 'package:meta/meta.dart';
 import 'package:multistockfish/multistockfish.dart';
 

@@ -1,16 +1,16 @@
+import 'package:chess_srs/src/model/game/exported_game.dart';
+import 'package:chess_srs/src/model/game/game_history.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/game/game_list_tile.dart';
+import 'package:chess_srs/src/view/user/game_history_screen.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/game/exported_game.dart';
-import 'package:lichess_mobile/src/model/game/game_history.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/game/game_list_tile.dart';
-import 'package:lichess_mobile/src/view/user/game_history_screen.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
 
 /// A widget that show a list of recent games.
 ///

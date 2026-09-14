@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/screen.dart';
+import 'package:chess_srs/src/widgets/clock.dart';
 import 'package:clock/clock.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/screen.dart';
-import 'package:lichess_mobile/src/widgets/clock.dart';
 import 'package:material_ui/material_ui.dart';
 
 class CorrespondenceClock extends StatefulWidget {

@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/model/game/game.dart';
+import 'package:chess_srs/src/utils/duration.dart';
+import 'package:chess_srs/src/utils/l10n.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/widgets/clock.dart';
+import 'package:chess_srs/src/widgets/misc.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/model/game/game.dart';
-import 'package:lichess_mobile/src/utils/duration.dart';
-import 'package:lichess_mobile/src/utils/l10n.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/widgets/clock.dart';
-import 'package:lichess_mobile/src/widgets/misc.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// App bar title for a standalone game (an existing/archived game), derived from

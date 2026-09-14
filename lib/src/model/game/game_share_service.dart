@@ -1,13 +1,13 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/game/exported_game.dart';
+import 'package:chess_srs/src/model/game/game_repository.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/game/exported_game.dart';
-import 'package:lichess_mobile/src/model/game/game_repository.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// A provider for [GameShareService].

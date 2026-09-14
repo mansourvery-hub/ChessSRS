@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/cache.dart';
+import 'package:chess_srs/src/utils/json.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/cache.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('Aggregator');

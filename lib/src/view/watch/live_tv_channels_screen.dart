@@ -1,15 +1,15 @@
+import 'package:chess_srs/src/model/tv/live_tv_channels.dart';
+import 'package:chess_srs/src/model/tv/tv_channel.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/focus_detector.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/watch/tv_screen.dart';
+import 'package:chess_srs/src/widgets/board_preview.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/user.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/tv/live_tv_channels.dart';
-import 'package:lichess_mobile/src/model/tv/tv_channel.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/focus_detector.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/watch/tv_screen.dart';
-import 'package:lichess_mobile/src/widgets/board_preview.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/user.dart';
 import 'package:material_ui/material_ui.dart';
 
 class LiveTvChannelsScreen extends ConsumerWidget {

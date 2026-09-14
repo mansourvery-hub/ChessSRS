@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/engine_diagnostics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/engine_diagnostics.dart';
 
 /// What the engine was doing when it failed.
 enum EngineFailureKind {

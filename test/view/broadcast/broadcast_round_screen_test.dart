@@ -1,15 +1,15 @@
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_players_tab.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_round_screen.dart';
+import 'package:chess_srs/src/widgets/board_thumbnail.dart';
+import 'package:chess_srs/src/widgets/platform_context_menu_button.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_players_tab.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_round_screen.dart';
-import 'package:lichess_mobile/src/widgets/board_thumbnail.dart';
-import 'package:lichess_mobile/src/widgets/platform_context_menu_button.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../test_helpers.dart';

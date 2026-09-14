@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/analysis/server_analysis_service.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/node.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/analysis/server_analysis_service.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
 
 void main() {
   group('ServerAnalysisService.mergeOngoingAnalysis', () {

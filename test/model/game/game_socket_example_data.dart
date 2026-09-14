@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/game/game.dart';
 import 'package:dartchess/dartchess.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/game/game.dart';
 
 typedef FullEventTestClock = ({
   bool running,

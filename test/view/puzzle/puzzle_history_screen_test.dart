@@ -1,17 +1,18 @@
 import 'dart:math' as math;
+
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_batch_storage.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_storage.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/puzzle/puzzle_history_screen.dart';
+import 'package:chess_srs/src/view/puzzle/puzzle_screen.dart';
+import 'package:chess_srs/src/widgets/board_thumbnail.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_batch_storage.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_storage.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/puzzle/puzzle_history_screen.dart';
-import 'package:lichess_mobile/src/view/puzzle/puzzle_screen.dart';
-import 'package:lichess_mobile/src/widgets/board_thumbnail.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../model/auth/fake_auth_storage.dart';

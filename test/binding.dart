@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/binding.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/binding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The binding instance used in tests.

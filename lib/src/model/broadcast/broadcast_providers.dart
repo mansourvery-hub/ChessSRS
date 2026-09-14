@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_repository.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_repository.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 /// A provider that fetches a paginated list of broadcasts.
 final broadcastsPaginatorProvider =

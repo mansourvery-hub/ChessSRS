@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/tab_navigation.dart';
+import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart';
-import 'package:lichess_mobile/src/view/more/import_pgn_screen.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('SharedPgn');

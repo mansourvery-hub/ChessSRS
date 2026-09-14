@@ -3,6 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/auth/bearer.dart';
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/log/http_log_storage.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/aggregator.dart';
+import 'package:chess_srs/src/network/server_status.dart';
 import 'package:cronet_http/cronet_http.dart';
 import 'package:cupertino_http/cupertino_http.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -21,14 +29,6 @@ import 'package:http/http.dart'
         StreamedResponse;
 import 'package:http/io_client.dart';
 import 'package:http/retry.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/auth/bearer.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/log/http_log_storage.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/aggregator.dart';
-import 'package:lichess_mobile/src/network/server_status.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -211,7 +211,7 @@ final userAgentProvider = Provider<String>((Ref ref) {
 
 /// Creates a user-agent string with the app version, build number, and device info and possibly the user ID if a user is logged in.
 String makeUserAgent(PackageInfo info, BaseDeviceInfo deviceInfo, String sri, LightUser? user) {
-  final base = 'Lichess Mobile/${info.version} as:${user?.id ?? 'anon'} sri:$sri';
+  final base = 'ChessSRS/${info.version} as:${user?.id ?? 'anon'} sri:$sri';
 
   if (deviceInfo is AndroidDeviceInfo) {
     return '$base os:Android/${deviceInfo.version.release} dev:${deviceInfo.model}';

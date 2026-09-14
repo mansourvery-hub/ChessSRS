@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
-import 'package:lichess_mobile/src/styles/lichess_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
 // ignore: avoid_classes_with_only_static_members

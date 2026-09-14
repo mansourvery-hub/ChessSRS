@@ -1,15 +1,15 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/screen.dart';
+import 'package:chess_srs/src/view/engine/engine_gauge.dart';
+import 'package:chess_srs/src/widgets/pockets.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/screen.dart';
-import 'package:lichess_mobile/src/view/engine/engine_gauge.dart';
-import 'package:lichess_mobile/src/widgets/pockets.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The height of the board header or footer in the analysis layout.

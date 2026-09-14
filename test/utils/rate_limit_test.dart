@@ -1,6 +1,5 @@
+import 'package:chess_srs/src/utils/rate_limit.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:lichess_mobile/src/utils/rate_limit.dart';
 
 void main() {
   group('debounce', () {

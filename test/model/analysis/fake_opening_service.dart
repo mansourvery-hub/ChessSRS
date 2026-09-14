@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/src/model/analysis/opening_service.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/analysis/opening_service.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
 
 class FakeOpeningService implements OpeningService {
   const FakeOpeningService({this.openings = const {}});

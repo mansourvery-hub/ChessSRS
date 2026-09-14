@@ -1,4 +1,4 @@
-package org.lichess.mobileV2
+package org.chesssrs.app
 
 import android.app.ActivityManager
 import android.content.Context

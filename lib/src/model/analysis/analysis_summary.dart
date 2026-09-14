@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/game/player.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:http/http.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/game/player.dart';
 
 /// The study/broadcast pgn endpoints send this summary of server analysis via the 'x-lichess-analysis' header if the query contains 'analysisHeader=1'.
 typedef AnalysisSummary = ({Division? division, PlayerAnalysis white, PlayerAnalysis black});

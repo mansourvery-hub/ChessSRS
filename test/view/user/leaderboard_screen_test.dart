@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/user/leaderboard_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/user/leaderboard_screen.dart';
 
 import '../../test_helpers.dart';
 import '../../test_provider_scope.dart';

@@ -1,16 +1,16 @@
 import 'dart:math' as math;
 
+import 'package:chess_srs/src/model/game/player.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/styles/lichess_colors.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/game/player.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/styles/lichess_colors.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/user/user_or_profile_screen.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 

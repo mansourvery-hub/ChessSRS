@@ -1,6 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/model/account/account_preferences.dart';
+import 'package:chess_srs/src/model/analysis/opening_service.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/auth/auth_storage.dart';
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/engine/engine_factory.dart';
+import 'package:chess_srs/src/model/engine/thinking_time.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
+import 'package:chess_srs/src/model/notifications/notification_service.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/network/aggregator.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/socket.dart';
+import 'package:chess_srs/src/tab_navigation.dart' show rootNavRouteStackObserver;
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override, ProviderOrFamily;
@@ -9,27 +30,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:l10n_esperanto/l10n_esperanto.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/db/database.dart';
-import 'package:lichess_mobile/src/model/account/account_preferences.dart';
-import 'package:lichess_mobile/src/model/analysis/opening_service.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/auth/auth_storage.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/engine/engine_factory.dart';
-import 'package:lichess_mobile/src/model/engine/thinking_time.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
-import 'package:lichess_mobile/src/model/notifications/notification_service.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/network/aggregator.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart' show rootNavRouteStackObserver;
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -260,10 +260,10 @@ Future<Widget> makeTestProviderScope(
       return (
         sri: 'test-sri',
         packageInfo: PackageInfo(
-          appName: 'lichess_mobile_test',
+          appName: 'chess_srs_test',
           version: '0.0.0',
           buildNumber: '0',
-          packageName: 'lichess_mobile_test',
+          packageName: 'chess_srs_test',
         ),
         deviceInfo: BaseDeviceInfo({
           'name': 'test',

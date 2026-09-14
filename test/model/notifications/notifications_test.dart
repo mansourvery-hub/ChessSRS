@@ -1,11 +1,11 @@
 import 'dart:convert';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/notifications/notifications.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/notifications/notifications.dart';
 import 'package:mocktail/mocktail.dart';
 
 /// Broadcast notifications carry their title and body from the server, so they never read from

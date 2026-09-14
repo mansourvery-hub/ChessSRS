@@ -1,11 +1,11 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
+import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
+import 'package:chess_srs/src/view/over_the_board/over_the_board_screen.dart';
+import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/widgets.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/board_editor/board_editor_screen.dart';
-import 'package:lichess_mobile/src/view/offline_computer/offline_computer_game_screen.dart';
-import 'package:lichess_mobile/src/view/over_the_board/over_the_board_screen.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_action_sheet.dart';
 
 void openBoardEditor(BuildContext context, Variant variant, String fen, Side orientation) {
   Navigator.of(context).push(

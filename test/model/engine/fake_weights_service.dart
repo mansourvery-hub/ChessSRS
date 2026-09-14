@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
 
 /// A [MaiaWeightsService] that hands out paths without touching the disk or the network.
 ///

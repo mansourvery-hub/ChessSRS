@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
+import 'package:chess_srs/src/model/analysis/analysis_preferences.dart';
+import 'package:chess_srs/src/view/game/game_result_dialog.dart';
+import 'package:chess_srs/src/widgets/pgn.dart';
+import 'package:chess_srs/src/widgets/variations_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_controller.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_preferences.dart';
-import 'package:lichess_mobile/src/view/game/game_result_dialog.dart';
-import 'package:lichess_mobile/src/widgets/pgn.dart';
-import 'package:lichess_mobile/src/widgets/variations_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 class AnalysisTreeView extends ConsumerWidget {

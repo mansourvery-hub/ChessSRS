@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/engine/position_evaluator.dart';
+import 'package:chess_srs/src/model/engine/work.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/engine/position_evaluator.dart';
-import 'package:lichess_mobile/src/model/engine/work.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('PracticeAnalyser');

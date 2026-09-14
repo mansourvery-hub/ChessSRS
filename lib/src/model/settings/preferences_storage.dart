@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/user/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('PreferencesStorage');

@@ -1,27 +1,27 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/common/uci.dart';
+import 'package:chess_srs/src/model/engine/engine_budget.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/model/engine/evaluation_context.dart';
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
+import 'package:chess_srs/src/model/engine/position_evaluator.dart';
+import 'package:chess_srs/src/model/engine/work.dart';
+import 'package:chess_srs/src/network/socket.dart';
+import 'package:chess_srs/src/utils/json.dart';
+import 'package:chess_srs/src/utils/rate_limit.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
-import 'package:lichess_mobile/src/model/engine/engine_budget.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_context.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
-import 'package:lichess_mobile/src/model/engine/position_evaluator.dart';
-import 'package:lichess_mobile/src/model/engine/work.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
-import 'package:lichess_mobile/src/utils/rate_limit.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 
-export 'package:lichess_mobile/src/model/engine/evaluation_context.dart';
+export 'package:chess_srs/src/model/engine/evaluation_context.dart';
 
 /// The debounce delay for requesting an eval.
 ///

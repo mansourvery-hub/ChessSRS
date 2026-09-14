@@ -1,9 +1,9 @@
 import 'dart:math';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:collection/collection.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A action bottom sheet that adapts to the platform (Android/iOS).

@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/account/account_repository.dart';
+import 'package:chess_srs/src/model/account/ongoing_game.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/game/playable_game.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/account/account_repository.dart';
-import 'package:lichess_mobile/src/model/account/ongoing_game.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/game/playable_game.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 class OngoingGamesNotifier extends AsyncNotifier<IList<OngoingGame>> {
   @override

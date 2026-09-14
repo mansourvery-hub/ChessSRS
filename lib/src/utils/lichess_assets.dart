@@ -1,6 +1,6 @@
 import 'dart:math' show Random;
 
-import 'package:lichess_mobile/src/constants.dart';
+import 'package:chess_srs/src/constants.dart';
 
 final _random = Random();
 const _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';

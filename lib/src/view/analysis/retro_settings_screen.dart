@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/analysis/retro_controller.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/analysis/engine_settings_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/analysis/retro_controller.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/analysis/engine_settings_widget.dart';
 import 'package:material_ui/material_ui.dart';
 
 class RetroSettingsScreen extends ConsumerWidget {

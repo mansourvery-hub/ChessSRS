@@ -1,21 +1,21 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_preferences.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_providers.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_repository.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/network/socket.dart';
+import 'package:chess_srs/src/utils/json.dart';
+import 'package:chess_srs/src/utils/rate_limit.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_preferences.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_providers.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_repository.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
-import 'package:lichess_mobile/src/utils/rate_limit.dart';
 
 part 'broadcast_round_controller.freezed.dart';
 

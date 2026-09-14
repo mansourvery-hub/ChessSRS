@@ -1,6 +1,6 @@
+import 'package:chess_srs/src/model/engine/engine_budget.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/engine/engine_budget.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
 
 void main() {
   group('EngineBudget', () {

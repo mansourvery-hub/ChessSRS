@@ -1,13 +1,13 @@
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_controller.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/string.dart';
+import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_controller.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/string.dart';
-import 'package:lichess_mobile/src/view/account/rating_pref_aware.dart';
 import 'package:material_ui/material_ui.dart';
 
 class PuzzleFeedbackWidget extends ConsumerWidget {

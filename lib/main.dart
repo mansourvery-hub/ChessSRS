@@ -1,15 +1,15 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/app.dart';
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/init.dart';
+import 'package:chess_srs/src/intl.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/log/app_log_service.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/app.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/init.dart';
-import 'package:lichess_mobile/src/intl.dart';
-import 'package:lichess_mobile/src/model/common/service/sound_service.dart';
-import 'package:lichess_mobile/src/model/log/app_log_service.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 Future<void> main() async {

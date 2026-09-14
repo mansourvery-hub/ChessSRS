@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 
 typedef OnlineFriend = ({LightUser user, bool playing});
 

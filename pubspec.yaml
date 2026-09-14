@@ -1,5 +1,5 @@
-name: lichess_mobile
-description: Lichess mobile app V2
+name: chess_srs
+description: ChessSRS - local-first chess repertoire trainer (Lichess Mobile fork)
 publish_to: "none"
 
 version: 0.28.3+002803 # See README.md for details about versioning

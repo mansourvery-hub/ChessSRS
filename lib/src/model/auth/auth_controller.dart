@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/auth/auth_repository.dart';
+import 'package:chess_srs/src/model/auth/auth_storage.dart';
+import 'package:chess_srs/src/model/auth/auth_user.dart';
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
 import 'package:flutter_riverpod/experimental/mutation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_repository.dart';
-import 'package:lichess_mobile/src/model/auth/auth_storage.dart';
-import 'package:lichess_mobile/src/model/auth/auth_user.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
 
 export 'auth_user.dart';
 

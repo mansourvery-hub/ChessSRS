@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 
 ServerException serverException(int statusCode) =>
     ServerException(statusCode, 'boom', Uri.parse('https://lichess.org/api/account'), null);

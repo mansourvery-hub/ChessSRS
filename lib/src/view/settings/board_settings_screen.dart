@@ -1,21 +1,21 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/account/account_preferences.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/utils/screen.dart';
+import 'package:chess_srs/src/utils/system.dart';
+import 'package:chess_srs/src/view/settings/board_choice_screen.dart';
+import 'package:chess_srs/src/view/settings/piece_set_screen.dart';
+import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/settings.dart';
 import 'package:chessground/chessground.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/account/account_preferences.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/utils/screen.dart';
-import 'package:lichess_mobile/src/utils/system.dart';
-import 'package:lichess_mobile/src/view/settings/board_choice_screen.dart';
-import 'package:lichess_mobile/src/view/settings/piece_set_screen.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_choice_picker.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/settings.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BoardSettingsScreen extends ConsumerStatefulWidget {

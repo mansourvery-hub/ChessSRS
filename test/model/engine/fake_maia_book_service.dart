@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/src/model/engine/opening_book.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/model/engine/opening_book.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
 
 /// A [MaiaOfflineBookService] that hands out a book given to it rather than reading the asset bundle.
 ///

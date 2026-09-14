@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
 
 part 'practice_comment.freezed.dart';
 part 'practice_comment.g.dart';

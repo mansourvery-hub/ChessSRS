@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/user/profile.dart';
+import 'package:chess_srs/src/utils/json.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/user/profile.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
 
 part 'user.freezed.dart';
 part 'user.g.dart';

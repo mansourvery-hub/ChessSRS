@@ -1,16 +1,16 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/engine/evaluation_context.dart';
+import 'package:chess_srs/src/model/engine/position_evaluator.dart';
+import 'package:chess_srs/src/model/engine/work.dart';
+import 'package:chess_srs/src/model/offline_computer/practice_analyser.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_context.dart';
-import 'package:lichess_mobile/src/model/engine/position_evaluator.dart';
-import 'package:lichess_mobile/src/model/engine/work.dart';
-import 'package:lichess_mobile/src/model/offline_computer/practice_analyser.dart';
 
 import '../../binding.dart';
 import '../../test_container.dart';

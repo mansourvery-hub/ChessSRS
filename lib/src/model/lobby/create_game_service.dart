@@ -1,17 +1,17 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/account/account_repository.dart';
+import 'package:chess_srs/src/model/challenge/challenge.dart';
+import 'package:chess_srs/src/model/challenge/challenge_repository.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/lobby/game_seek.dart';
+import 'package:chess_srs/src/model/lobby/lobby_repository.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/account/account_repository.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_repository.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/lobby/game_seek.dart';
-import 'package:lichess_mobile/src/model/lobby/lobby_repository.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 import 'package:logging/logging.dart';
 
 /// A provider for the [CreateGameService].

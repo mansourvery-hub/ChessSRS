@@ -1,7 +1,8 @@
 import 'dart:async';
+
+import 'package:chess_srs/src/network/http.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 /// The retry policy used by every provider in the app.
 ///

@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/model/correspondence/correspondence_game_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/correspondence/correspondence_game_storage.dart';
 
 import '../../example_data.dart';
 import '../../test_container.dart';

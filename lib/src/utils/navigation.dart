@@ -1,4 +1,4 @@
-import 'package:lichess_mobile/src/widgets/background.dart';
+import 'package:chess_srs/src/widgets/background.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A page route that always builds the same screen widget.

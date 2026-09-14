@@ -1,19 +1,19 @@
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/tab_navigation.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/widgets/platform_alert_dialog.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/widgets/platform_alert_dialog.dart';
 import 'package:logging/logging.dart';
 import 'package:material_ui/material_ui.dart' show AlertDialog, Navigator, Text, showAdaptiveDialog;
 import 'package:multistockfish/multistockfish.dart';

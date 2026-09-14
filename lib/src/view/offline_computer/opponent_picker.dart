@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/non_linear_slider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/non_linear_slider.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The engines a game can be played against, in the order the picker presents them: Stockfish

@@ -1,15 +1,15 @@
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/game/exported_game.dart';
+import 'package:chess_srs/src/model/game/game_filter.dart';
+import 'package:chess_srs/src/model/game/game_storage.dart';
+import 'package:chess_srs/src/model/game/playable_game.dart';
+import 'package:chess_srs/src/network/aggregator.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/game/exported_game.dart';
-import 'package:lichess_mobile/src/model/game/game_filter.dart';
-import 'package:lichess_mobile/src/model/game/game_storage.dart';
-import 'package:lichess_mobile/src/model/game/playable_game.dart';
-import 'package:lichess_mobile/src/network/aggregator.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 /// A provider for the [GameRepository].
 final gameRepositoryProvider = Provider<GameRepository>((ref) {

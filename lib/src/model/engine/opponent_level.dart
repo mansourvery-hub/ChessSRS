@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
 
 /// Stockfish strength levels. Level 1 is the easiest, level 12 is the hardest.
 enum StockfishLevel {

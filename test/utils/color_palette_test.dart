@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/utils/color_palette.dart';
 import 'package:dynamic_system_colors/dynamic_system_colors.dart';
 import 'package:dynamic_system_colors/test_utils.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/utils/color_palette.dart';
 import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:material_ui/material_ui.dart' as mui;
 

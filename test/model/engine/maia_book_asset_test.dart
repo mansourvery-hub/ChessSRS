@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/engine/opening_book.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/engine/opening_book.dart';
 
 /// The books that ship with the app, as `scripts/gen_maia_book.dart` crawled them.
 ///

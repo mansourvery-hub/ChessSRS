@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
+import 'package:chess_srs/src/model/analysis/analysis_player.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/duration.dart';
+import 'package:chess_srs/src/view/analysis/analysis_layout.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_controller.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_player.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/duration.dart';
-import 'package:lichess_mobile/src/view/analysis/analysis_layout.dart';
 import 'package:material_ui/material_ui.dart';
 
 ({PgnPlayerWidget? white, PgnPlayerWidget? black}) playerWidgetsFromPgnHeaders({

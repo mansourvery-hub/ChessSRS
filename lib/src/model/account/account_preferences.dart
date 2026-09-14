@@ -1,12 +1,12 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/account/account_pref_types.dart';
+import 'package:chess_srs/src/model/account/account_repository.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/account/account_pref_types.dart';
-import 'package:lichess_mobile/src/model/account/account_repository.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 
 export 'account_pref_types.dart';
 

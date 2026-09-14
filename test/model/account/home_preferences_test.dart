@@ -2,11 +2,11 @@
 
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/account/home_preferences.dart';
+import 'package:chess_srs/src/model/account/home_widgets.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/account/home_preferences.dart';
-import 'package:lichess_mobile/src/model/account/home_widgets.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
 
 void main() {
   group('HomePrefs', () {

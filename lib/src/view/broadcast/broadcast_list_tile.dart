@@ -1,14 +1,14 @@
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/screen.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_round_screen.dart';
+import 'package:chess_srs/src/widgets/network_image.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/screen.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_round_screen.dart';
-import 'package:lichess_mobile/src/widgets/network_image.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _kDefaultBroadcastImage = AssetImage('assets/images/broadcast_image.webp');

@@ -1,18 +1,18 @@
 import 'dart:math';
 
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_providers.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/theme.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_team_screen.dart';
+import 'package:chess_srs/src/widgets/misc.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_providers.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/theme.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_team_screen.dart';
-import 'package:lichess_mobile/src/widgets/misc.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum _SortingTypes { elo, score }

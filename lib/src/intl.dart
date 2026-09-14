@@ -1,11 +1,11 @@
 import 'dart:convert';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 
 Locale getSystemLocale(WidgetsBinding widgetsBinding) {
   return AppLocalizations.delegate.isSupported(widgetsBinding.platformDispatcher.locale)

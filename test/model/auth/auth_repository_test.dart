@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/auth/auth_repository.dart';
+import 'package:chess_srs/src/model/auth/bearer.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/auth/auth_repository.dart';
-import 'package:lichess_mobile/src/model/auth/bearer.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 import '../../network/fake_http_client_factory.dart';
 import '../../test_container.dart';

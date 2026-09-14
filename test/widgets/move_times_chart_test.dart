@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
+import 'package:chess_srs/src/widgets/move_times_chart.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/analysis/analysis_screen.dart';
-import 'package:lichess_mobile/src/widgets/move_times_chart.dart';
 
 import '../network/fake_http_client_factory.dart';
 import '../test_helpers.dart';

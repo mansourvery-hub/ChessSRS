@@ -1,17 +1,17 @@
+import 'package:chess_srs/src/model/clock/clock_tool_controller.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/immersive_mode.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/utils/screen.dart';
+import 'package:chess_srs/src/view/clock/clock_settings.dart';
+import 'package:chess_srs/src/view/clock/custom_clock_settings.dart';
+import 'package:chess_srs/src/widgets/buttons.dart';
+import 'package:chess_srs/src/widgets/clock.dart';
 import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoIcons;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/clock/clock_tool_controller.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/immersive_mode.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/utils/screen.dart';
-import 'package:lichess_mobile/src/view/clock/clock_settings.dart';
-import 'package:lichess_mobile/src/view/clock/custom_clock_settings.dart';
-import 'package:lichess_mobile/src/widgets/buttons.dart';
-import 'package:lichess_mobile/src/widgets/clock.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ClockToolScreen extends StatelessWidget {

@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/tv/tv_channel.dart';
+import 'package:chess_srs/src/model/tv/tv_game_controller.dart';
+import 'package:chess_srs/src/model/tv/tv_repository.dart';
+import 'package:chess_srs/src/model/user/user_repository.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/tv/tv_channel.dart';
-import 'package:lichess_mobile/src/model/tv/tv_game_controller.dart';
-import 'package:lichess_mobile/src/model/tv/tv_repository.dart';
-import 'package:lichess_mobile/src/model/user/user_repository.dart';
 
 typedef TvControllerParams = ({
   TvChannel? channel,

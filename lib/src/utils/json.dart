@@ -1,9 +1,9 @@
 import 'dart:ui' show Locale;
 
+import 'package:chess_srs/src/model/common/uci.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('JsonUtils');

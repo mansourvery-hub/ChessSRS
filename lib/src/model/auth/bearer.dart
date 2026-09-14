@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 
-import 'package:lichess_mobile/src/constants.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:crypto/crypto.dart';
 
 final hmacSha1 = Hmac(sha1, utf8.encode(kLichessWSSecret));
 

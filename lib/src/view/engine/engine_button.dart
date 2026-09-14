@@ -1,13 +1,14 @@
 import 'dart:math' as math;
+
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
+import 'package:chess_srs/src/model/engine/position_evaluator.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/widgets/buttons.dart';
+import 'package:chess_srs/src/widgets/popover.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
-import 'package:lichess_mobile/src/model/engine/position_evaluator.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/widgets/buttons.dart';
-import 'package:lichess_mobile/src/widgets/popover.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A button to toggle engine evaluation and show engine depth.

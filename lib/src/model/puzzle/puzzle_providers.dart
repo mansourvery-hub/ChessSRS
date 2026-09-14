@@ -1,19 +1,19 @@
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_batch_storage.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_opening.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_preferences.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_repository.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_service.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_storage.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
+import 'package:chess_srs/src/model/puzzle/storm.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_batch_storage.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_opening.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_preferences.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_repository.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_service.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_storage.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
-import 'package:lichess_mobile/src/model/puzzle/storm.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 
 /// Reads the next unsolved puzzle of [angle] from the local queue, without ever syncing with the
 /// server.

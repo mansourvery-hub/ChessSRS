@@ -1,41 +1,41 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/app_links_service.dart';
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/account/account_repository.dart';
+import 'package:chess_srs/src/model/account/account_service.dart';
+import 'package:chess_srs/src/model/account/ongoing_games_notifier.dart';
+import 'package:chess_srs/src/model/analysis/analysis_preferences.dart';
+import 'package:chess_srs/src/model/announce/announce_service.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_preferences.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_service.dart';
+import 'package:chess_srs/src/model/challenge/challenge_service.dart';
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/correspondence/correspondence_service.dart';
+import 'package:chess_srs/src/model/log/app_log_service.dart';
+import 'package:chess_srs/src/model/message/message_service.dart';
+import 'package:chess_srs/src/model/notifications/notification_service.dart';
+import 'package:chess_srs/src/model/recap/recap_service.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/quick_actions.dart';
+import 'package:chess_srs/src/shared_pgn_service.dart';
+import 'package:chess_srs/src/tab_navigation.dart';
+import 'package:chess_srs/src/tab_scaffold.dart';
+import 'package:chess_srs/src/theme.dart';
+import 'package:chess_srs/src/utils/screen.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:l10n_esperanto/l10n_esperanto.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/app_links_service.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/account/account_repository.dart';
-import 'package:lichess_mobile/src/model/account/account_service.dart';
-import 'package:lichess_mobile/src/model/account/ongoing_games_notifier.dart';
-import 'package:lichess_mobile/src/model/analysis/analysis_preferences.dart';
-import 'package:lichess_mobile/src/model/announce/announce_service.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_preferences.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_service.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_service.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/correspondence/correspondence_service.dart';
-import 'package:lichess_mobile/src/model/log/app_log_service.dart';
-import 'package:lichess_mobile/src/model/message/message_service.dart';
-import 'package:lichess_mobile/src/model/notifications/notification_service.dart';
-import 'package:lichess_mobile/src/model/recap/recap_service.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
-import 'package:lichess_mobile/src/model/study/study_preferences.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/quick_actions.dart';
-import 'package:lichess_mobile/src/shared_pgn_service.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart';
-import 'package:lichess_mobile/src/tab_scaffold.dart';
-import 'package:lichess_mobile/src/theme.dart';
-import 'package:lichess_mobile/src/utils/screen.dart';
 import 'package:material_ui/material_ui.dart';
 
-const String _kIosAppGroupId = 'group.org.lichess.mobileV2.LichessWidgets';
+const String _kIosAppGroupId = 'group.org.chesssrs.app.LichessWidgets';
 const List<String> _kIosBlogWidgetKinds = [
   'OfficialBlogWidget',
   'CommunityBlogWidget',
@@ -230,7 +230,7 @@ class _AppState extends ConsumerState<Application> {
         CupertinoLocalizationsEo.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      title: 'lichess.org',
+      title: 'ChessSRS',
       locale: generalPrefs.locale,
       theme: theme.copyWith(
         navigationBarTheme: isIOS

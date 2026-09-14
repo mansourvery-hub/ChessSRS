@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/server_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/server_status.dart';
 
 import '../test_container.dart';
 import 'server_down_client.dart';

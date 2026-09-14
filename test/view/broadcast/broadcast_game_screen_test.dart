@@ -1,21 +1,21 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/broadcast/broadcast_analysis_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/engine/evaluation_mixin.dart';
+import 'package:chess_srs/src/model/engine/position_evaluator.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
+import 'package:chess_srs/src/view/engine/engine_button.dart';
+import 'package:chess_srs/src/view/engine/engine_gauge.dart';
+import 'package:chess_srs/src/view/engine/engine_lines.dart';
+import 'package:chess_srs/src/widgets/variations_bar.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_analysis_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_mixin.dart';
-import 'package:lichess_mobile/src/model/engine/position_evaluator.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_game_screen.dart';
-import 'package:lichess_mobile/src/view/engine/engine_button.dart';
-import 'package:lichess_mobile/src/view/engine/engine_gauge.dart';
-import 'package:lichess_mobile/src/view/engine/engine_lines.dart';
-import 'package:lichess_mobile/src/widgets/variations_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../model/broadcast/example_data.dart';

@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/styles/lichess_colors.dart';
+import 'package:chess_srs/src/utils/duration.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 // Only these two: intl also exports a `TextDirection` that would shadow the one used when
 // painting labels.
 import 'package:intl/intl.dart' show Intl, NumberFormat;
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/styles/lichess_colors.dart';
-import 'package:lichess_mobile/src/utils/duration.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
 import 'package:material_ui/material_ui.dart';
 
 typedef MoveTimesChartParams = ({

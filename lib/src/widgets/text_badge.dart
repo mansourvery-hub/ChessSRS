@@ -1,4 +1,4 @@
-import 'package:lichess_mobile/src/styles/lichess_colors.dart';
+import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
 // A simple badge widget to display text in a pill-shaped container.

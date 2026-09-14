@@ -1,8 +1,7 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/utils/l10n.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/utils/l10n.dart';
 
 void main() {
   group('l10nWithWidget', () {

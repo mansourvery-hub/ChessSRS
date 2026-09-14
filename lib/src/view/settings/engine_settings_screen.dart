@@ -1,19 +1,19 @@
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/analysis/engine_settings_widget.dart';
+import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
+import 'package:chess_srs/src/widgets/buttons.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/platform_alert_dialog.dart';
+import 'package:chess_srs/src/widgets/settings.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/analysis/engine_settings_widget.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_choice_picker.dart';
-import 'package:lichess_mobile/src/widgets/buttons.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/platform_alert_dialog.dart';
-import 'package:lichess_mobile/src/widgets/settings.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
 import 'package:material_ui/material_ui.dart';
 
 class EngineSettingsScreen extends ConsumerStatefulWidget {

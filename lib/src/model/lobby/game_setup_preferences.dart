@@ -1,12 +1,13 @@
 import 'dart:math' as math;
+
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/common/speed.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/model/user/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/common/speed.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
 
 part 'game_setup_preferences.freezed.dart';
 part 'game_setup_preferences.g.dart';

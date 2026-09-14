@@ -1,12 +1,12 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
+import 'package:chess_srs/src/widgets/platform_search_bar.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/view/more/import_pgn_screen.dart';
-import 'package:lichess_mobile/src/widgets/platform_search_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../test_helpers.dart';

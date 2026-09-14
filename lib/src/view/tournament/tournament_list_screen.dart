@@ -1,21 +1,21 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/tournament/tournament.dart';
+import 'package:chess_srs/src/model/tournament/tournament_providers.dart';
+import 'package:chess_srs/src/styles/lichess_colors.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/focus_detector.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/tournament/tournament_faq.dart';
+import 'package:chess_srs/src/view/tournament/tournament_screen.dart';
+import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/tournament/tournament.dart';
-import 'package:lichess_mobile/src/model/tournament/tournament_providers.dart';
-import 'package:lichess_mobile/src/styles/lichess_colors.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/focus_detector.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/tournament/tournament_faq.dart';
-import 'package:lichess_mobile/src/view/tournament/tournament_screen.dart';
-import 'package:lichess_mobile/src/widgets/haptic_refresh_indicator.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
 import 'package:material_ui/material_ui.dart';
 
 class TournamentListScreen extends ConsumerStatefulWidget {

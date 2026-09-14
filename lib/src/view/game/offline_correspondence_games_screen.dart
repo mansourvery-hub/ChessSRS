@@ -1,13 +1,13 @@
+import 'package:chess_srs/src/model/correspondence/correspondence_game_storage.dart';
+import 'package:chess_srs/src/model/correspondence/offline_correspondence_game.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/correspondence/offline_correspondence_game_screen.dart';
+import 'package:chess_srs/src/widgets/board_preview.dart';
+import 'package:chess_srs/src/widgets/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/correspondence/correspondence_game_storage.dart';
-import 'package:lichess_mobile/src/model/correspondence/offline_correspondence_game.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/correspondence/offline_correspondence_game_screen.dart';
-import 'package:lichess_mobile/src/widgets/board_preview.dart';
-import 'package:lichess_mobile/src/widgets/user.dart';
 import 'package:material_ui/material_ui.dart';
 
 class OfflineCorrespondenceGamesScreen extends ConsumerWidget {

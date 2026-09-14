@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
+import 'package:chess_srs/src/view/offline_computer/opponent_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
-import 'package:lichess_mobile/src/view/offline_computer/opponent_picker.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../binding.dart';

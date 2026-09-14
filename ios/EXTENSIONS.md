@@ -29,14 +29,14 @@ When a PR that adds a new extension is ready to merge, a Lichess org member with
 
 When a PR introduces a new App Group (shared `UserDefaults` between the main app and an extension), a Lichess org member needs to do this once:
 
-1. In the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/applicationGroup), go to **Identifiers** → **App Groups** → **+** and register the new group ID (e.g. `group.org.lichess.mobileV2`).
-2. Edit the **main app** identifier (`org.lichess.mobileV2`) → **App Groups** → enable the new group.
-3. Edit the **extension** identifier (e.g. `org.lichess.mobileV2.LichessWidgets`) → **App Groups** → enable the same group.
+1. In the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/applicationGroup), go to **Identifiers** → **App Groups** → **+** and register the new group ID (e.g. `group.org.chesssrs.app`).
+2. Edit the **main app** identifier (`org.chesssrs.app`) → **App Groups** → enable the new group.
+3. Edit the **extension** identifier (e.g. `org.chesssrs.app.LichessWidgets`) → **App Groups** → enable the same group.
 4. Regenerate and re-download any affected provisioning profiles, or let `match` handle it (see below).
 
 ## Deploying extensions via fastlane
 
-Extensions have their own bundle ID (`org.lichess.mobileV2.<ExtensionName>`) and require a separate provisioning profile managed by `match`. The `Matchfile` and `Fastfile` list all extension bundle IDs alongside the main app.
+Extensions have their own bundle ID (`org.chesssrs.app.<ExtensionName>`) and require a separate provisioning profile managed by `match`. The `Matchfile` and `Fastfile` list all extension bundle IDs alongside the main app.
 
 ### Adding a new extension to the fastlane setup
 
@@ -44,7 +44,7 @@ After registering the App ID in the developer portal (see above), run `match` on
 
 ```sh
 cd ios
-bundle exec fastlane match appstore --app_identifier org.lichess.mobileV2.<ExtensionName>
+bundle exec fastlane match appstore --app_identifier org.chesssrs.app.<ExtensionName>
 ```
 
 This will generate the profile, push it to the certificates repo, and set the correct `PROVISIONING_PROFILE_SPECIFIER` in the Xcode project. After that, `fastlane beta` handles signing for all targets automatically — including in CI.

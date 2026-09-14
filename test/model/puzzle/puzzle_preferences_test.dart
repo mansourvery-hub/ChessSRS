@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_difficulty.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_preferences.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_difficulty.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_preferences.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
 
 import '../../binding.dart';
 import '../../test_container.dart';

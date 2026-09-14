@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/notifications/notification_service.dart';
+import 'package:chess_srs/src/model/notifications/notifications.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/notifications/notification_service.dart';
-import 'package:lichess_mobile/src/model/notifications/notifications.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 
 final announceServiceProvider = Provider<AnnounceService>((ref) {
   final service = AnnounceService(ref);

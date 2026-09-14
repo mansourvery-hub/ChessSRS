@@ -1,18 +1,18 @@
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_providers.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/theme.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_player_results_screen.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_player_widget.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
+import 'package:chess_srs/src/widgets/network_image.dart';
+import 'package:chess_srs/src/widgets/platform_search_bar.dart';
+import 'package:chess_srs/src/widgets/progression_widget.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_providers.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/theme.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_player_results_screen.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_player_widget.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
-import 'package:lichess_mobile/src/widgets/network_image.dart';
-import 'package:lichess_mobile/src/widgets/platform_search_bar.dart';
-import 'package:lichess_mobile/src/widgets/progression_widget.dart';
 import 'package:material_ui/material_ui.dart';
 
 final playersAndTournamentProvider = FutureProvider.autoDispose

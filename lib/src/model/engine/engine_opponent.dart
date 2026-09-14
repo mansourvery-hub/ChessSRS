@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/engine.dart';
+import 'package:chess_srs/src/model/engine/engine_budget.dart';
+import 'package:chess_srs/src/model/engine/engine_providers.dart';
+import 'package:chess_srs/src/model/engine/opening_book.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/model/engine/thinking_time.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/engine.dart';
-import 'package:lichess_mobile/src/model/engine/engine_budget.dart';
-import 'package:lichess_mobile/src/model/engine/engine_providers.dart';
-import 'package:lichess_mobile/src/model/engine/opening_book.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/model/engine/thinking_time.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 

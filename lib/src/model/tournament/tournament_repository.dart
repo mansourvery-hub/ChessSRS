@@ -1,13 +1,13 @@
 import 'dart:io' show File;
 
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/tournament/tournament.dart';
+import 'package:chess_srs/src/network/aggregator.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/tournament/tournament.dart';
-import 'package:lichess_mobile/src/network/aggregator.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 /// A provider for [TournamentRepository].
 final tournamentRepositoryProvider = Provider<TournamentRepository>((Ref ref) {

@@ -1,15 +1,15 @@
 import 'dart:io';
 
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/server_status.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/server_status.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 
 import '../test_container.dart';
 import '../utils/fake_connectivity.dart';

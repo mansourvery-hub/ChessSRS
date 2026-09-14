@@ -1,9 +1,9 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/db/database.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// A provider for [PuzzleStorage].

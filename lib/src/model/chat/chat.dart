@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/study/study_controller.dart';
+import 'package:chess_srs/src/model/tv/tv_game_controller.dart';
+import 'package:chess_srs/src/model/user/user.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/study/study_controller.dart';
-import 'package:lichess_mobile/src/model/tv/tv_game_controller.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
 
 export 'chat_message.dart';
 

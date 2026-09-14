@@ -1,11 +1,11 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/account/account_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/account/account_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 import '../../binding.dart';
 import '../../network/fake_http_client_factory.dart';

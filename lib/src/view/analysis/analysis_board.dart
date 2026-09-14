@@ -1,26 +1,26 @@
 import 'dart:math' as math;
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/analysis/common_analysis_prefs.dart';
+import 'package:chess_srs/src/model/analysis/common_analysis_state.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
+import 'package:chess_srs/src/model/engine/position_evaluator.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/styles/lichess_colors.dart';
+import 'package:chess_srs/src/view/analysis/game_analysis_board.dart';
+import 'package:chess_srs/src/view/analysis/retro_screen.dart';
+import 'package:chess_srs/src/view/broadcast/broadcast_game_screen.dart';
+import 'package:chess_srs/src/view/study/study_screen.dart';
+import 'package:chess_srs/src/widgets/board.dart';
+import 'package:chess_srs/src/widgets/pgn.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/analysis/common_analysis_prefs.dart';
-import 'package:lichess_mobile/src/model/analysis/common_analysis_state.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
-import 'package:lichess_mobile/src/model/engine/position_evaluator.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/styles/lichess_colors.dart';
-import 'package:lichess_mobile/src/view/analysis/game_analysis_board.dart';
-import 'package:lichess_mobile/src/view/analysis/retro_screen.dart';
-import 'package:lichess_mobile/src/view/broadcast/broadcast_game_screen.dart';
-import 'package:lichess_mobile/src/view/study/study_screen.dart';
-import 'package:lichess_mobile/src/widgets/board.dart';
-import 'package:lichess_mobile/src/widgets/pgn.dart';
 
 /// An abstract widget that provides the common interface for three types of analysis boards:
 /// - [GameAnalysisBoard]

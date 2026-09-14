@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 import 'package:multistockfish/multistockfish.dart';
 
 part 'evaluation_preferences.freezed.dart';

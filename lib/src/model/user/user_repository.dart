@@ -1,19 +1,19 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/game/exported_game.dart';
+import 'package:chess_srs/src/model/user/leaderboard.dart';
+import 'package:chess_srs/src/model/user/streamer.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/aggregator.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/json.dart';
 import 'package:collection/collection.dart';
 import 'package:dartchess/dartchess.dart' show Side;
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/game/exported_game.dart';
-import 'package:lichess_mobile/src/model/user/leaderboard.dart';
-import 'package:lichess_mobile/src/model/user/streamer.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/aggregator.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
 
 /// A provider for the [UserRepository].
 final userRepositoryProvider = Provider<UserRepository>((ref) {

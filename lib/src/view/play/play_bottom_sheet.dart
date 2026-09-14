@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/play/play_menu.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/play/play_menu.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 

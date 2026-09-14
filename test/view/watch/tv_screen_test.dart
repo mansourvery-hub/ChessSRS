@@ -1,14 +1,14 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/game/exported_game.dart';
+import 'package:chess_srs/src/model/tv/tv_channel.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/socket.dart';
+import 'package:chess_srs/src/view/watch/tv_screen.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/game/exported_game.dart';
-import 'package:lichess_mobile/src/model/tv/tv_channel.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
-import 'package:lichess_mobile/src/view/watch/tv_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../example_data.dart';

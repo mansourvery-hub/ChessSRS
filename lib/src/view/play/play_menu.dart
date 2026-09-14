@@ -1,15 +1,15 @@
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
+import 'package:chess_srs/src/view/over_the_board/over_the_board_screen.dart';
+import 'package:chess_srs/src/view/play/correspondence_challenges_screen.dart';
+import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
+import 'package:chess_srs/src/view/play/create_game_widget.dart';
+import 'package:chess_srs/src/view/tournament/tournament_list_screen.dart';
+import 'package:chess_srs/src/widgets/list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/offline_computer/offline_computer_game_screen.dart';
-import 'package:lichess_mobile/src/view/over_the_board/over_the_board_screen.dart';
-import 'package:lichess_mobile/src/view/play/correspondence_challenges_screen.dart';
-import 'package:lichess_mobile/src/view/play/create_challenge_bottom_sheet.dart';
-import 'package:lichess_mobile/src/view/play/create_game_widget.dart';
-import 'package:lichess_mobile/src/view/tournament/tournament_list_screen.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
 import 'package:material_ui/material_ui.dart';
 
 class PlayMenu extends ConsumerWidget {

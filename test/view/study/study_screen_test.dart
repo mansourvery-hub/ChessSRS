@@ -1,21 +1,21 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/model/study/study.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
+import 'package:chess_srs/src/model/study/study_repository.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/view/study/study_screen.dart';
+import 'package:chess_srs/src/widgets/variations_bar.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/engine/evaluation_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/model/study/study.dart';
-import 'package:lichess_mobile/src/model/study/study_preferences.dart';
-import 'package:lichess_mobile/src/model/study/study_repository.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/view/study/study_screen.dart';
-import 'package:lichess_mobile/src/widgets/variations_bar.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../test_helpers.dart';

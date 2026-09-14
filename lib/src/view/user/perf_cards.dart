@@ -1,13 +1,13 @@
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/account/rating_pref_aware.dart';
-import 'package:lichess_mobile/src/view/puzzle/storm_dashboard.dart';
-import 'package:lichess_mobile/src/view/user/perf_stats_screen.dart';
-import 'package:lichess_mobile/src/widgets/rating.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
+import 'package:chess_srs/src/view/puzzle/storm_dashboard.dart';
+import 'package:chess_srs/src/view/user/perf_stats_screen.dart';
+import 'package:chess_srs/src/widgets/rating.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A widget that displays the performance cards of a user.

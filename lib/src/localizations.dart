@@ -1,8 +1,8 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/intl.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/intl.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
 
 typedef ActiveLocalizations = ({Locale locale, AppLocalizations strings});
 

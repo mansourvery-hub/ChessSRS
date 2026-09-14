@@ -1,5 +1,5 @@
+import 'package:chess_srs/l10n/l10n.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Returns a localized string with a single placeholder replaced by a widget.

@@ -1,12 +1,12 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/correspondence/offline_correspondence_game.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/db/database.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/correspondence/offline_correspondence_game.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// A provider for [CorrespondenceGameStorage].

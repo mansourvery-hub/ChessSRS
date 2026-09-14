@@ -1,4 +1,4 @@
-import 'package:lichess_mobile/src/styles/styles.dart';
+import 'package:chess_srs/src/styles/styles.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _customOpacity = 0.6;

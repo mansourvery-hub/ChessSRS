@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/engine/engine.dart';
+import 'package:chess_srs/src/model/engine/engine_providers.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/engine/engine.dart';
-import 'package:lichess_mobile/src/model/engine/engine_providers.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
 
 import '../../test_container.dart';
 import 'fake_engine.dart';

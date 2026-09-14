@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'dart:io' show Directory;
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/db/secure_storage.dart';
+import 'package:chess_srs/src/model/auth/auth_storage.dart';
+import 'package:chess_srs/src/model/auth/auth_user.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/string.dart';
+import 'package:chess_srs/src/utils/system.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/db/secure_storage.dart';
-import 'package:lichess_mobile/src/model/auth/auth_storage.dart';
-import 'package:lichess_mobile/src/model/auth/auth_user.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/string.dart';
-import 'package:lichess_mobile/src/utils/system.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart'
     show getApplicationDocumentsDirectory, getApplicationSupportDirectory;

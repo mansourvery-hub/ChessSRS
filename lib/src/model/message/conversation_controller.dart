@@ -1,17 +1,17 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/message/message.dart';
+import 'package:chess_srs/src/model/message/message_repository.dart';
+import 'package:chess_srs/src/model/relation/relation_repository.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/model/user/user_repository.dart';
+import 'package:chess_srs/src/network/socket.dart';
+import 'package:chess_srs/src/utils/rate_limit.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/message/message.dart';
-import 'package:lichess_mobile/src/model/message/message_repository.dart';
-import 'package:lichess_mobile/src/model/relation/relation_repository.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/model/user/user_repository.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
-import 'package:lichess_mobile/src/utils/rate_limit.dart';
 
 part 'conversation_controller.freezed.dart';
 

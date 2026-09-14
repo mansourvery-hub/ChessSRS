@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/common/uci.dart';
 import 'package:collection/collection.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
 
 part 'forecast.freezed.dart';
 part 'forecast.g.dart';

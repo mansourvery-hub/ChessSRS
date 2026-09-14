@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/model/broadcast/broadcast.dart';
+import 'package:chess_srs/src/model/broadcast/broadcast_repository.dart';
+import 'package:chess_srs/src/model/common/id.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast.dart';
-import 'package:lichess_mobile/src/model/broadcast/broadcast_repository.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
 
 import '../../test_container.dart';
 import '../../test_helpers.dart';

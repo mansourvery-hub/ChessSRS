@@ -1,15 +1,15 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/analysis/server_analysis_service.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/game/game_socket_events.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:collection/collection.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/analysis/server_analysis_service.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/game/game_socket_events.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 
 /// Interface for Notifier's State that uses [ServerAnalysisMixin].
 mixin ServerAnalysisMixinState {

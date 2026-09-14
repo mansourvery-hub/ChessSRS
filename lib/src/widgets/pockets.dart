@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Visualization of captured pieces in variants like Crazyhouse.

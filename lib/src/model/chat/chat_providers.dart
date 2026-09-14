@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/chat/chat.dart';
+import 'package:chess_srs/src/model/chat/chat_mixin.dart';
+import 'package:chess_srs/src/model/game/game_controller.dart';
+import 'package:chess_srs/src/model/study/study_controller.dart';
+import 'package:chess_srs/src/model/tournament/tournament_controller.dart';
+import 'package:chess_srs/src/model/tv/tv_game_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/chat/chat.dart';
-import 'package:lichess_mobile/src/model/chat/chat_mixin.dart';
-import 'package:lichess_mobile/src/model/game/game_controller.dart';
-import 'package:lichess_mobile/src/model/study/study_controller.dart';
-import 'package:lichess_mobile/src/model/tournament/tournament_controller.dart';
-import 'package:lichess_mobile/src/model/tv/tv_game_controller.dart';
 
 /// A provider that gets the current chat state
 final chatProvider = FutureProvider.autoDispose.family<ChatState?, ChatOptions>(

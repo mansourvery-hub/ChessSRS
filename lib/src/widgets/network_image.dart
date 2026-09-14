@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/http_network_image.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/http_network_image.dart';
 
 /// Like [Image.network], but uses a [HttpNetworkImage] with the globally configured http client.
 class HttpNetworkImageWidget extends ConsumerWidget {

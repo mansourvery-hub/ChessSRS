@@ -1,16 +1,16 @@
+import 'package:chess_srs/src/model/relation/online_friends.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/relation/friend_screen.dart';
+import 'package:chess_srs/src/view/user/search_screen.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/platform_search_bar.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
+import 'package:chess_srs/src/widgets/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/relation/online_friends.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/relation/friend_screen.dart';
-import 'package:lichess_mobile/src/view/user/search_screen.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/platform_search_bar.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
-import 'package:lichess_mobile/src/widgets/user.dart';
 import 'package:material_ui/material_ui.dart';
 
 class PickPlayerScreen extends ConsumerWidget {

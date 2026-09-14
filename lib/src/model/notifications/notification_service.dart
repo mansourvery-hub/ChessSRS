@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/localizations.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/notifications/notifications.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/badge_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/localizations.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/notifications/notifications.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/badge_service.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('NotificationService');

@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/widgets/list.dart';
 import 'package:material_ui/material_ui.dart';
 
 const kSettingsTileTitleMaxLines = 3;

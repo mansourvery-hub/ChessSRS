@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/common/chess.dart' show Variant;
+import 'package:chess_srs/src/model/explorer/tablebase.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart' show Variant;
-import 'package:lichess_mobile/src/model/explorer/tablebase.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 
 /// A provider for fetching tablebase entries.
 final tablebaseProvider = FutureProvider.autoDispose

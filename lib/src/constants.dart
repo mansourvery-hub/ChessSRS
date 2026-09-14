@@ -30,7 +30,7 @@ const kLichessTablebaseHost = String.fromEnvironment(
 
 const kLichessCustomUriSchemeName = 'org.lichess.mobile';
 
-const kLichessClientId = 'lichess_mobile';
+const kLichessClientId = 'chess_srs';
 
 const kSRIStorageKey = 'socket_random_identifier';
 

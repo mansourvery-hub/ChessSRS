@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/account/account_preferences.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/rate_limit.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/account/account_preferences.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/rate_limit.dart';
 import 'package:material_ui/material_ui.dart';
 
 const _scrollAnimationDuration = Duration(milliseconds: 200);

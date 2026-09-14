@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/common/perf.dart';
+import 'package:chess_srs/src/model/user/leaderboard.dart';
+import 'package:chess_srs/src/model/user/streamer.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/model/user/user_repository.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/common/perf.dart';
-import 'package:lichess_mobile/src/model/user/leaderboard.dart';
-import 'package:lichess_mobile/src/model/user/streamer.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/model/user/user_repository.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 const _kAutoCompleteDebounceTimer = Duration(milliseconds: 300);
 

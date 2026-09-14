@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/engine/engine.dart';
+import 'package:chess_srs/src/model/engine/engine_failure.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/engine/engine.dart';
-import 'package:lichess_mobile/src/model/engine/engine_failure.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
 
 import 'fake_transport.dart';
 

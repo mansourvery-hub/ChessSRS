@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/model/game/over_the_board_game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/model/game/over_the_board_game.dart';
 import 'package:logging/logging.dart';
 import 'package:path_provider/path_provider.dart';
 

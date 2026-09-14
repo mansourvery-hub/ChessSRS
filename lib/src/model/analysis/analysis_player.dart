@@ -6,7 +6,7 @@ part 'analysis_player.freezed.dart';
 
 /// A simple player representation for analysis from PGN headers.
 ///
-/// Unlike `Player` from `package:lichess_mobile/src/model/game/player.dart`,
+/// Unlike `Player` from `package:chess_srs/src/model/game/player.dart`,
 /// this doesn't require user accounts or full game context.
 @freezed
 sealed class AnalysisPlayer with _$AnalysisPlayer {

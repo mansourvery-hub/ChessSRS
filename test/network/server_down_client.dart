@@ -1,6 +1,6 @@
+import 'package:chess_srs/src/network/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 /// A mock client simulating a lichess server outage.
 ///

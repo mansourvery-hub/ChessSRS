@@ -1,6 +1,6 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/utils/duration.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/utils/duration.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAppLocalizations extends Mock implements AppLocalizations {}

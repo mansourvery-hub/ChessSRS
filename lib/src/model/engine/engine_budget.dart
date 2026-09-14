@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/engine/engine_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/engine/engine_utils.dart';
 
 /// The smallest table worth giving an engine at all.
 const _kMinHashInMb = 16;

@@ -1,15 +1,15 @@
 import 'dart:io';
 
+import 'package:chess_srs/src/model/common/preloaded_data.dart';
+import 'package:chess_srs/src/model/engine/weights_service.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/common/preloaded_data.dart';
-import 'package:lichess_mobile/src/model/engine/weights_service.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 import 'package:multistockfish/multistockfish.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 

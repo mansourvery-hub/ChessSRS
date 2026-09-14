@@ -1,13 +1,13 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:chess_srs/src/model/engine/opening_book.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/engine/opening_book.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 import '../../network/fake_http_client_factory.dart';
 import '../../test_container.dart';

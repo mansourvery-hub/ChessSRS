@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:974101866555:android:91f3475b526b436bb8541e",
         "android_client_info": {
-          "package_name": "org.lichess.mobileV2"
+          "package_name": "org.chesssrs.app"
         }
       },
       "oauth_client": [
@@ -34,7 +34,7 @@
               "client_id": "974101866555-8ag66ua0p0pn1ab7u982i58a9iubhbod.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "org.lichess.mobileV2"
+                "bundle_id": "org.chesssrs.app"
               }
             }
           ]

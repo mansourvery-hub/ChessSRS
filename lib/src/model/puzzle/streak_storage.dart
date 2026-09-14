@@ -1,10 +1,10 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_streak.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_streak.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Provider for the streak storage for a given user.

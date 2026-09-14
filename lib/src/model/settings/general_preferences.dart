@@ -1,12 +1,12 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart'
+    show BoardPrefs, BoardTheme, boardPreferencesProvider;
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
+import 'package:chess_srs/src/theme.dart';
+import 'package:chess_srs/src/utils/json.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/settings/board_preferences.dart'
-    show BoardPrefs, BoardTheme, boardPreferencesProvider;
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
-import 'package:lichess_mobile/src/theme.dart';
-import 'package:lichess_mobile/src/utils/json.dart';
 import 'package:material_ui/material_ui.dart';
 
 part 'general_preferences.freezed.dart';

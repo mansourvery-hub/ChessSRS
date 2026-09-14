@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/analysis/opening_service.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/node.dart';
+import 'package:chess_srs/src/model/common/uci.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/analysis/opening_service.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/node.dart';
-import 'package:lichess_mobile/src/model/common/uci.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 import 'package:meta/meta.dart';
 
 /// Openings only exist for the first moves, so we don't look them up beyond this ply.

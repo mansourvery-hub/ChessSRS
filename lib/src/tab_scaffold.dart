@@ -1,17 +1,17 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/tab_navigation.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/view/home/home_tab_screen.dart';
+import 'package:chess_srs/src/view/learn/learn_tab_screen.dart';
+import 'package:chess_srs/src/view/more/more_tab_screen.dart';
+import 'package:chess_srs/src/view/puzzle/puzzle_tab_screen.dart';
+import 'package:chess_srs/src/view/watch/watch_tab_screen.dart';
+import 'package:chess_srs/src/widgets/background.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/tab_navigation.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/view/home/home_tab_screen.dart';
-import 'package:lichess_mobile/src/view/learn/learn_tab_screen.dart';
-import 'package:lichess_mobile/src/view/more/more_tab_screen.dart';
-import 'package:lichess_mobile/src/view/puzzle/puzzle_tab_screen.dart';
-import 'package:lichess_mobile/src/view/watch/watch_tab_screen.dart';
-import 'package:lichess_mobile/src/widgets/background.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Main scaffold that provides the bottom navigation bar and tab switching view.

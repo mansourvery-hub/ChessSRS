@@ -1,12 +1,12 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show MissingPluginException, PlatformException, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/settings/general_preferences.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 import 'package:logging/logging.dart';
 import 'package:sound_effect/sound_effect.dart';
 

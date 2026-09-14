@@ -1,16 +1,16 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/common/socket.dart';
+import 'package:chess_srs/src/model/tv/featured_player.dart';
+import 'package:chess_srs/src/model/tv/tv_channel.dart';
+import 'package:chess_srs/src/model/tv/tv_game.dart';
+import 'package:chess_srs/src/model/tv/tv_repository.dart';
+import 'package:chess_srs/src/model/tv/tv_socket_events.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/common/socket.dart';
-import 'package:lichess_mobile/src/model/tv/featured_player.dart';
-import 'package:lichess_mobile/src/model/tv/tv_channel.dart';
-import 'package:lichess_mobile/src/model/tv/tv_game.dart';
-import 'package:lichess_mobile/src/model/tv/tv_repository.dart';
-import 'package:lichess_mobile/src/model/tv/tv_socket_events.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
 
 typedef LiveTvChannelsState = IMap<TvChannel, TvGameSnapshot>;
 

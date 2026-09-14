@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:chess_srs/src/model/challenge/challenge.dart';
+import 'package:chess_srs/src/model/common/game.dart';
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/network/aggregator.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge.dart';
-import 'package:lichess_mobile/src/model/common/game.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/network/aggregator.dart';
-import 'package:lichess_mobile/src/network/http.dart';
 
 /// A provider for [ChallengeRepository].
 final challengeRepositoryProvider = Provider<ChallengeRepository>((Ref ref) {

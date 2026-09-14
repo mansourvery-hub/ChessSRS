@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/model/common/eval.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
 
 void main() {
   group('Eval.evalString (centipawn formatting)', () {

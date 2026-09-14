@@ -1,22 +1,22 @@
+import 'package:chess_srs/src/model/relation/online_friends.dart';
+import 'package:chess_srs/src/model/relation/relation_repository.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/user/user_context_menu.dart';
+import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
+import 'package:chess_srs/src/view/watch/tv_screen.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
+import 'package:chess_srs/src/widgets/list.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/shimmer.dart';
+import 'package:chess_srs/src/widgets/user.dart';
+import 'package:chess_srs/src/widgets/user_list_tile.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:lichess_mobile/src/model/relation/online_friends.dart';
-import 'package:lichess_mobile/src/model/relation/relation_repository.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/user/user_context_menu.dart';
-import 'package:lichess_mobile/src/view/user/user_or_profile_screen.dart';
-import 'package:lichess_mobile/src/view/watch/tv_screen.dart';
-import 'package:lichess_mobile/src/widgets/feedback.dart';
-import 'package:lichess_mobile/src/widgets/list.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/shimmer.dart';
-import 'package:lichess_mobile/src/widgets/user.dart';
-import 'package:lichess_mobile/src/widgets/user_list_tile.dart';
 import 'package:material_ui/material_ui.dart';
 
 final followingProvider = FutureProvider.autoDispose<IList<User>>((ref) {

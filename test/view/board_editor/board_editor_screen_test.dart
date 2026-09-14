@@ -1,15 +1,15 @@
+import 'package:chess_srs/src/model/board_editor/board_editor_controller.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/chess960.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
+import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
+import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
+import 'package:chess_srs/src/widgets/bottom_bar.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/board_editor/board_editor_controller.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/chess960.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
-import 'package:lichess_mobile/src/view/analysis/analysis_screen.dart';
-import 'package:lichess_mobile/src/view/board_editor/board_editor_screen.dart';
-import 'package:lichess_mobile/src/widgets/bottom_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../model/engine/fake_engine.dart';

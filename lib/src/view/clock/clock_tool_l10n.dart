@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/clock/clock_tool_controller.dart';
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/clock/clock_tool_controller.dart';
 
 extension ClockTimeControlTypeL10n on ClockTimeControlType {
   String label(AppLocalizations l10n) {

@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/app.dart';
+import 'package:chess_srs/src/network/connectivity.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/widgets/server_outage_display.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/app.dart';
-import 'package:lichess_mobile/src/network/connectivity.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/widgets/server_outage_display.dart';
 
 import '../../network/fake_http_client_factory.dart';
 import '../../network/server_down_client.dart';

@@ -1,6 +1,5 @@
+import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-
-import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
 
 part 'puzzle_angle.freezed.dart';
 

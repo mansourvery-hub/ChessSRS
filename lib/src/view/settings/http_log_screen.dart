@@ -1,13 +1,13 @@
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/log/http_log_paginator.dart';
+import 'package:chess_srs/src/model/log/http_log_storage.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
+import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
+import 'package:chess_srs/src/widgets/platform_search_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/log/http_log_paginator.dart';
-import 'package:lichess_mobile/src/model/log/http_log_storage.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_action_sheet.dart';
-import 'package:lichess_mobile/src/widgets/haptic_refresh_indicator.dart';
-import 'package:lichess_mobile/src/widgets/platform_search_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 class HttpLogScreen extends ConsumerStatefulWidget {

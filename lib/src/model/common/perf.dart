@@ -1,10 +1,10 @@
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/speed.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:deep_pick/deep_pick.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/widgets.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/speed.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
 
 /// Represents a lichess rating perf item
 enum Perf {

@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/widgets/rich_link_text.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/widgets/rich_link_text.dart';
 
 void main() {
   group('linkify', () {

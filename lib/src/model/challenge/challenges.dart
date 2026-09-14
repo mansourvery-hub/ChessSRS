@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/challenge/challenge.dart';
+import 'package:chess_srs/src/model/challenge/challenge_repository.dart';
+import 'package:chess_srs/src/model/challenge/challenge_service.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_repository.dart';
-import 'package:lichess_mobile/src/model/challenge/challenge_service.dart';
 
 final challengesProvider = AsyncNotifierProvider.autoDispose<Challenges, ChallengesList>(
   Challenges.new,

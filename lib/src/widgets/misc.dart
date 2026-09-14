@@ -1,7 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:flutter/gestures.dart';
-import 'package:lichess_mobile/src/styles/lichess_icons.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 

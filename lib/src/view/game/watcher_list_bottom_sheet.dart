@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/model/common/id.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
-import 'package:lichess_mobile/src/model/common/id.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/view/user/user_or_profile_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 class WatcherListBottomSheet extends StatelessWidget {

@@ -1,9 +1,10 @@
 import 'dart:io';
+
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/widgets/misc.dart';
 import 'package:flutter/widgets.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/widgets/misc.dart';
 
 /// A widget that displays a variant [Icon] followed by its translated label, sized and colored to
 /// match the surrounding text style, with a description below. Intended for use as a [labelBuilder]

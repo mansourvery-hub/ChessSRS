@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/l10n/l10n.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
 
 part 'local_game_clock.freezed.dart';
 

@@ -1,11 +1,11 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/speed.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer.dart';
+import 'package:chess_srs/src/model/explorer/opening_explorer_repository.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/speed.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer.dart';
-import 'package:lichess_mobile/src/model/explorer/opening_explorer_repository.dart';
 
 import '../../test_container.dart';
 import '../../test_helpers.dart';

@@ -1,5 +1,5 @@
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/widgets/pockets.dart';
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/widgets/pockets.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Returns the estimated height of what is left after removing the height of the board from the screen.

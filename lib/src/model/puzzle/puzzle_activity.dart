@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/puzzle/puzzle.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_providers.dart';
+import 'package:chess_srs/src/model/puzzle/puzzle_repository.dart';
+import 'package:chess_srs/src/utils/riverpod.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_providers.dart';
-import 'package:lichess_mobile/src/model/puzzle/puzzle_repository.dart';
-import 'package:lichess_mobile/src/utils/riverpod.dart';
 
 part 'puzzle_activity.freezed.dart';
 

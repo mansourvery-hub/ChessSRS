@@ -1,11 +1,11 @@
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/local_game_clock.dart';
+import 'package:chess_srs/src/model/common/time_increment.dart';
+import 'package:chess_srs/src/model/game/offline_computer_game.dart';
+import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/local_game_clock.dart';
-import 'package:lichess_mobile/src/model/common/time_increment.dart';
-import 'package:lichess_mobile/src/model/game/offline_computer_game.dart';
-import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
 
 part 'offline_computer_game_preferences.freezed.dart';
 part 'offline_computer_game_preferences.g.dart';

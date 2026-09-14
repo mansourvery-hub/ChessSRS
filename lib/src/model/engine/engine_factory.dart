@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/engine/engine.dart';
+import 'package:chess_srs/src/model/engine/engine_failure.dart';
+import 'package:chess_srs/src/model/engine/engine_slot.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
+import 'package:chess_srs/src/model/engine/engine_transport.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/engine/engine.dart';
-import 'package:lichess_mobile/src/model/engine/engine_failure.dart';
-import 'package:lichess_mobile/src/model/engine/engine_slot.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
-import 'package:lichess_mobile/src/model/engine/engine_transport.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('EngineFactory');

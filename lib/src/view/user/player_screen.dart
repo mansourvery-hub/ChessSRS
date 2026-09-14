@@ -1,18 +1,18 @@
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/relation/online_friends.dart';
+import 'package:chess_srs/src/model/user/user_repository_providers.dart';
+import 'package:chess_srs/src/utils/focus_detector.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
+import 'package:chess_srs/src/view/relation/friend_screen.dart';
+import 'package:chess_srs/src/view/user/leaderboard_widget.dart';
+import 'package:chess_srs/src/view/user/online_bots_screen.dart';
+import 'package:chess_srs/src/view/user/search_screen.dart';
+import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
+import 'package:chess_srs/src/widgets/platform_search_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/relation/online_friends.dart';
-import 'package:lichess_mobile/src/model/user/user_repository_providers.dart';
-import 'package:lichess_mobile/src/utils/focus_detector.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/account/rating_pref_aware.dart';
-import 'package:lichess_mobile/src/view/relation/friend_screen.dart';
-import 'package:lichess_mobile/src/view/user/leaderboard_widget.dart';
-import 'package:lichess_mobile/src/view/user/online_bots_screen.dart';
-import 'package:lichess_mobile/src/view/user/search_screen.dart';
-import 'package:lichess_mobile/src/view/user/user_or_profile_screen.dart';
-import 'package:lichess_mobile/src/widgets/platform.dart';
-import 'package:lichess_mobile/src/widgets/platform_search_bar.dart';
 import 'package:material_ui/material_ui.dart';
 
 class PlayerScreen extends ConsumerWidget {

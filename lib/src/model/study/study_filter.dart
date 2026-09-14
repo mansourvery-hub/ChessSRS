@@ -1,4 +1,4 @@
-import 'package:lichess_mobile/l10n/l10n.dart';
+import 'package:chess_srs/l10n/l10n.dart';
 
 enum StudyCategory {
   all,

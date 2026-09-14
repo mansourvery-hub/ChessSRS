@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io' show Platform;
 
+import 'package:chess_srs/src/binding.dart';
+import 'package:chess_srs/src/model/log/app_log_storage.dart';
+import 'package:chess_srs/src/model/settings/log_preferences.dart';
+import 'package:chess_srs/src/utils/lru_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/binding.dart';
-import 'package:lichess_mobile/src/model/log/app_log_storage.dart';
-import 'package:lichess_mobile/src/model/settings/log_preferences.dart';
-import 'package:lichess_mobile/src/utils/lru_list.dart';
 import 'package:logging/logging.dart';
 
 const _loggersToShowInTerminal = {'HttpClient', 'Socket', 'PositionEvaluator', 'Stockfish', 'Lc0'};

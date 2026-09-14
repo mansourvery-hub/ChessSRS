@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/common/eval.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
 import 'package:dartchess/dartchess.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
-import 'package:lichess_mobile/src/model/common/eval.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
 import 'package:multistockfish/multistockfish.dart';
 
 /// Maximum number of CPU cores available for engine use.

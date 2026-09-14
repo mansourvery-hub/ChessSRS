@@ -1,10 +1,10 @@
+import 'package:chess_srs/src/model/board_editor/board_editor_controller.dart';
+import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/utils/l10n_context.dart';
+import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:dartchess/dartchess.dart' hide Position;
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/board_editor/board_editor_controller.dart';
-import 'package:lichess_mobile/src/styles/styles.dart';
-import 'package:lichess_mobile/src/utils/l10n_context.dart';
-import 'package:lichess_mobile/src/widgets/adaptive_bottom_sheet.dart';
 import 'package:material_ui/material_ui.dart';
 
 class BoardEditorFilters extends ConsumerWidget {

@@ -1,13 +1,13 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/network/http.dart';
+import 'package:chess_srs/src/network/server_status.dart';
+import 'package:chess_srs/src/utils/rate_limit.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart';
-import 'package:lichess_mobile/src/constants.dart';
-import 'package:lichess_mobile/src/network/http.dart';
-import 'package:lichess_mobile/src/network/server_status.dart';
-import 'package:lichess_mobile/src/utils/rate_limit.dart';
 import 'package:logging/logging.dart';
 
 final _logger = Logger('Connectivity');

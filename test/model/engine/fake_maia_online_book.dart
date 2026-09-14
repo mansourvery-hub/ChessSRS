@@ -1,6 +1,6 @@
+import 'package:chess_srs/src/model/engine/opening_book.dart';
+import 'package:chess_srs/src/model/engine/opponent_level.dart';
 import 'package:dartchess/dartchess.dart';
-import 'package:lichess_mobile/src/model/engine/opening_book.dart';
-import 'package:lichess_mobile/src/model/engine/opponent_level.dart';
 
 /// A [MaiaOnlineBook] that answers from a map rather than from the explorer.
 ///

@@ -1,8 +1,8 @@
+import 'package:chess_srs/src/model/game/game.dart';
+import 'package:chess_srs/src/view/correspondence/offline_correspondence_game_screen.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/game/game.dart';
-import 'package:lichess_mobile/src/view/correspondence/offline_correspondence_game_screen.dart';
 
 import '../../example_data.dart';
 import '../../test_helpers.dart';

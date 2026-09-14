@@ -1,9 +1,9 @@
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
+import 'package:chess_srs/src/model/user/user.dart';
+import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/account/profile_screen.dart';
+import 'package:chess_srs/src/view/user/user_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
-import 'package:lichess_mobile/src/model/user/user.dart';
-import 'package:lichess_mobile/src/utils/navigation.dart';
-import 'package:lichess_mobile/src/view/account/profile_screen.dart';
-import 'package:lichess_mobile/src/view/user/user_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 class UserOrProfileScreen extends ConsumerWidget {

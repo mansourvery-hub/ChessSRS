@@ -1,12 +1,12 @@
+import 'package:chess_srs/src/db/database.dart';
 import 'package:collection/collection.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:lichess_mobile/src/db/database.dart';
 import 'package:sqflite/sqflite.dart';
 
-part 'http_log_storage.g.dart';
 part 'http_log_storage.freezed.dart';
+part 'http_log_storage.g.dart';
 
 /// Provides an instance of [HttpLogStorage] using Riverpod.
 final httpLogStorageProvider = FutureProvider<HttpLogStorage>((Ref ref) async {

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:async/src/stream_sink_transformer.dart';
-import 'package:lichess_mobile/src/network/socket.dart';
+import 'package:chess_srs/src/network/socket.dart';
 import 'package:material_ui/material_ui.dart' show debugPrint;
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';

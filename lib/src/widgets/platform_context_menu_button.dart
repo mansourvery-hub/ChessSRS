@@ -1,5 +1,5 @@
+import 'package:chess_srs/src/widgets/popover.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:lichess_mobile/src/widgets/popover.dart';
 import 'package:material_ui/material_ui.dart';
 
 const Color _kBorderColor = CupertinoDynamicColor.withBrightness(

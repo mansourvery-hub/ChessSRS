@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/model/engine/engine_diagnostics.dart';
+import 'package:chess_srs/src/model/engine/engine_failure.dart';
+import 'package:chess_srs/src/model/engine/engine_spec.dart';
+import 'package:chess_srs/src/model/engine/engine_transport.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lichess_mobile/src/model/engine/engine_diagnostics.dart';
-import 'package:lichess_mobile/src/model/engine/engine_failure.dart';
-import 'package:lichess_mobile/src/model/engine/engine_spec.dart';
-import 'package:lichess_mobile/src/model/engine/engine_transport.dart';
 import 'package:multistockfish/multistockfish.dart';
 
 /// The engine every [EngineFactory] built by `makeContainer` hands out.

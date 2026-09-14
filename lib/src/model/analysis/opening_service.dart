@@ -1,7 +1,7 @@
+import 'package:chess_srs/src/db/openings_database.dart';
+import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lichess_mobile/src/db/openings_database.dart';
-import 'package:lichess_mobile/src/model/common/chess.dart';
 import 'package:sqflite/sqflite.dart';
 
 const kOpeningAllowedVariants = ISetConst({

@@ -1,60 +1,50 @@
-# Lichess Mobile
+# ChessSRS
 
-Second iteration of the [Lichess mobile app](https://lichess.org/mobile).
+**A local-first chess repertoire + spaced-repetition trainer**, built as a
+fork of [Lichess Mobile](https://github.com/lichess-org/mobile) (GPL-3.0).
 
-## How to contribute
+> Give the player a position from their own repertoire and ask them to play
+> what they have learned.
 
-Contributions to this project are welcome!
+- Import your PGN studies (variations, comments, NAGs, custom FENs).
+- Review due positions on a Lichess-quality board.
+- Spaced repetition schedules what you see next — learned moves return when
+  they're due again.
+- Everything runs locally; no account, no network on the training path.
 
-If you want to contribute, please read the [contributing guide](./CONTRIBUTING.md).
+## Status
 
-If you are new to this project, you can [read the documentation](./docs) to get
-started. The [CLAUDE.md](./CLAUDE.md) is also a good resource to understand the
-codebase.
+Foundation phase — the app is the Lichess Mobile foundation with product
+specifics under active development. See `IMPLEMENTATION_PLAN.md`.
 
-## Setup
-
-tl;dr: Install Flutter, clone the repo, run in order:
-- `flutter pub get`
-- `dart run build_runner watch`
-- `flutter analyze --watch`
-
-and you're ready to code!
-
-See [the dev environment docs](./docs/setting_dev_env.md) for detailed instructions.
-
-## Running the app
-
-To run the app, you can use the following command:
+## Development
 
 ```bash
-# if not already done, run the code generation
-dart run build_runner build
-
-# run the app on all available devices
-flutter run -d all
+fvm flutter pub get
+dart run build_runner build     # after model/codegen changes
+fvm flutter analyze
+fvm flutter test
+fvm flutter run -d linux
 ```
 
-## Running tests
+`./verify` runs the quality gate (analyze + tests).
 
-To run the tests, you can use the following command:
+## Licensing
 
-```bash
-# if not already done, run the code generation
-dart run build_runner build
+ChessSRS is a fork of Lichess Mobile and is licensed under the **GNU GPL
+v3** — see `LICENSE` and `COPYING.md`. Lichess Mobile copyright and license
+notices are preserved.
 
-flutter test
-```
+Domain behavior is informed by studying (not copying)
+[listudy](https://github.com/ArneVogel/listudy) (AGPL-3.0, behavioral
+reference only) and [chessrs](https://github.com/ZackMurry/chessrs)
+(GPL-3.0). See `docs/INTEGRATION_MAP.md`.
 
-## Internationalisation
+## Documentation
 
-Do not edit the `app_en.arb` file by hand, this file is generated.
-For more information, see [Internationalisation](./docs/internationalisation.md).
-
-## Releasing
-
-Only for members of lichess team.
-
-1. Bump the pubspec.yaml version number. This can be in a PR making a change or a separate PR. Use semantic versioning to determine which part to increment. The version number after the + should also be incremented. For example 0.3.3+000303 with a patch should become 0.3.4+000304.
-2. Run workflow [Deploy to Play Store](https://github.com/lichess-org/mobile/actions/workflows/deploy_play_store.yml)
-3. [Publish on F-Droid](./docs/publish_fdroid.md)
+- `PRODUCT.md` — product definition
+- `MVP.md` — current scope
+- `ARCHITECTURE.md` — foundation + domain boundary
+- `QUALITY.md` — invariants
+- `CUT_PROPOSALS.md` — Lichess foundation trim map
+- `docs/INTEGRATION_MAP.md` — Listudy/chessrs extraction plan

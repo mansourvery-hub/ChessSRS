@@ -7,7 +7,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-const kLichessDatabaseName = 'lichess_mobile.db';
+const kLichessDatabaseName = 'chess_srs.db';
 
 const puzzleTTL = Duration(days: 60);
 const corresGameTTL = Duration(days: 60);

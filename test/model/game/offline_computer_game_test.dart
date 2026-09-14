@@ -1,8 +1,8 @@
 import 'dart:convert';
 
+import 'package:chess_srs/src/model/game/offline_computer_game.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lichess_mobile/src/model/game/offline_computer_game.dart';
 
 /// A saved game as it was serialised before there was more than one engine to play against.
 final legacyGameJson = {
