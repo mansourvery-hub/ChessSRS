@@ -37,14 +37,17 @@ before the core review loop is in the owner's hands.
 
 ## Phase 1 — Lichess Mobile foundation
 
-- [ ] **F1: Hard reset of working tree** — remove old `lib/`, `test/`,
+- [x] **F1: Hard reset of working tree** — remove old `lib/`, `test/`,
       `pubspec.*`, platform dirs, `start.sh`; copy Lichess Mobile source
-      (LICENSE + COPYING.md preserved). **No feature removal yet.**
-- [ ] **F2: Tooling baseline** — `fvm flutter pub get`, `build_runner build`,
-      recreate `./verify` (analyze + test), `.gitignore` adapted.
-      Gate: verify green.
-- [ ] **F3: Build & launch** — `fvm flutter run -d linux` launches; manual
-      smoke run; record runtime evidence. Gate: runtime pass.
+      (LICENSE + COPYING.md preserved). No feature removal.
+- [x] **F2: Tooling baseline** — FVM pinned to Flutter 3.47.3 (upstream
+      requirement), `pub get`, `build_runner build` (197 outputs), `./verify`
+      adapted. Gate: verify green.
+- [x] **F3: Build & launch** — Linux desktop launch had 11 startup errors
+      (Firebase/libsecret/quick_actions/home_widget/sound guards missing on
+      desktop targets); fixed fail-soft. Final: **zero startup errors**,
+      analyze 0 issues, tests 1570/1570, home tab renders with board +
+      navigation. Evidence: `docs/phase1_runtime_evidence.png` (2026-09-14).
 - [ ] **F4: App identity** — rename app (pubspec name, display name, Android
       namespace/ios bundle later), launcher icons, remove upstream-only
       tooling where trivial. Gate: verify + launch.
