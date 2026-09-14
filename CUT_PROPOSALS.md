@@ -291,4 +291,4 @@ or HTTP consumers outside auth and study-import paths.
 | Step | Feature | Commit | Date | Tests before → after |
 |---|---|---|---|---|
 | 1 / C9 | Learn tab + coordinate training | `f74627873` | 2026-09-14 | 1570 → 1564 |
-| 2 / UI | Lichess branding (donate, about, LichessMessage, welcome card) | pending | 2026-09-14 | 1564 → 1564 |
+| 2 / UI | Lichess branding (donate, about, LichessMessage, welcome card) | `1af79eab3` | 2026-09-14 | 1564 → 1564 |
