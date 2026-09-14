@@ -69,6 +69,12 @@ abstract class LichessBinding {
   /// This should be called only once before the app starts.
   Future<void> initializeFirebase();
 
+  /// Whether Firebase is available and initialized on this platform.
+  ///
+  /// Firebase is only initialized on Android and iOS; other targets (e.g.
+  /// Linux desktop) must not use the Firebase getters.
+  bool get isFirebaseSupported;
+
   /// Wraps [FirebaseMessaging.instance].
   FirebaseMessaging get firebaseMessaging;
 
@@ -144,6 +150,8 @@ class AppLichessBinding extends LichessBinding {
   Future<void> initializeFirebase() async {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+    _firebaseInitialized = true;
+
     if (kReleaseMode) {
       FlutterError.onError = firebaseCrashlytics.recordFlutterFatalError;
       PlatformDispatcher.instance.onError = (error, stack) {
@@ -156,6 +164,11 @@ class AppLichessBinding extends LichessBinding {
       };
     }
   }
+
+  bool _firebaseInitialized = false;
+
+  @override
+  bool get isFirebaseSupported => _firebaseInitialized;
 
   @override
   FirebaseMessaging get firebaseMessaging => FirebaseMessaging.instance;

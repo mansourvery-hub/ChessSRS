@@ -38,6 +38,12 @@ class QuickActionService {
   TargetPlatform get platform => defaultTargetPlatform;
 
   void start() {
+    // Quick actions are only supported on Android and iOS; the plugin has no
+    // implementation on desktop targets.
+    if (platform != TargetPlatform.android && platform != TargetPlatform.iOS) {
+      return;
+    }
+
     final recentSeeks = ref.read(recentGameSeekProvider).seeks;
     quickActions.initialize((String shortcutType) {
       final context = ref.read(currentNavigatorKeyProvider).currentContext;

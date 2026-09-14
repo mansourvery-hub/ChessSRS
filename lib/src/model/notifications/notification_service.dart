@@ -98,6 +98,12 @@ class NotificationService {
   /// This method should be called once the app is ready to receive notifications,
   /// and after [LichessBinding.initializeNotifications] has been called.
   Future<void> start() async {
+    // Firebase is only available on Android and iOS. On other targets (e.g.
+    // Linux desktop) the notification service has nothing to do.
+    if (!LichessBinding.instance.isFirebaseSupported) {
+      return;
+    }
+
     // Firebase auto-init is disabled at build time (`FirebaseMessagingAutoInitEnabled` in
     // Info.plist, `firebase_messaging_auto_init_enabled` in AndroidManifest.xml) so that nothing
     // is registered with Firebase before the app actually starts its notification service.

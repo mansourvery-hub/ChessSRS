@@ -55,11 +55,15 @@ Future<void> initializeApp() async {
     }
   } catch (e, st) {
     _logger.severe('Error during app initialization:', e, st);
-    LichessBinding.instance.firebaseCrashlytics.recordError(
-      e,
-      st,
-      reason: 'Error during app initialization',
-    );
+    // Firebase is only initialized on Android/iOS; guard against calling
+    // Crashlytics on platforms where it is unavailable (e.g. Linux desktop).
+    if (LichessBinding.instance.isFirebaseSupported) {
+      LichessBinding.instance.firebaseCrashlytics.recordError(
+        e,
+        st,
+        reason: 'Error during app initialization',
+      );
+    }
   } finally {
     await prefs.setBool('first_run', false);
   }

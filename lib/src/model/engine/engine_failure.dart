@@ -127,6 +127,11 @@ class EngineFailure {
 ///
 /// This never throws: telemetry must not interfere with the engine.
 Future<void> reportEngineFailure(EngineFailure failure) async {
+  // Firebase is only available on Android and iOS; there is nothing to report
+  // on other platforms.
+  if (!LichessBinding.instance.isFirebaseSupported) {
+    return;
+  }
   try {
     final crashlytics = LichessBinding.instance.firebaseCrashlytics;
     final diagnostics = failure.diagnostics;

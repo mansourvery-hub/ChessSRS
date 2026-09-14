@@ -91,9 +91,15 @@ Future<String> _readOrCreateSri() async {
     await SecureStorage.instance.write(key: kSRIStorageKey, value: newSri);
     return newSri;
   } on PlatformException catch (_) {
-    // Clear all secure storage if an error occurs because it probably means
-    // the key has been lost.
-    await SecureStorage.instance.deleteAll();
+    // Clear all secure storage if an error occurs because it probably means the
+    // key has been lost. If clearing fails too (e.g. no keyring service is
+    // available on the platform, as on some Linux desktop environments), fall
+    // back to an ephemeral in-memory SRI so the app can still start.
+    try {
+      await SecureStorage.instance.deleteAll();
+    } on PlatformException catch (_) {
+      // Ignore: secure storage is unusable on this platform/session.
+    }
     return genRandomString(12);
   }
 }

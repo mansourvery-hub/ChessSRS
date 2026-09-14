@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show MissingPluginException, PlatformException, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lichess_mobile/src/binding.dart';
 import 'package:lichess_mobile/src/model/common/chess.dart';
@@ -100,7 +100,14 @@ class SoundService {
     if (!isEnabled || finalVolume == 0.0) {
       return;
     }
-    _soundEffectPlugin.play(sound.name, volume: finalVolume);
+    try {
+      await _soundEffectPlugin.play(sound.name, volume: finalVolume);
+    } on PlatformException catch (_) {
+      // The sound plugin has no implementation on some platforms (e.g. Linux
+      // desktop); sounds are optional feedback and must never crash the app.
+    } on MissingPluginException catch (_) {
+      // Same as above: missing plugin implementation for this platform.
+    }
   }
 
   /// Play the capture sound for the given chess [variant].

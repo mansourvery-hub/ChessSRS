@@ -103,6 +103,11 @@ class TestLichessBinding extends LichessBinding {
   @override
   Future<void> initializeFirebase() async {}
 
+  /// Tests exercise the Crashlytics reporting paths, so the fake binding
+  /// reports Firebase as supported (its Crashlytics is a fake anyway).
+  @override
+  bool get isFirebaseSupported => true;
+
   @override
   FakeFirebaseCrashlytics get firebaseCrashlytics {
     return _firebaseCrashlytics ??= FakeFirebaseCrashlytics();

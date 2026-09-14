@@ -150,10 +150,14 @@ class _AppState extends ConsumerState<Application> {
     ref.read(broadcastServiceProvider).start();
     ref.read(recapServiceProvider).start();
 
-    if (Platform.isIOS) {
-      HomeWidget.setAppGroupId(_kIosAppGroupId);
+    // Home-screen widgets are only supported on iOS and Android; the plugin
+    // has no implementation on desktop platforms.
+    if (Platform.isIOS || Platform.isAndroid) {
+      if (Platform.isIOS) {
+        HomeWidget.setAppGroupId(_kIosAppGroupId);
+      }
+      HomeWidget.saveWidgetData<String>('lichessHost', kLichessHost);
     }
-    HomeWidget.saveWidgetData<String>('lichessHost', kLichessHost);
 
     if (Platform.isIOS) {
       ref.listenManual(kidModeProvider, (prev, state) {
