@@ -1,0 +1,135 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lichess_mobile/src/model/study/study_controller.dart';
+import 'package:lichess_mobile/src/utils/l10n_context.dart';
+import 'package:lichess_mobile/src/widgets/rich_link_text.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+class StudyGamebook extends StatelessWidget {
+  const StudyGamebook(this.options);
+
+  final StudyOptions options;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _Comment(options: options),
+          _Hint(options: options),
+        ],
+      ),
+    );
+  }
+}
+
+class _Comment extends ConsumerStatefulWidget {
+  const _Comment({required this.options});
+  final StudyOptions options;
+
+  @override
+  ConsumerState<_Comment> createState() => _CommentState();
+}
+
+class _CommentState extends ConsumerState<_Comment> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant _Comment oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _scrollController.jumpTo(0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(studyControllerProvider(widget.options)).requireValue;
+
+    final comment =
+        state.gamebookComment ??
+        switch (state.gamebookState) {
+          GamebookState.findTheMove => context.l10n.studyWhatWouldYouPlay,
+          GamebookState.correctMove => context.l10n.studyGoodMove,
+          GamebookState.incorrectMove => context.l10n.puzzleNotTheMove,
+          GamebookState.lessonComplete => context.l10n.studyYouCompletedThisLesson,
+          _ => '',
+        };
+
+    return Expanded(
+      child: Scrollbar(
+        controller: _scrollController,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 5),
+            child: RichLinkText(
+              text: comment,
+              style: const TextStyle(fontSize: 16),
+              onOpen: (link) {
+                launchUrl(Uri.parse(link.url));
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Hint extends ConsumerStatefulWidget {
+  const _Hint({required this.options});
+
+  final StudyOptions options;
+
+  @override
+  ConsumerState<_Hint> createState() => _HintState();
+}
+
+class _HintState extends ConsumerState<_Hint> {
+  bool showHint = false;
+
+  void _hideHint() {
+    setState(() {
+      showHint = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(
+      studyControllerProvider(widget.options).select((state) => state.value?.gamebookState),
+      (prev, next) {
+        if (prev == GamebookState.correctMove && next == GamebookState.findTheMove) {
+          _hideHint();
+        }
+      },
+    );
+
+    ref.listen(
+      studyControllerProvider(widget.options).select((state) => state.value?.currentChapter.id),
+      (prev, next) {
+        if (prev != next) {
+          _hideHint();
+        }
+      },
+    );
+
+    final hint = ref.watch(studyControllerProvider(widget.options)).requireValue.gamebookHint;
+    return hint == null
+        ? const SizedBox.shrink()
+        : SizedBox(
+            height: 40,
+            child: showHint
+                ? Center(child: Text(hint))
+                : TextButton(
+                    onPressed: () {
+                      setState(() {
+                        showHint = true;
+                      });
+                    },
+                    child: Text(context.l10n.getAHint),
+                  ),
+          );
+  }
+}

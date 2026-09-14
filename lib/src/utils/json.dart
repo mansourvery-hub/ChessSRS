@@ -1,0 +1,205 @@
+import 'dart:ui' show Locale;
+
+import 'package:deep_pick/deep_pick.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:json_annotation/json_annotation.dart';
+import 'package:lichess_mobile/src/model/common/uci.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('JsonUtils');
+
+/// Reads a JSON list of objects and maps it using the provided mapper function.
+IList<T> decodeObjectList<T>(Object? json, {required T? Function(Map<String, dynamic>) mapper}) {
+  if (json is! List<dynamic>) {
+    _logger.severe('Could not read JSON object as List: expected a list.');
+    throw Exception('Could not read JSON object as List: expected a list.');
+  }
+
+  final List<T> list = [];
+  for (final e in json) {
+    if (e is! Map<String, dynamic>) {
+      _logger.severe('Could not read JSON object as $T: expected an object.');
+      throw Exception('Could not read JSON object as $T: expected an object.');
+    }
+    try {
+      final mapped = mapper(e);
+      if (mapped != null) {
+        list.add(mapped);
+      }
+    } catch (e, st) {
+      _logger.severe('Could not read JSON object as $T:', e, st);
+      throw Exception('Could not read JSON object as $T: $e');
+    }
+  }
+  return IList(list);
+}
+
+class LocaleConverter implements JsonConverter<Locale?, Map<String, dynamic>?> {
+  const LocaleConverter();
+
+  @override
+  Locale? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return Locale.fromSubtags(
+      languageCode: json['languageCode'] as String,
+      countryCode: json['countryCode'] as String?,
+      scriptCode: json['scriptCode'] as String?,
+    );
+  }
+
+  @override
+  Map<String, dynamic>? toJson(Locale? locale) {
+    return locale != null
+        ? {
+            'languageCode': locale.languageCode,
+            'countryCode': locale.countryCode,
+            'scriptCode': locale.scriptCode,
+          }
+        : null;
+  }
+}
+
+extension UciExtension on Pick {
+  /// Matches a UciCharPair from a string.
+  UciCharPair asUciCharPairOrThrow() {
+    final value = required().asStringOrThrow();
+    return UciCharPair.fromStringId(value);
+  }
+
+  UciCharPair? asUciCharPairOrNull() {
+    if (value == null) return null;
+    try {
+      return asUciCharPairOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Matches a UciPath from a string.
+  UciPath asUciPathOrThrow() {
+    final value = required().asStringOrThrow();
+    return UciPath(value);
+  }
+
+  UciPath? asUciPathOrNull() {
+    if (value == null) return null;
+    try {
+      return asUciPathOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+extension TimeExtension on Pick {
+  /// Matches a DateTime from milliseconds since unix epoch.
+  DateTime asDateTimeFromMillisecondsOrThrow() {
+    final value = required().value;
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    throw PickException("value $value at $debugParsingExit can't be casted to DateTime");
+  }
+
+  /// Matches a DateTime from milliseconds since unix epoch.
+  DateTime? asDateTimeFromMillisecondsOrNull() {
+    if (value == null) return null;
+    try {
+      return asDateTimeFromMillisecondsOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Matches a Duration from minutes.
+  Duration asDurationFromMinutesOrThrow() {
+    final value = required().value;
+    if (value is Duration) {
+      return value;
+    }
+    if (value is int) {
+      return Duration(minutes: value);
+    }
+    throw PickException("value $value at $debugParsingExit can't be casted to Duration");
+  }
+
+  Duration? asDurationFromMinutesOrNull() {
+    if (value == null) return null;
+    try {
+      return asDurationFromMinutesOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Matches a Duration from seconds
+  Duration asDurationFromSecondsOrThrow() {
+    final value = required().value;
+    if (value is Duration) {
+      return value;
+    }
+    if (value is int) {
+      return Duration(seconds: value);
+    } else if (value is double) {
+      return Duration(milliseconds: (value * 1000).toInt());
+    }
+    throw PickException("value $value at $debugParsingExit can't be casted to Duration");
+  }
+
+  /// Matches a Duration from seconds
+  Duration? asDurationFromSecondsOrNull() {
+    if (value == null) return null;
+    try {
+      return asDurationFromSecondsOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Matches a Duration from centiseconds
+  Duration asDurationFromCentiSecondsOrThrow() {
+    final value = required().value;
+    if (value is Duration) {
+      return value;
+    }
+    if (value is int) {
+      return Duration(milliseconds: value * 10);
+    }
+    throw PickException("value $value at $debugParsingExit can't be casted to Duration");
+  }
+
+  Duration? asDurationFromCentiSecondsOrNull() {
+    if (value == null) return null;
+    try {
+      return asDurationFromCentiSecondsOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Matches a Duration from milliseconds
+  Duration asDurationFromMilliSecondsOrThrow() {
+    final value = required().value;
+    if (value is Duration) {
+      return value;
+    }
+    if (value is int) {
+      return Duration(milliseconds: value);
+    }
+    throw PickException("value $value at $debugParsingExit can't be casted to Duration");
+  }
+
+  Duration? asDurationFromMilliSecondsOrNull() {
+    if (value == null) return null;
+    try {
+      return asDurationFromMilliSecondsOrThrow();
+    } catch (_) {
+      return null;
+    }
+  }
+}

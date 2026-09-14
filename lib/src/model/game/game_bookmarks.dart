@@ -1,0 +1,113 @@
+import 'dart:async';
+
+import 'package:collection/collection.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
+import 'package:lichess_mobile/src/model/common/id.dart';
+import 'package:lichess_mobile/src/model/game/exported_game.dart';
+import 'package:lichess_mobile/src/model/game/game_repository.dart';
+
+part 'game_bookmarks.freezed.dart';
+
+const _nbPerPage = 20;
+
+/// A provider that paginates the game bookmarks for the current app user.
+final gameBookmarksPaginatorProvider =
+    AsyncNotifierProvider.autoDispose<GameBookmarksPaginator, GameBookmarksPaginatorState>(
+      GameBookmarksPaginator.new,
+      name: 'GameBookmarksPaginatorProvider',
+    );
+
+class GameBookmarksPaginator extends AsyncNotifier<GameBookmarksPaginatorState> {
+  final _list = <LightExportedGameWithPov>[];
+
+  GameRepository get _gameRepository => ref.read(gameRepositoryProvider);
+
+  @override
+  Future<GameBookmarksPaginatorState> build() async {
+    ref.onDispose(() {
+      _list.clear();
+    });
+
+    final authUser = ref.watch(authControllerProvider);
+
+    if (authUser == null) {
+      return GameBookmarksPaginatorState(
+        gameList: <LightExportedGameWithPov>[].toIList(),
+        isLoading: false,
+        hasMore: false,
+        hasError: false,
+      );
+    }
+
+    final games = _gameRepository.getBookmarkedGames(authUser);
+
+    _list.addAll(await games);
+
+    return GameBookmarksPaginatorState(
+      gameList: _list.toIList(),
+      isLoading: false,
+      hasMore: true,
+      hasError: false,
+    );
+  }
+
+  /// Fetches the next page of games.
+  Future<void> getNext() async {
+    if (!state.hasValue) return;
+
+    final authUser = ref.read(authControllerProvider);
+
+    if (authUser == null) return;
+
+    final currentVal = state.requireValue;
+    state = AsyncData(currentVal.copyWith(isLoading: true));
+    try {
+      final value = await _gameRepository.getBookmarkedGames(
+        authUser,
+        max: _nbPerPage,
+        until: _list.last.game.createdAt,
+      );
+      if (value.isEmpty) {
+        state = AsyncData(currentVal.copyWith(hasMore: false, isLoading: false));
+        return;
+      }
+
+      _list.addAll(value);
+
+      state = AsyncData(
+        currentVal.copyWith(
+          gameList: _list.toIList(),
+          isLoading: false,
+          hasMore: value.length == _nbPerPage,
+        ),
+      );
+    } catch (e) {
+      state = AsyncData(currentVal.copyWith(isLoading: false, hasError: true));
+    }
+  }
+
+  void removeBookmark(GameId id) {
+    if (!state.hasValue) return;
+
+    final gameList = state.requireValue.gameList;
+    final entry = gameList.firstWhereOrNull((e) => e.game.id == id);
+    if (entry == null) return;
+
+    final index = gameList.indexOf(entry);
+
+    state = AsyncData(state.requireValue.copyWith(gameList: gameList.removeAt(index)));
+  }
+}
+
+@freezed
+sealed class GameBookmarksPaginatorState with _$GameBookmarksPaginatorState {
+  const factory GameBookmarksPaginatorState({
+    required IList<LightExportedGameWithPov> gameList,
+    required bool isLoading,
+    required bool hasMore,
+    required bool hasError,
+  }) = _GameBookmarksPaginatorState;
+}

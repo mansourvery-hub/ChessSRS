@@ -1,0 +1,283 @@
+import 'package:collection/collection.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:dartchess/dartchess.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lichess_mobile/src/model/account/account_preferences.dart';
+import 'package:lichess_mobile/src/model/game/exported_game.dart';
+import 'package:lichess_mobile/src/styles/lichess_icons.dart';
+import 'package:lichess_mobile/src/styles/styles.dart';
+import 'package:lichess_mobile/src/utils/l10n.dart';
+import 'package:lichess_mobile/src/utils/l10n_context.dart';
+import 'package:lichess_mobile/src/utils/screen.dart';
+import 'package:lichess_mobile/src/view/game/game_common_widgets.dart';
+import 'package:lichess_mobile/src/view/game/game_list_tile.dart';
+import 'package:lichess_mobile/src/view/game/status_l10n.dart';
+import 'package:lichess_mobile/src/widgets/board_thumbnail.dart';
+import 'package:lichess_mobile/src/widgets/user.dart';
+import 'package:material_ui/material_ui.dart';
+
+/// A list tile that shows more detailed game info than [GameListTile].
+class GameListDetailTile extends ConsumerWidget {
+  const GameListDetailTile({required this.item, this.onPressedBookmark});
+
+  final LightExportedGameWithPov item;
+  final Future<void> Function(BuildContext context)? onPressedBookmark;
+
+  Side get mySide => item.pov;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (:game, pov: youAre) = item;
+    final me = youAre == Side.white ? game.white : game.black;
+    final opponent = youAre == Side.white ? game.black : game.white;
+    final isTablet = isTabletOrLarger(context);
+
+    final titleFontSize = isTablet ? 24.0 : 16.0;
+    final subtitleFontSize = isTablet ? 18.0 : 12.0;
+
+    final moveList = game.moves?.split(' ');
+
+    final dateStyle = TextStyle(
+      color: textShade(context, 0.5),
+      fontSize: subtitleFontSize,
+      fontWeight: FontWeight.w600,
+      letterSpacing: -0.2,
+      height: 1,
+    );
+
+    final scaledTitleFontSize = MediaQuery.textScalerOf(context).scale(titleFontSize);
+
+    return InkWell(
+      onLongPress: () {
+        showModalBottomSheet<void>(
+          context: context,
+          useRootNavigator: true,
+          isDismissible: true,
+          isScrollControlled: true,
+          builder: (context) =>
+              GameContextMenu(game: game, mySide: mySide, onPressedBookmark: onPressedBookmark),
+        );
+      },
+      onTap: () => openGameScreen(
+        context,
+        game: item.game,
+        orientation: item.pov,
+        loadingLastMove: game.lastMove,
+        lastMoveAt: game.lastMoveAt,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final boardSize = constraints.maxWidth / 3;
+            return Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                if (game.lastFen != null)
+                  BoardThumbnail(
+                    size: boardSize,
+                    fen: game.lastFen!,
+                    orientation: mySide,
+                    lastMove: game.lastMove,
+                  ),
+                Expanded(
+                  child: SizedBox(
+                    height: boardSize,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    // For an imported game, `lastMoveAt` is the import date, so
+                                    // prefer the PGN date if we have it.
+                                    (game.importDate != null
+                                            ? formatPgnDate(game.importDate!)
+                                            : relativeDate(context.l10n, game.lastMoveAt))
+                                        .toUpperCase(),
+                                    style: dateStyle,
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (me.analysis != null) ...[
+                                        Icon(
+                                          CupertinoIcons.chart_bar_alt_fill,
+                                          size: subtitleFontSize + 3,
+                                          color: textShade(context, 0.7),
+                                        ),
+                                        const SizedBox(width: 2),
+                                      ],
+                                      Icon(
+                                        game.isImported
+                                            ? Icons.cloud_upload_outlined
+                                            : game.perf.icon,
+                                        size: subtitleFontSize + 3,
+                                        color: textShade(context, 0.7),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              // An imported game is not tied to a lichess account: the point of
+                              // view is arbitrary, so show both players.
+                              if (game.isImported)
+                                Text(
+                                  context.l10n.resVsX(
+                                    game.white.fullName(context.l10n),
+                                    game.black.fullName(context.l10n),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: titleFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                )
+                              else
+                                UserFullNameWidget.player(
+                                  user: opponent.user,
+                                  name: opponent.name,
+                                  aiLevel: opponent.aiLevel,
+                                  rating: opponent.rating,
+                                  style: TextStyle(
+                                    fontSize: titleFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              if (game.arenaTournamentId != null) ...[
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      LichessIcons.tournament_cup,
+                                      size: subtitleFontSize + 1,
+                                      color: textShade(context, Styles.subtitleOpacity),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        game.arenaTournamentName ?? context.l10n.tournament,
+                                        maxLines: 2,
+                                        overflow: .ellipsis,
+                                        style: TextStyle(
+                                          color: textShade(context, Styles.subtitleOpacity),
+                                          fontSize: subtitleFontSize,
+                                          fontWeight: .w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (game.lastFen != null)
+                            Consumer(
+                              builder: (context, ref, child) {
+                                final showRatingAsync = ref.watch(showRatingsPrefProvider);
+                                return Text.rich(
+                                  TextSpan(
+                                    text: gameStatusL10n(
+                                      context,
+                                      variant: game.variant,
+                                      status: game.status,
+                                      lastPosition: Position.setupPosition(
+                                        game.variant.rule,
+                                        Setup.parseFen(game.lastFen!),
+                                      ),
+                                      winner: game.winner,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: subtitleFontSize,
+                                      color: game.winner == null
+                                          ? context.lichessColors.brag
+                                          : game.winner == mySide
+                                          ? context.lichessColors.good
+                                          : context.lichessColors.error,
+                                    ),
+                                    children: [
+                                      if (me.ratingDiff != null)
+                                        switch (showRatingAsync) {
+                                          AsyncData(value: ShowRatings.yes) => TextSpan(
+                                            text:
+                                                ' (${me.ratingDiff == 0
+                                                    ? '±'
+                                                    : me.ratingDiff! > 0
+                                                    ? '+'
+                                                    : ''}${me.ratingDiff})',
+                                          ),
+
+                                          _ => const TextSpan(),
+                                        },
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          if (isTablet || scaledTitleFontSize <= 26)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (game.opening != null || moveList?.isNotEmpty == true)
+                                  Text.rich(
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: textShade(context, Styles.subtitleOpacity),
+                                      fontSize: subtitleFontSize,
+                                    ),
+                                    TextSpan(
+                                      text: game.opening?.name,
+                                      style: const TextStyle(fontWeight: FontWeight.w600),
+                                      children: [
+                                        if (moveList != null && moveList.length > 1) ...[
+                                          const TextSpan(text: '\n'),
+                                          ...moveList
+                                              .take(isTablet ? 6 : 4)
+                                              .toList()
+                                              .asMap()
+                                              .entries
+                                              .slices(2)
+                                              .mapIndexed((index, moves) {
+                                                return TextSpan(
+                                                  text:
+                                                      '${index + 1}. ${moves.map((e) => '${e.value} ').join()}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.normal,
+                                                  ),
+                                                );
+                                              }),
+                                          TextSpan(
+                                            text: '\u2026 ${(moveList.length / 2).ceil()} moves',
+                                            style: const TextStyle(fontWeight: FontWeight.normal),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,650 @@
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:dartchess/dartchess.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
+import 'package:lichess_mobile/src/model/puzzle/puzzle.dart';
+import 'package:lichess_mobile/src/model/puzzle/puzzle_angle.dart';
+import 'package:lichess_mobile/src/model/puzzle/puzzle_providers.dart';
+import 'package:lichess_mobile/src/model/puzzle/puzzle_service.dart';
+import 'package:lichess_mobile/src/model/puzzle/puzzle_theme.dart';
+import 'package:lichess_mobile/src/model/puzzle/streak_storage.dart';
+import 'package:lichess_mobile/src/network/connectivity.dart';
+import 'package:lichess_mobile/src/styles/lichess_icons.dart';
+import 'package:lichess_mobile/src/styles/puzzle_icons.dart';
+import 'package:lichess_mobile/src/styles/styles.dart';
+import 'package:lichess_mobile/src/tab_navigation.dart';
+import 'package:lichess_mobile/src/utils/l10n_context.dart';
+import 'package:lichess_mobile/src/utils/screen.dart';
+import 'package:lichess_mobile/src/utils/string.dart';
+import 'package:lichess_mobile/src/view/account/account_menu.dart';
+import 'package:lichess_mobile/src/view/puzzle/dashboard_screen.dart';
+import 'package:lichess_mobile/src/view/puzzle/puzzle_history_screen.dart';
+import 'package:lichess_mobile/src/view/puzzle/puzzle_screen.dart';
+import 'package:lichess_mobile/src/view/puzzle/puzzle_themes_screen.dart';
+import 'package:lichess_mobile/src/view/puzzle/storm_screen.dart';
+import 'package:lichess_mobile/src/view/puzzle/streak_screen.dart';
+import 'package:lichess_mobile/src/widgets/board_preview.dart';
+import 'package:lichess_mobile/src/widgets/feedback.dart';
+import 'package:lichess_mobile/src/widgets/list.dart';
+import 'package:lichess_mobile/src/widgets/platform.dart';
+import 'package:lichess_mobile/src/widgets/shimmer.dart';
+import 'package:material_ui/material_ui.dart';
+
+const _kNumberOfHistoryItemsOnHandset = 8;
+const _kNumberOfHistoryItemsOnTablet = 16;
+
+class PuzzleTabScreen extends ConsumerWidget {
+  const PuzzleTabScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // The saved batches are only used to show the extra angle previews at the bottom of the list,
+    // so a storage failure must not prevent the rest of the tab from being displayed. The listener
+    // only fires on state changes, so the user is warned once per failed load.
+    ref.listen(savedBatchesProvider, (_, next) {
+      if (next case AsyncError(:final error, :final stackTrace)) {
+        debugPrint('SEVERE: [PuzzleTabScreen] could not load saved batches; $error\n$stackTrace');
+        showSnackBar(context, 'Could not load the puzzles.', type: SnackBarType.error);
+      }
+    });
+
+    switch (ref.watch(savedBatchesProvider)) {
+      case AsyncData(:final value):
+        return _MaterialTabBody(value);
+      case AsyncError():
+        return const _MaterialTabBody(IList.empty());
+      case _:
+        return const _PuzzleTabScaffold(body: CenterLoadingIndicator());
+    }
+  }
+}
+
+/// Scaffold of the puzzle tab, shared by all states of the [savedBatchesProvider].
+class _PuzzleTabScaffold extends ConsumerWidget {
+  const _PuzzleTabScaffold({required this.body});
+
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, _) {
+        if (!didPop) {
+          ref.read(currentBottomTabProvider.notifier).state = BottomTab.home;
+        }
+      },
+      child: PlatformScaffold(
+        appBar: PlatformAppBar(
+          title: Text(context.l10n.puzzles),
+          centerTitle: false,
+          titleTextStyle: Theme.of(context).platform == TargetPlatform.iOS
+              ? Theme.of(context).textTheme.headlineSmall
+              : null,
+          actions: const [AccountMenuButton()],
+        ),
+        body: body,
+      ),
+    );
+  }
+}
+
+class _MaterialTabBody extends ConsumerStatefulWidget {
+  const _MaterialTabBody(this.savedAngles);
+
+  final IList<PuzzleAngle> savedAngles;
+
+  @override
+  ConsumerState<_MaterialTabBody> createState() => _MaterialTabBodyState();
+}
+
+class _MaterialTabBodyState extends ConsumerState<_MaterialTabBody> {
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  late AnimatedListModel<PuzzleAngle> _angles;
+
+  @override
+  void initState() {
+    super.initState();
+    _angles = AnimatedListModel<PuzzleAngle>(
+      listKey: _listKey,
+      removedItemBuilder: _buildMainListRemovedItem,
+      initialItems: widget.savedAngles,
+      itemsOffset: 4,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _MaterialTabBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldKeys = ISet(oldWidget.savedAngles);
+    final newKeys = ISet(widget.savedAngles);
+
+    if (oldKeys != newKeys) {
+      final missings = oldKeys.difference(newKeys);
+      if (missings.isNotEmpty) {
+        for (final missing in missings) {
+          final index = _angles.indexOf(missing);
+          if (index != -1) {
+            _angles.removeAt(index);
+          }
+        }
+      }
+
+      final additions = newKeys.difference(oldKeys);
+      if (additions.isNotEmpty) {
+        for (final addition in additions) {
+          _angles.prepend(addition);
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isTablet = isTabletOrLarger(context);
+
+    Widget buildItem(BuildContext context, int index, Animation<double> animation) =>
+        _buildMainListItem(context, index, animation, (index) => _angles[index]);
+
+    return _PuzzleTabScaffold(
+      body: isTablet
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AnimatedList(
+                    key: _listKey,
+                    initialItemCount: _angles.length,
+                    controller: puzzlesScrollController,
+                    itemBuilder: buildItem,
+                  ),
+                ),
+                Expanded(child: ListView(children: const [PuzzleHistoryWidget()])),
+              ],
+            )
+          : AnimatedList(
+              key: _listKey,
+              controller: puzzlesScrollController,
+              initialItemCount: _angles.length,
+              itemBuilder: buildItem,
+            ),
+    );
+  }
+}
+
+Widget _buildMainListItem(
+  BuildContext context,
+  int index,
+  Animation<double> animation,
+  PuzzleAngle Function(int index) getAngle,
+) {
+  switch (index) {
+    case 0:
+      return const _PuzzleMenu();
+    case 1:
+      return Padding(
+        padding: Styles.horizontalBodyPadding,
+        child: Text(context.l10n.puzzleDesc, style: Styles.sectionTitle),
+      );
+    case 2:
+      return const DailyPuzzle();
+    case 3:
+      return PuzzleAnglePreview(
+        angle: const PuzzleTheme(PuzzleThemeKey.mix),
+        onTap: () {
+          Navigator.of(
+            context,
+            rootNavigator: true,
+          ).push(PuzzleScreen.buildRoute(angle: const PuzzleTheme(PuzzleThemeKey.mix)));
+        },
+      );
+    default:
+      final angle = getAngle(index);
+      return PuzzleAnglePreview(
+        angle: angle,
+        onTap: () {
+          Navigator.of(context, rootNavigator: true).push(PuzzleScreen.buildRoute(angle: angle));
+        },
+      );
+  }
+}
+
+Widget _buildMainListRemovedItem(
+  PuzzleAngle angle,
+  BuildContext context,
+  Animation<double> animation,
+) {
+  return SizeTransition(
+    sizeFactor: animation,
+    child: PuzzleAnglePreview(angle: angle),
+  );
+}
+
+class _PuzzleMenuListTile extends StatelessWidget {
+  const _PuzzleMenuListTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.badgeLabel,
+    this.onTap,
+    this.enabled = true,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? badgeLabel;
+  final VoidCallback? onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      enabled: enabled,
+      leading: Badge(
+        backgroundColor: ColorScheme.of(context).secondary,
+        textStyle: TextStyle(
+          color: ColorScheme.of(context).onSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+        isLabelVisible: badgeLabel != null,
+        label: (badgeLabel != null) ? Text(badgeLabel!) : null,
+        child: Icon(icon, color: ColorScheme.of(context).primary),
+      ),
+      title: Text(title, style: Styles.mainListTileTitle),
+      subtitle: Text(subtitle, maxLines: 3),
+      trailing: Theme.of(context).platform == TargetPlatform.iOS
+          ? const CupertinoListTileChevron()
+          : null,
+      onTap: onTap,
+    );
+  }
+}
+
+class _PuzzleMenu extends ConsumerWidget {
+  const _PuzzleMenu();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(isDeviceOnlineProvider);
+    final authUser = ref.watch(authControllerProvider);
+
+    return ListSection(
+      hasLeading: true,
+      children: [
+        _PuzzleMenuListTile(
+          icon: PuzzleIcons.opening,
+          title: context.l10n.puzzlePuzzleThemes,
+          subtitle: context.l10n.mobilePuzzleThemesSubtitle,
+          onTap: () {
+            Navigator.of(context).push(PuzzleThemesScreen.buildRoute());
+          },
+        ),
+        _PuzzleMenuListTile(
+          enabled: isOnline,
+          icon: LichessIcons.streak,
+          title: 'Puzzle Streak',
+          badgeLabel: switch (ref.watch(savedStreakScoreProvider)) {
+            AsyncData(:final value?) => value.toString(),
+            _ => null,
+          },
+          subtitle:
+              context.l10n.puzzleStreakDescription.characters
+                  .takeWhile((c) => c != '.')
+                  .toString() +
+              (context.l10n.puzzleStreakDescription.contains('.') ? '.' : ''),
+          onTap: isOnline
+              ? () {
+                  Navigator.of(context, rootNavigator: true).push(StreakScreen.buildRoute());
+                }
+              : null,
+        ),
+        _PuzzleMenuListTile(
+          enabled: isOnline,
+          icon: LichessIcons.storm,
+          title: 'Puzzle Storm',
+          subtitle: context.l10n.mobilePuzzleStormSubtitle,
+          onTap: isOnline
+              ? () {
+                  Navigator.of(context, rootNavigator: true).push(StormScreen.buildRoute());
+                }
+              : null,
+        ),
+        if (authUser != null) ...[
+          _PuzzleMenuListTile(
+            icon: Icons.assessment_outlined,
+            title: context.l10n.puzzlePuzzleDashboard,
+            subtitle: context.l10n.puzzlePuzzleDashboardDescription,
+            enabled: isOnline,
+            onTap: isOnline
+                ? () => Navigator.of(context).push(PuzzleDashboardScreen.buildRoute())
+                : null,
+          ),
+          _PuzzleMenuListTile(
+            icon: Icons.history_outlined,
+            title: context.l10n.puzzleHistory,
+            subtitle: 'Review your past puzzle attempts.',
+            enabled: isOnline,
+            onTap: isOnline
+                ? () => Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).push(PuzzleHistoryScreen.buildRoute())
+                : null,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class PuzzleHistoryWidget extends ConsumerWidget {
+  const PuzzleHistoryWidget({this.showHeader = true});
+
+  final bool showHeader;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncData = ref.watch(puzzleRecentActivityProvider);
+    final isTablet = isTabletOrLarger(context);
+    return asyncData.when(
+      data: (recentActivity) {
+        if (recentActivity == null) {
+          return const SizedBox.shrink();
+        }
+        if (recentActivity.isEmpty) {
+          return ListSection(
+            header: showHeader ? Text(context.l10n.puzzleHistory) : null,
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+                  child: Text(context.l10n.puzzleNoPuzzlesToShow),
+                ),
+              ),
+            ],
+          );
+        }
+
+        final maxItems = isTablet
+            ? _kNumberOfHistoryItemsOnTablet
+            : _kNumberOfHistoryItemsOnHandset;
+
+        return ListSection(
+          backgroundColor: Colors.transparent,
+          clipBehavior: Clip.none,
+          header: showHeader ? Text(context.l10n.puzzleHistory) : null,
+          onHeaderTap: showHeader
+              ? () => Navigator.of(context).push(PuzzleHistoryScreen.buildRoute())
+              : null,
+          children: [PuzzleHistoryPreview(recentActivity.take(maxItems).toIList(), maxRows: 5)],
+        );
+      },
+      error: (e, s) {
+        debugPrint('SEVERE: [PuzzleHistoryWidget] could not load puzzle history');
+        return const Padding(
+          padding: Styles.bodySectionPadding,
+          child: Text('Could not load Puzzle history.'),
+        );
+      },
+      loading: () => Shimmer(
+        child: ShimmerLoading(
+          isLoading: true,
+          child: ListSection.loading(itemsNumber: 5, header: true),
+        ),
+      ),
+    );
+  }
+}
+
+TextStyle _puzzlePreviewSubtitleStyle(BuildContext context) {
+  return TextStyle(
+    fontSize: 14.0,
+    color: DefaultTextStyle.of(context).style.color?.withValues(alpha: 0.6),
+  );
+}
+
+/// A widget that displays the daily puzzle.
+class DailyPuzzle extends ConsumerWidget {
+  const DailyPuzzle({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(isDeviceOnlineProvider);
+    final puzzle = ref.watch(dailyPuzzleProvider);
+
+    return puzzle.when(
+      data: (data) {
+        final preview = PuzzlePreview.fromPuzzle(data);
+        return SmallBoardPreview(
+          orientation: preview.orientation,
+          fen: preview.initialFen,
+          lastMove: preview.initialMove,
+          description: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(context.l10n.puzzlePuzzleOfTheDay, style: Styles.boardPreviewTitle),
+                  Text(
+                    context.l10n.puzzlePlayedXTimes(data.puzzle.plays).localizeNumbers(),
+                    style: _puzzlePreviewSubtitleStyle(context),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.today,
+                    size: 32,
+                    color: context.lichessColors.brag.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      data.puzzle.sideToMove == Side.white
+                          ? context.l10n.whitePlays
+                          : context.l10n.blackPlays,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: textShade(context, 0.8)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          onTap: () {
+            if (!context.mounted) return;
+            Navigator.of(context, rootNavigator: true).push(
+              PuzzleScreen.buildRoute(angle: const PuzzleTheme(PuzzleThemeKey.mix), puzzle: data),
+            );
+          },
+        );
+      },
+      loading: () => isOnline
+          ? const Shimmer(
+              child: ShimmerLoading(isLoading: true, child: SmallBoardPreview.loading()),
+            )
+          : const SizedBox.shrink(),
+      error: (error, _) {
+        return isOnline
+            ? const Padding(
+                padding: Styles.bodySectionPadding,
+                child: Text('Could not load the daily puzzle.'),
+              )
+            : const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+/// A widget that displays a preview of a puzzle angle batch.
+class PuzzleAnglePreview extends ConsumerWidget {
+  const PuzzleAnglePreview({required this.angle, this.onTap, super.key});
+
+  final PuzzleAngle angle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final puzzle = ref.watch(nextPuzzlePreviewProvider(angle));
+    final flatOpenings = ref.watch(flatOpeningsListProvider);
+    final isOnline = ref.watch(isDeviceOnlineProvider);
+    // Only useful offline: online the queue is refilled as puzzles are solved, so the number of
+    // puzzles left says nothing about what the user can still do.
+    final savedCount = ref.watch(savedBatchNbUnsolvedProvider(angle)).value ?? 0;
+
+    Widget buildPuzzlePreview(Puzzle? puzzle, {bool loading = false}) {
+      final preview = puzzle != null ? PuzzlePreview.fromPuzzle(puzzle) : null;
+
+      return loading
+          ? const Shimmer(
+              child: ShimmerLoading(isLoading: true, child: SmallBoardPreview.loading()),
+            )
+          : Slidable(
+              dragStartBehavior: DragStartBehavior.start,
+              enabled: angle != const PuzzleTheme(PuzzleThemeKey.mix),
+              endActionPane: ActionPane(
+                motion: const StretchMotion(),
+                children: [
+                  SlidableAction(
+                    icon: Icons.delete,
+                    onPressed: (context) async {
+                      final service = await ref.read(puzzleServiceProvider.future);
+                      if (context.mounted) {
+                        await service.deleteBatch(
+                          userId: ref.read(authControllerProvider)?.user.id,
+                          angle: angle,
+                        );
+                        ref.invalidate(savedBatchesProvider);
+                      }
+                    },
+                    spacing: 8.0,
+                    backgroundColor: context.lichessColors.error,
+                    foregroundColor: Colors.white,
+                    label: context.l10n.delete,
+                  ),
+                ],
+              ),
+              child: SmallBoardPreview(
+                orientation: preview?.orientation ?? Side.white,
+                fen: preview?.initialFen ?? kEmptyFEN,
+                lastMove: preview?.initialMove,
+                description: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: switch (angle) {
+                        PuzzleTheme(themeKey: final themeKey) => [
+                          Text(
+                            themeKey.l10n(context.l10n).name,
+                            style: Styles.boardPreviewTitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            themeKey.l10n(context.l10n).description,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              height: 1.2,
+                              fontSize: 12.0,
+                              color: DefaultTextStyle.of(
+                                context,
+                              ).style.color?.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                        PuzzleOpening(key: final openingKey) => [
+                          Text(
+                            flatOpenings.value
+                                    ?.firstWhere(
+                                      (o) => o.key == openingKey,
+                                      orElse: () => (
+                                        key: openingKey,
+                                        name: openingKey.replaceAll('_', ''),
+                                        count: 0,
+                                      ),
+                                    )
+                                    .name ??
+                                openingKey.replaceAll('_', ' '),
+                            style: Styles.boardPreviewTitle,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      },
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          switch (angle) {
+                            PuzzleTheme(themeKey: final themeKey) => themeKey.icon,
+                            PuzzleOpening() => PuzzleIcons.opening,
+                          },
+                          size: 34,
+                          color: DefaultTextStyle.of(context).style.color?.withValues(alpha: 0.6),
+                        ),
+                        const SizedBox(width: 8),
+                        if (puzzle != null)
+                          Flexible(
+                            child: Column(
+                              mainAxisSize: .min,
+                              crossAxisAlignment: .start,
+                              children: [
+                                Text(
+                                  puzzle.puzzle.sideToMove == Side.white
+                                      ? context.l10n.whitePlays
+                                      : context.l10n.blackPlays,
+                                  style: TextStyle(color: textShade(context, 0.9)),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (!isOnline && savedCount > 0)
+                                  Text(
+                                    '$savedCount',
+                                    style: TextStyle(
+                                      fontSize: Theme.of(context).textTheme.bodySmall?.fontSize,
+                                      color: textShade(context, Styles.subtitleOpacity),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ],
+                            ),
+                          )
+                        else
+                          Flexible(
+                            child: Text(
+                              isOnline
+                                  // The queue is only refilled when a puzzle is opened, so an empty
+                                  // one online is not a dead end.
+                                  ? 'Tap to fetch new puzzles.'
+                                  : 'No puzzles available, please go online to fetch them.',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                // Tappable even with an empty queue: the puzzle screen is what fetches new puzzles.
+                onTap: onTap,
+              ),
+            );
+    }
+
+    return switch (puzzle) {
+      AsyncData(:final value) => buildPuzzlePreview(value),
+      // A storage failure leaves nothing to preview, but the angle can still be opened.
+      AsyncError() => buildPuzzlePreview(null),
+      _ => buildPuzzlePreview(null, loading: true),
+    };
+  }
+}

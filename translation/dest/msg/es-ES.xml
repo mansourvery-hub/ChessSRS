@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="lichobileNewAppAvailable">¡Hay una nueva aplicación móvil de Lichess disponible!</string>
+  <string name="lichobileNewAppDownload" comment="The parameter links to https://lichess.org/app">Descarga la nueva aplicación oficial de Lichess en %s.</string>
+</resources>

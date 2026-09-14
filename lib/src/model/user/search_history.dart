@@ -1,0 +1,66 @@
+import 'dart:convert';
+
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lichess_mobile/src/binding.dart';
+import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+part 'search_history.g.dart';
+part 'search_history.freezed.dart';
+
+final searchHistoryProvider = NotifierProvider<SearchHistory, SearchHistoryState>(
+  SearchHistory.new,
+  name: 'SearchHistoryProvider',
+);
+
+class SearchHistory extends Notifier<SearchHistoryState> {
+  static const maxHistory = 10;
+
+  String _storageKey(AuthUser? authUser) => 'search.history.${authUser?.user.id ?? '**anon**'}';
+
+  SharedPreferencesWithCache get _prefs => LichessBinding.instance.sharedPreferences;
+
+  @override
+  SearchHistoryState build() {
+    final authUser = ref.watch(authControllerProvider);
+    final stored = _prefs.getString(_storageKey(authUser));
+
+    return stored != null
+        ? SearchHistoryState.fromJson(jsonDecode(stored) as Map<String, dynamic>)
+        : SearchHistoryState(history: IList());
+  }
+
+  Future<void> saveTerm(String term) async {
+    if (state.history.contains(term)) {
+      return;
+    }
+    final currentList = state.history.toList();
+    if (currentList.length >= maxHistory) {
+      currentList.removeLast();
+    }
+    currentList.insert(0, term);
+    final newState = SearchHistoryState(history: currentList.toIList());
+    final authUser = ref.read(authControllerProvider);
+    await _prefs.setString(_storageKey(authUser), jsonEncode(newState.toJson()));
+    if (!ref.mounted) return;
+    state = newState;
+  }
+
+  Future<void> clear() async {
+    final newState = state.copyWith(history: IList());
+    final prefKey = _storageKey(ref.read(authControllerProvider));
+    await _prefs.setString(prefKey, jsonEncode(newState.toJson()));
+    if (!ref.mounted) return;
+    state = newState;
+  }
+}
+
+@Freezed(fromJson: true, toJson: true)
+sealed class SearchHistoryState with _$SearchHistoryState {
+  const factory SearchHistoryState({required IList<String> history}) = _SearchHistoryState;
+
+  factory SearchHistoryState.fromJson(Map<String, dynamic> json) =>
+      _$SearchHistoryStateFromJson(json);
+}

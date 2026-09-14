@@ -1,0 +1,164 @@
+import 'package:collection/collection.dart';
+import 'package:dartchess/dartchess.dart';
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:lichess_mobile/src/model/common/chess.dart';
+import 'package:lichess_mobile/src/model/common/eval.dart';
+import 'package:lichess_mobile/src/utils/l10n_context.dart';
+import 'package:material_ui/material_ui.dart';
+
+typedef AcplChartParams = ({
+  /// The evaluation data points to display on the chart
+  IList<ExternalEval> acplChartData,
+
+  /// Game phase division information (opening/middlegame/endgame boundaries)
+  Division? division,
+
+  /// The ply number at the root of the analysis tree
+  int rootPly,
+
+  /// The ply number of the current position being viewed
+  int currentNodePly,
+
+  /// Whether the current node is on the main line
+  bool isOnMainline,
+
+  /// Callback when user taps/drags to jump to a specific node
+  void Function(int nodeIndex) onJumpToNode,
+});
+
+/// A chart displaying average centipawn loss (ACPL) analysis over the course of a game.
+///
+/// This widget shows the evaluation curve for the chess game, with lines indicating
+/// for game phases (opening, middlegame, endgame) and the current position.
+class AcplChart extends StatelessWidget {
+  const AcplChart({required this.params, super.key});
+
+  final AcplChartParams params;
+
+  @override
+  Widget build(BuildContext context) {
+    final mainLineColor = Theme.of(context).colorScheme.secondary;
+    final brightness = Theme.of(context).brightness;
+    final white = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final black = Theme.of(context).colorScheme.outline;
+    // Note: below/above are inverted in fl_chart
+    final belowLineColor = brightness == .light ? white : black;
+    final aboveLineColor = brightness == .light ? black : white;
+
+    final spots = params.acplChartData
+        .mapIndexed((i, e) => FlSpot(i.toDouble(), e.winningChances(Side.white)))
+        .toList(growable: false);
+
+    final divisionLines = _buildDivisionLines(context, params.division);
+
+    return Center(
+      child: AspectRatio(
+        aspectRatio: 2.5,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // The chart is drawn without axis titles or border, so the spots span the full
+              // width of the constraints.
+              void jumpToOffset(Offset offset) {
+                if (spots.length < 2) return;
+                final index = (offset.dx / constraints.maxWidth * (spots.length - 1)).round().clamp(
+                  0,
+                  spots.length - 1,
+                );
+                params.onJumpToNode(index);
+              }
+
+              return GestureDetector(
+                behavior: .opaque,
+                onTapUp: (details) => jumpToOffset(details.localPosition),
+                onHorizontalDragUpdate: (details) => jumpToOffset(details.localPosition),
+                child: LineChart(
+                  LineChartData(
+                    lineTouchData: const LineTouchData(enabled: false),
+                    minY: -1.0,
+                    maxY: 1.0,
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots,
+                        isCurved: false,
+                        barWidth: 1,
+                        color: mainLineColor.withValues(alpha: 0.7),
+                        aboveBarData: BarAreaData(
+                          show: true,
+                          color: aboveLineColor,
+                          applyCutOffY: true,
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: belowLineColor,
+                          applyCutOffY: true,
+                        ),
+                        dotData: const FlDotData(show: false),
+                      ),
+                    ],
+                    extraLinesData: ExtraLinesData(
+                      verticalLines: [
+                        if (params.isOnMainline)
+                          VerticalLine(
+                            x: (params.currentNodePly - 1 - params.rootPly).toDouble(),
+                            color: mainLineColor,
+                            strokeWidth: 1.0,
+                          ),
+                        ...divisionLines,
+                      ],
+                    ),
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: const FlTitlesData(show: false),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<VerticalLine> _buildDivisionLines(BuildContext context, Division? division) {
+    final divisionLines = <VerticalLine>[];
+
+    VerticalLine phaseVerticalBar(int x, String label) => VerticalLine(
+      x: x.toDouble(),
+      color: const Color(0xFF707070),
+      strokeWidth: 0.5,
+      label: VerticalLineLabel(
+        style: TextStyle(
+          fontSize: 10,
+          color: Theme.of(context).textTheme.labelMedium?.color?.withValues(alpha: 0.3),
+        ),
+        labelResolver: (line) => label,
+        padding: const EdgeInsets.only(right: 1),
+        alignment: .topRight,
+        direction: .vertical,
+        show: true,
+      ),
+    );
+
+    if (division?.middlegame != null) {
+      if (division!.middlegame! > 0) {
+        divisionLines.add(phaseVerticalBar(0, context.l10n.opening));
+        divisionLines.add(phaseVerticalBar(division.middlegame! - 1, context.l10n.middlegame));
+      } else {
+        divisionLines.add(phaseVerticalBar(0, context.l10n.middlegame));
+      }
+    }
+
+    if (division?.endgame != null) {
+      if (division!.endgame! > 0) {
+        divisionLines.add(phaseVerticalBar(division.endgame! - 1, context.l10n.endgame));
+      } else {
+        divisionLines.add(phaseVerticalBar(0, context.l10n.endgame));
+      }
+    }
+
+    return divisionLines;
+  }
+}

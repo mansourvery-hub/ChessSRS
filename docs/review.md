@@ -104,6 +104,21 @@ A more sophisticated algorithm such as FSRS may be introduced later. Migration m
 
 Review has no mandatory session boundary. Users can stop at any time.
 
+## Reference behavior (chessrs + Listudy)
+
+Proven behaviors translated into our contracts (see `docs/INTEGRATION_MAP.md`
+for extraction rules and licensing):
+
+- **chessrs practice queue**: prefetch a queue of due items; refill when one
+  remains; wrong answer → display the correct move on the board, brief pause,
+  reset; per-item board orientation from the repertoire side.
+- **Listudy training loop**: a correct user move is followed by an
+  auto-played opponent reply (weighted-random with anti-repetition); a wrong
+  move resets training for *all sibling replies*, not just the played one.
+- **Listudy key moves**: fully-learned prefix moves (training value 5) are
+  auto-played at line start — our equivalent is auto-traversal of non-due
+  decisions.
+
 ## Review state durability
 
 After a move result, persist the state locally before the item can be lost due to app closure where practical. Do not block the visible move interaction on network sync.

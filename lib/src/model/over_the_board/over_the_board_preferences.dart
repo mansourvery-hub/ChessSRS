@@ -1,0 +1,91 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:lichess_mobile/src/model/common/local_game_clock.dart';
+import 'package:lichess_mobile/src/model/common/time_increment.dart';
+import 'package:lichess_mobile/src/model/settings/preferences_storage.dart';
+
+part 'over_the_board_preferences.freezed.dart';
+part 'over_the_board_preferences.g.dart';
+
+final overTheBoardPreferencesProvider =
+    NotifierProvider<OverTheBoardPreferencesNotifier, OverTheBoardPrefs>(
+      OverTheBoardPreferencesNotifier.new,
+      name: 'OverTheBoardPreferencesProvider',
+    );
+
+class OverTheBoardPreferencesNotifier extends Notifier<OverTheBoardPrefs>
+    with PreferencesStorage<OverTheBoardPrefs> {
+  @override
+  @protected
+  PrefCategory get prefCategory => PrefCategory.overTheBoard;
+
+  @override
+  @protected
+  OverTheBoardPrefs get defaults => OverTheBoardPrefs.defaults;
+
+  @override
+  OverTheBoardPrefs fromJson(Map<String, dynamic> json) {
+    final migratedJson = Map<String, dynamic>.of(json);
+    if (migratedJson['timeControlType'] == 'realTime' ||
+        migratedJson['timeControlType'] == 'increment') {
+      migratedJson['timeControlType'] = 'clock';
+    }
+    return OverTheBoardPrefs.fromJson(migratedJson);
+  }
+
+  @override
+  OverTheBoardPrefs build() {
+    return fetch();
+  }
+
+  Future<void> toggleFlipPiecesAfterMove() {
+    return save(state.copyWith(flipPiecesAfterMove: !state.flipPiecesAfterMove));
+  }
+
+  Future<void> toggleSymmetricPieces() {
+    return save(state.copyWith(symmetricPieces: !state.symmetricPieces));
+  }
+
+  Future<void> setTimeControlType(TimeControlType type) {
+    return save(state.copyWith(timeControlType: type));
+  }
+
+  Future<void> setTimeIncrement(TimeIncrement timeIncrement) {
+    return save(state.copyWith(timeIncrement: timeIncrement));
+  }
+
+  Future<void> toggleBlindfoldMode() {
+    return save(state.copyWith(blindfoldMode: !state.blindfoldMode));
+  }
+}
+
+@Freezed(fromJson: true, toJson: true)
+sealed class OverTheBoardPrefs with _$OverTheBoardPrefs implements Serializable {
+  const OverTheBoardPrefs._();
+
+  static const _defaultTimeIncrement = TimeIncrement(300, 3);
+
+  const factory OverTheBoardPrefs({
+    required bool flipPiecesAfterMove,
+    required bool symmetricPieces,
+    @Default(TimeControlType.unlimited) TimeControlType timeControlType,
+    @Default(OverTheBoardPrefs._defaultTimeIncrement) TimeIncrement timeIncrement,
+    @Default(false) bool blindfoldMode,
+  }) = _OverTheBoardPrefs;
+
+  static const defaults = OverTheBoardPrefs(
+    flipPiecesAfterMove: false,
+    symmetricPieces: false,
+    timeControlType: TimeControlType.unlimited,
+    timeIncrement: _defaultTimeIncrement,
+    blindfoldMode: false,
+  );
+
+  factory OverTheBoardPrefs.fromJson(Map<String, dynamic> json) {
+    try {
+      return _$OverTheBoardPrefsFromJson(json);
+    } catch (e) {
+      return defaults;
+    }
+  }
+}

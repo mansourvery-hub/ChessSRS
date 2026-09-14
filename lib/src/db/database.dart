@@ -1,0 +1,250 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+const kLichessDatabaseName = 'lichess_mobile.db';
+
+const puzzleTTL = Duration(days: 60);
+const corresGameTTL = Duration(days: 60);
+const gameTTL = Duration(days: 90);
+const chatReadMessagesTTL = Duration(days: 180);
+const httpLogTTL = Duration(days: 7);
+const appLogTTL = Duration(days: 7);
+
+const kStorageAnonId = '**anonymous**';
+
+final _logger = Logger('Database');
+
+/// A provider for the app [Database].
+final databaseProvider = FutureProvider<Database>((Ref ref) async {
+  if (Platform.isLinux) {
+    databaseFactory = databaseFactoryFfi;
+  }
+  final dbPath = await _databasePath;
+  return await openAppDatabase(databaseFactory, dbPath);
+}, name: 'DatabaseProvider');
+
+/// Returns the database path including filename.
+Future<String> get _databasePath async {
+  if (Platform.isLinux) {
+    final directory = await getApplicationSupportDirectory();
+    return join(directory.path, kLichessDatabaseName);
+  }
+
+  return join(await getDatabasesPath(), kLichessDatabaseName);
+}
+
+Future<int?> _getDatabaseVersion(Database db) async {
+  try {
+    final versionStr = (await db.rawQuery('SELECT sqlite_version()')).first.values.first.toString();
+    final versionCells = versionStr.split('.').map((i) => int.parse(i)).toList();
+    return versionCells[0] * 100000 + versionCells[1] * 1000 + versionCells[2];
+  } catch (e, st) {
+    _logger.warning('Error occurred while fetching SQLite version:', e, st);
+    return null;
+  }
+}
+
+/// A provider that returns the size of the database file in bytes.
+final getDbSizeInBytesProvider = FutureProvider<int>((Ref ref) async {
+  final dbPath = join(await getDatabasesPath(), kLichessDatabaseName);
+  final dbFile = File(dbPath);
+
+  return await dbFile.length();
+}, name: 'GetDbSizeInBytesProvider');
+
+/// Opens the app database.
+Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
+  return dbFactory.openDatabase(
+    path,
+    options: OpenDatabaseOptions(
+      version: 5,
+      onConfigure: (db) async {
+        final version = await _getDatabaseVersion(db);
+        _logger.info('SQLite version: $version');
+        if (version != null && version >= 307000) {
+          _logger.info('Enabling WAL journal mode');
+          await db.rawQuery('PRAGMA journal_mode=WAL');
+        }
+      },
+      onOpen: (db) async {
+        await db.transaction((txn) async {
+          await Future.wait([
+            _deleteOldEntries(txn, 'puzzle', puzzleTTL),
+            _deleteOldEntries(txn, 'correspondence_game', corresGameTTL),
+            _deleteOldEntries(txn, 'game', gameTTL),
+            _deleteOldEntries(txn, 'chat_read_messages', chatReadMessagesTTL),
+            _deleteOldEntries(txn, 'http_log', httpLogTTL),
+            _deleteOldEntries(txn, 'app_log', appLogTTL),
+          ]);
+        });
+      },
+      onCreate: (db, version) async {
+        final batch = db.batch();
+        _createPuzzleBatchTableV3(batch);
+        _createPuzzleTableV1(batch);
+        _createCorrespondenceGameTableV1(batch);
+        _createChatReadMessagesTableV1(batch);
+        _createGameTableV2(batch);
+        _createHttpLogTableV4(batch);
+        _createAppLogTableV5(batch);
+        await batch.commit();
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        final batch = db.batch();
+        if (oldVersion == 1) {
+          _createGameTableV2(batch);
+        }
+        if (oldVersion < 3) {
+          _updatePuzzleBatchTableToV3(batch);
+        }
+        if (oldVersion < 4) {
+          _createHttpLogTableV4(batch);
+        }
+        if (oldVersion < 5) {
+          _createAppLogTableV5(batch);
+        }
+        await batch.commit();
+      },
+      onDowngrade: onDatabaseDowngradeDelete,
+    ),
+  );
+}
+
+void _createPuzzleBatchTableV3(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS puzzle_batchs');
+  batch.execute('''
+    CREATE TABLE puzzle_batchs(
+      userId TEXT NOT NULL,
+      angle TEXT NOT NULL,
+      lastModified TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      data TEXT NOT NULL,
+      PRIMARY KEY (userId, angle)
+    )
+    ''');
+}
+
+void _updatePuzzleBatchTableToV3(Batch batch) {
+  batch.execute('''
+    CREATE TABLE puzzle_batchs_new(
+      userId TEXT NOT NULL,
+      angle TEXT NOT NULL,
+      lastModified TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      data TEXT NOT NULL,
+      PRIMARY KEY (userId, angle)
+    )
+    ''');
+  batch.execute('''
+    INSERT INTO puzzle_batchs_new(userId, angle, data)
+    SELECT userId, angle, data FROM puzzle_batchs
+    ''');
+  batch.execute('DROP TABLE puzzle_batchs');
+  batch.execute('ALTER TABLE puzzle_batchs_new RENAME TO puzzle_batchs');
+}
+
+void _createPuzzleTableV1(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS puzzle');
+  batch.execute('''
+    CREATE TABLE puzzle(
+    puzzleId TEXT NOT NULL,
+    lastModified TEXT NOT NULL,
+    data TEXT NOT NULL,
+    PRIMARY KEY (puzzleId)
+  )
+    ''');
+}
+
+void _createCorrespondenceGameTableV1(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS correspondence_game');
+  batch.execute('''
+    CREATE TABLE correspondence_game(
+    gameId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    lastModified TEXT NOT NULL,
+    data TEXT NOT NULL,
+    PRIMARY KEY (gameId)
+  )
+    ''');
+}
+
+void _createGameTableV2(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS game');
+  batch.execute('''
+    CREATE TABLE game(
+    gameId TEXT NOT NULL,
+    userId TEXT NOT NULL,
+    lastModified TEXT NOT NULL,
+    data TEXT NOT NULL,
+    PRIMARY KEY (gameId)
+  )
+    ''');
+}
+
+void _createChatReadMessagesTableV1(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS chat_read_messages');
+  batch.execute('''
+    CREATE TABLE chat_read_messages(
+    id TEXT NOT NULL,
+    lastModified TEXT NOT NULL,
+    nbRead INTEGER NOT NULL,
+    PRIMARY KEY (id)
+  )
+    ''');
+}
+
+void _createHttpLogTableV4(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS http_log');
+  batch.execute('''
+    CREATE TABLE http_log(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    httpLogId TEXT NOT NULL UNIQUE,
+    requestDateTime TEXT NOT NULL,
+    requestMethod TEXT NOT NULL,
+    requestUrl TEXT NOT NULL,
+    responseCode INTEGER,
+    responseDateTime TEXT,
+    lastModified TEXT NOT NULL,
+    errorMessage TEXT
+  )
+    ''');
+}
+
+void _createAppLogTableV5(Batch batch) {
+  batch.execute('DROP TABLE IF EXISTS app_log');
+  batch.execute('''
+    CREATE TABLE app_log(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    logTime TEXT NOT NULL,
+    loggerName TEXT NOT NULL,
+    levelValue INTEGER NOT NULL,
+    levelName TEXT NOT NULL,
+    message TEXT NOT NULL,
+    error TEXT,
+    stackTrace TEXT,
+    lastModified TEXT NOT NULL
+  )
+    ''');
+}
+
+Future<void> _deleteOldEntries(DatabaseExecutor db, String table, Duration ttl) async {
+  final date = DateTime.now().subtract(ttl);
+
+  if (!await _doesTableExist(db, table)) {
+    return;
+  }
+
+  await db.delete(table, where: 'lastModified < ?', whereArgs: [date.toIso8601String()]);
+}
+
+Future<bool> _doesTableExist(DatabaseExecutor db, String table) async {
+  final tableExists = await db.rawQuery(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='$table'",
+  );
+
+  return tableExists.isNotEmpty;
+}

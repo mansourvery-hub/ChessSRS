@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="account" comment="The account screen title.">الحساب</string>
+  <string name="accountPreferences" comment="Displayed on settings screen. This is for preferences synced with website on the server.">تفضيلات الحساب</string>
+  <string name="accountPreferencesHelp" comment="Help displayed on the account preferences screen.">يتم تطبيق هذه التفضيلات على حساب Lichess الخاص بك وسيتم استخدامها عبر جميع الأجهزة.</string>
+  <string name="allGames" comment="This is shown instead of 'Number of Games' if the number could not be loaded">جميع المباريات</string>
+  <string name="areYouSure" comment="This is shown in confirmation dialogs.">هل أنت متأكد؟</string>
+  <string name="boardSettings" comment="This is shown in the app main settings screen, which opens a screen dedicated to chess board settings.">إعدادات الرقعة</string>
+  <string name="cancelTakebackOffer" comment="Menu action that cancels a previous takeback offer">إلغاء عرض الاسترجاع</string>
+  <string name="clearButton" comment="Buttons that clear things, e.g. recent searches. Should be short.">محو</string>
+  <string name="correspondenceClearSavedMove" comment="This is shown in the correspondence game screen. Will clear the saved move.">مسح النقلات المحفوظة</string>
+  <string name="customGameJoinAGame" comment="This is shown in the custom game screen. Will open the game lobby.">الإنضمام إلى مباراة</string>
+  <string name="feedbackButton" comment="Shown in the settings, pressing this button will redirect to the lichess contact site.">الملاحظات</string>
+  <string name="goodEvening" comment="A greeting that is shown on the app's home page, e.g. 'Good evening, GM Magnus' (%s is substituted with the user's name). This is associated with a 'moon' icon and is displayed only between 18:00 and 06:00 local time. If the language you're translating into does not have this time based concept, just use a generic formula (like 'Hello' in english).">مساء الخيـر، %s</string>
+  <string name="goodEveningWithoutName" comment="A greeting that is shown on the app's home page, when the user is not logged in. This is associated with a 'moon' icon and is displayed only between 18:00 and 06:00 local time. If the language you're translating into does not have this time based concept, just use a generic formula (like 'Hello' in english).">مساء الخيـر</string>
+  <string name="goodDay" comment="A greeting that is shown on the app's home page, e.g. 'Good day, GM Magnus' (%s is substituted with the user's name). This is associated with a 'sun' icon and is displayed only between 06:00 and 18:00 local time. If the language you're translating into does not have this time based concept, just use a generic formula (like 'Hello' in english).">يـوم طيـب، %s</string>
+  <string name="goodDayWithoutName" comment="A greeting that is shown on the app's home page, when the user is not logged in. This is associated with a 'sun' icon and is displayed only between 06:00 and 18:00 local time. If the language you're translating into does not have this time based concept, just use a generic formula (like 'Hello' in english).">يـوم طيـب</string>
+  <string name="hideVariation" comment="Shown in the analysis screen.">إخفاء التسلسل</string>
+  <string name="homeTab" comment="The tab in bottom navigation bar. Must be very short (10 characters max) to avoid ugly text shifting issues." maxLength="10">الرئيسية</string>
+  <string name="liveStreamers" comment="This is shown as a heading in the streamer screen">البثوث المباشرة</string>
+  <string name="mustBeLoggedIn" comment="This is shown when the user tries to access a feature that requires login.">لعرض هذه الصفحة، قم بتسجيل الدخول.</string>
+  <string name="nbOfflinePuzzles" comment="Label for the puzzle setting that controls how many puzzles are downloaded and kept available for offline play.">ألغاز دون اتصال بالإنترنت</string>
+  <string name="newGame" comment="New game button in OTB and play against offline computer features">مباراة جديدة</string>
+  <string name="noSearchResults" comment="This is shown when the search did not return any results.">لا توجد نتائج</string>
+  <string name="notAllFeaturesAreAvailable" comment="This is shown in the welcome message when the app is first installed">يُرجى ملاحظة أن بعض الميزات من التطبيق القديم أو الموقع الإلكتروني غير متوفّرة حاليًّا، ولكننا نضيف ميزات جديدة باستمرار.</string>
+  <string name="notFollowingAnyUser" comment="This is shown in the list that contains user followed by the user. Displayed if the user does not follow any users.">أنت لا تتابع أي مستخدمين.</string>
+  <string name="okButton" comment="This is used in varius confirmations dialogs. Translation should be short.">موافق</string>
+  <string name="overTheBoard" comment="Used in the main play menu to launch the Over the board game mode.">على الرقعة</string>
+  <string name="playersMatchingSearchTerm" comment="This is shown when searching for a player. %s is the string that user entered in the search bar">لاعبين مع</string>
+  <string name="positionLeft" comment="Appears in the board settings screen to indicate clock position.">يسار</string>
+  <string name="positionRight" comment="Appears in the board settings screen to indicate clock position.">يمين</string>
+  <string name="prefMagnifyDraggedPiece" comment="Title of a setting the settings screen. When enabled, the piece being dragged around the board will be magnified.">تكبير القطعة المسحوبة</string>
+  <string name="puzzleStormConfirmEndRun" comment="Text of the confirmation dialog when ending a puzzle storm run">هل تريد إنهاء هذه الجولة؟</string>
+  <string name="puzzleStormFilterNothingToShow" comment="Shown when the user has no puzzles matching the filter criteria">لا يوجد شيء لعرضه، يُرجى تغيير المرشّحات</string>
+  <string name="puzzleStormNothingToShow" comment="Shown when the user has not played any puzzle storm runs yet. Prefer to not translate Puzzle Storm.">لا يوجد شيء لعرضه. جرّب لعب بعض الجولات في ”عاصفة الألغاز“.</string>
+  <string name="puzzleStormSubtitle" comment="Shown as a description for the 'Puzzle Storm' mode">حُلّ أكبر عدد ممكن من الألغاز في ٣ دقائق.</string>
+  <string name="puzzleStreakAbortWarning" comment="Shown as a subtitle in the confirmation dialog for aborting puzzle streak. Prefer to not translate Puzzle Streak">ستفقد سلسلة انتصاراتك الحالية وسيتم حفظ نتيجتك.</string>
+  <string name="puzzleThemesSubtitle" comment="Shown as a description for the 'Puzzle themes' mode">العب الألغاز من مقدّماتك المفضلة، أو اختر موضوعًا.</string>
+  <string name="puzzlesTab" comment="The tab in bottom navigation bar. Must be very short (10 characters max) to avoid ugly text shifting issues." maxLength="10">الألغاز</string>
+  <string name="recentSearches" comment="Title of the recent searches section in the search screen.">عمليات البحث الأخيرة</string>
+  <string name="removeBookmark" comment="Label of the action of removing a game bookmark. Used in various places of the app where the space in constrained so this should remain short (eg: don't translate as 'Remove game bookmark', keep the essential).">إزالة الإشارة المرجعية</string>
+  <string name="serverAnalysis" comment="Title of a switch in analysis settings, used to toggle the server analysis display.">تحليل الخادم</string>
+  <string name="settingsClockPosition" comment="Clock position entry in main settings screen.">موضع الساعة</string>
+  <string name="settingsCustomBackgroundPresets" comment="Displayed on the custom background theme screen.">الإعدادات المسبقة</string>
+  <string name="settingsDraggedPieceTarget" comment="Dragged piece target entry in main settings screen.">هدف القطعة المسحوبة</string>
+  <string name="settingsDraggedTargetCircle" comment="Dragged target settings circle type. One of the possible values of 'Dragged piece target' settings.">دائرة</string>
+  <string name="settingsDraggedTargetSquare" comment="Dragged target settings square type. One of the possible values of 'Dragged piece target' settings.">مربع</string>
+  <string name="settingsHomeWidgets" comment="Settings entry. Allow to enable which widgets are displayed on the home screen.">الأدوات للشاشة الرئيسة</string>
+  <string name="settingsImmersiveMode" comment="Entry in the settings. When enabled, the app will hide the navigation bar and status bar.">وضع ملء الشاشة</string>
+  <string name="settingsImmersiveModeSubtitle" comment="Subtitle for the 'Immersive Mode' setting. Gives an explanation of what the button does.">إخفاء واجهة المستخدم في أثناء اللعب. استخدم هذه الخاصية إذا كانت إيماءات التنقل في النظام على حواف الشاشة تزعجك. ينطبق هذا على شاشات الألعاب والألغاز.</string>
+  <string name="settingsMaterialDifferenceCapturedPieces" comment="A value of the material difference settings choice (to show all captured pieces instead of material difference).">القطع المأسورة</string>
+  <string name="settingsPickAnImage" comment="Displayed in theme background choice screen, to allow user to pick and image from the image library as app custom background.">اختر صورة</string>
+  <string name="settingsPickAnImageHelp" comment="Displayed in theme background choice screen, to help user pick an image.">لا تعمل الخلفية المخصّصة إلا في الوضع الداكن. يُنصح باستخدام صورة داكنة.</string>
+  <string name="settingsPickAnImageBlur" comment="Displayed in theme background choice screen, to blur the chosen image.">طمس الصورة</string>
+  <string name="settingsPickAnImageHideBoard" comment="Displayed in theme background choice screen, to hide the board when viewing chosen image.">إخفاء اللوحة</string>
+  <string name="settingsPickAnImageShowBoard" comment="Displayed in theme background choice screen, to show the board when viewing chosen image.">إظهار اللوحة</string>
+  <string name="settingsPickAnImageSwipeToDisplay" comment="Displayed in theme background choice screen, when viewing colors presets to display other colors backgrounds.">إسحب لعرض خلفيات أخرى</string>
+  <string name="settingsPieceShiftMethodEither" comment="A value of piece shift method settings entry.">إما الضغط أو السحب</string>
+  <string name="settingsPieceShiftMethodTapTwoSquares" comment="A value of piece shift method settings entry.">الضغط علي مربعين</string>
+  <string name="settingsShapeDrawing" comment="Entry in the settings.">رسم الأسهم</string>
+  <string name="settingsShapeDrawingSubtitle" comment="Help message for the 'Shape drawing' settings entry.">رسم الأسهم بإصبعين: ثبت إصبعك علي مربع فارغ و حرّك إصبعك الآخر لرسم سهم.</string>
+  <string name="settingsShowBorder" comment="Settings found in theme screen. If enabled a border will be shown around the board.">إظهار الحـواف</string>
+  <string name="settingsTouchFeedback" comment="Entry in the settings. When enabled, the app will vibrate on some game events like move and capture.">الإهتزاز عند لمس</string>
+  <string name="settingsTouchFeedbackSubtitle" comment="Help message for the touch feedback settings entry in main settings screen.">عند التفعيل, سيهتز الجهاز لمدة وجيزة عند نقل أو أسر القطع.</string>
+  <string name="settingsTab" comment="The tab in bottom navigation bar. Must be very short (10 characters max) to avoid ugly text shifting issues." maxLength="10">الإعدادات</string>
+  <string name="shareGamePGN" comment="Menu action that shares the PGN of a game">شارك الـ PGN</string>
+  <string name="shareGameURL" comment="Menu action that shares the URL of the current game">شارك رابط المباراة</string>
+  <string name="sharePositionAsFEN" comment="Menu action that shares the current position as a FEN string">مشاركة الموقف كـ FEN</string>
+  <string name="sharePuzzle" comment="This is shown in the puzzle screen. When pressed, the user can share the puzzle.">شارك هذا اللغز</string>
+  <string name="showComments" comment="Shown in the analysis screen.">عرض التعليقات</string>
+  <string name="showResult" comment="This is the label of a button in the bottom bar shown when viewing a game from your history. Pressing the button will open a dialog showing the game's result (e.g 'White resigned') and displaying button such as 'new opponent'">إظهار النتيجة</string>
+  <string name="showVariations" comment="Shown in the analysis screen.">أظهر النقلات المرشحة</string>
+  <string name="somethingWentWrong" comment="This is a generic text to be shown when something unexpected happens, e.g. failing to load data from the server.">حدث خطأ ما.</string>
+  <string name="systemColors" comment="The title of the system colors setting. When enabling this, tha app's colors will match those of the operating system.">ألوان النظام</string>
+  <string name="theme" comment="Graphic theme section in the global app settings.">المظهر</string>
+  <string name="toolsTab" comment="The tab in bottom navigation bar. Must be very short (10 characters max) to avoid ugly text shifting issues. Currently this includes the analysis board, the chess clock, and importing a position by PGN/FEN" maxLength="10">الأدوات</string>
+  <string name="unsupportedVariant" comment="Shown when trying to access/play a variant not yet supported in the app.">الخيار %s غير مدعوم في هذا الإصدار.</string>
+  <string name="waitingForOpponentToJoin" comment="This is after the user has created a game and is waiting for an opponent to join.">في إنتظار الطرف الآخر...</string>
+  <string name="watchTab" comment="The tab in bottom navigation bar. Must be very short (10 characters max) to avoid ugly text shifting issues." maxLength="10">شاهد</string>
+  <string name="welcomeToLichessApp" comment="A welcome message shown only the first time the app is installed.">مرحباً بكم في تطبيق Lichess!</string>
+  <string name="viewGame" comment="Button text in puzzle settings to view the originating game.">عرض اللعبة</string>
+  <string name="customizeHomeTip" comment="Shown in a widget on the home screen to let the user know that they can customize their homescreen">نصيحة: يمكنك إضافة المزيد من الأدوات إلى الشاشة الرئيسية أو إزالة تلك التي لا تحتاج اليها!</string>
+  <string name="customizeHomeTipDismiss" comment="Hides the widget to customize the home screen.">تجاهل</string>
+  <string name="customizeButton" comment="Text of a button, so translation should be short.">تخصيص</string>
+  <string name="stopShowingThreat" comment="This disables the 'Show Treat' mode in analysis.">توقف إظهار التهديد</string>
+  <string name="tournamentCompleted" comment="Title of a tab in the tournament screen, showing tournaments that are already completed. Translation should be short ideally one word">مكتمل</string>
+  <string name="tournamentJumpToMyPage" comment="Accessibility description of a button that jumps to user's position in tournament standings">انتقل إلى صفحتي</string>
+  <string name="displayModeCompact" comment="">مصغر</string>
+  <string name="displayModeDetailed" comment="">مفصّل</string>
+  <string name="openingExplorerNotAvailableOffline" comment="">مستكشف الإفتتحيات غير متاح دون إتصال</string>
+  <string name="challengeCreated" comment="Shown as a bottom banner when another player has been challenged.">تم إنشاء التحدي: سيتم إبلاغك عند بداية اللعبة
+يمكنك فتحها في الصفحة الرئيسة</string>
+  <string name="previousPage" comment="Shows the previous page, e.g. in tournament standings">السابق</string>
+  <string name="orImportPgnFile" comment="Button text to import a PGN file from the device">أو استيراد ملف PGN</string>
+  <string name="goodMoveButThereIsBetter" comment="Verdict shown in the offline computer game when the player's move is good but not the best move available.">نقلة جيدة، ولكن توجد نقلة أفضل</string>
+  <string name="perfShortUltraBullet" comment="Short label for the UltraBullet chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">فائق</string>
+  <string name="perfShortBullet" comment="Short label for the Bullet chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">الرصاصة</string>
+  <string name="perfShortBlitz" comment="Short label for the Blitz chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">خاطف</string>
+  <string name="perfShortRapid" comment="Short label for the Rapid chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">سريع</string>
+  <string name="perfShortClassical" comment="Short label for the Classical chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">كلاسيكي</string>
+  <string name="perfShortCorrespondence" comment="Short label for the Correspondence chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">مراسلة.</string>
+  <string name="perfShortFromPosition" comment="Short label for the From Position chess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">وضعية.</string>
+  <string name="perfShortChess960" comment="Short label for the Chess960 performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">960</string>
+  <string name="perfShortAntichess" comment="Short label for the Antichess performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">معكوس</string>
+  <string name="perfShortKingOfTheHill" comment="Short label for the King of the Hill performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">ملك التل</string>
+  <string name="perfShortThreeCheck" comment="Short label for the Three-check performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">3كش</string>
+  <string name="perfShortAtomic" comment="Short label for the Atomic performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">ذري</string>
+  <string name="perfShortHorde" comment="Short label for the Horde performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">حشد</string>
+  <string name="perfShortRacingKings" comment="Short label for the Racing Kings performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">سباق</string>
+  <string name="perfShortCrazyhouse" comment="Short label for the Crazyhouse performance. Used in compact UI such as perf cards and game filters, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">كريزي</string>
+  <string name="perfShortPuzzle" comment="Short label for puzzle performance. Used in compact UI such as perf cards, where visual width is limited. Use a short abbreviation rather than the full name. The max length is only a rough cross-language limit; for CJK languages, prefer 2-4 characters if possible." maxLength="10">لغز</string>
+</resources>

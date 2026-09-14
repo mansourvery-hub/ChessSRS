@@ -1,0 +1,264 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lichess_mobile/src/model/account/account_preferences.dart';
+import 'package:lichess_mobile/src/model/account/account_repository.dart';
+import 'package:lichess_mobile/src/model/auth/auth_controller.dart';
+import 'package:lichess_mobile/src/network/http.dart';
+import 'package:lichess_mobile/src/utils/l10n_context.dart';
+import 'package:lichess_mobile/src/utils/navigation.dart';
+import 'package:lichess_mobile/src/widgets/adaptive_choice_picker.dart';
+import 'package:lichess_mobile/src/widgets/feedback.dart';
+import 'package:lichess_mobile/src/widgets/list.dart';
+import 'package:lichess_mobile/src/widgets/misc.dart';
+import 'package:lichess_mobile/src/widgets/platform.dart';
+import 'package:lichess_mobile/src/widgets/settings.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+class AccountPreferencesScreen extends ConsumerStatefulWidget {
+  const AccountPreferencesScreen({super.key});
+
+  static Route<dynamic> buildRoute() {
+    return buildScreenRoute(screen: const AccountPreferencesScreen());
+  }
+
+  @override
+  ConsumerState<AccountPreferencesScreen> createState() => _AccountPreferencesScreenState();
+}
+
+class _AccountPreferencesScreenState extends ConsumerState<AccountPreferencesScreen>
+    with WidgetsBindingObserver {
+  bool isLoading = false;
+  bool _pendingKidModeRefresh = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _pendingKidModeRefresh) {
+      _pendingKidModeRefresh = false;
+      ref.invalidate(accountProvider);
+    }
+  }
+
+  Future<void> _setPref(Future<void> Function() f) async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      await f();
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accountPrefs = ref.watch(accountPreferencesProvider);
+    final authUser = ref.watch(authControllerProvider);
+    final kidMode = ref.watch(kidModeProvider).value ?? false;
+
+    final content = accountPrefs.when(
+      data: (data) {
+        if (authUser == null) {
+          return Center(child: Text(context.l10n.mobileMustBeLoggedIn));
+        }
+
+        return ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                context.l10n.mobileAccountPreferencesHelp,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            ListSection(
+              header: SettingsSectionTitle(context.l10n.preferencesDisplay),
+              hasLeading: false,
+              children: [
+                SettingsListTile(
+                  settingsLabel: Text(context.l10n.preferencesShowPlayerRatings),
+                  settingsValue: data.showRatings.label(context.l10n),
+                  onTap: () => showChoicePicker(
+                    context,
+                    choices: ShowRatings.values,
+                    selectedItem: data.showRatings,
+                    labelBuilder: (t) => Text(t.label(context.l10n)),
+                    onSelectedItemChanged: (ShowRatings? value) {
+                      _setPref(
+                        () => ref
+                            .read(accountPreferencesProvider.notifier)
+                            .setShowRatings(value ?? data.showRatings),
+                      );
+                    },
+                  ),
+                  explanation: context.l10n.preferencesExplainShowPlayerRatings,
+                ),
+              ],
+            ),
+            ListSection(
+              header: SettingsSectionTitle(context.l10n.preferencesPrivacy),
+              hasLeading: false,
+              children: [
+                SwitchSettingTile(
+                  title: Text(context.l10n.letOtherPlayersFollowYou),
+                  value: data.follow.value,
+                  onChanged: isLoading
+                      ? null
+                      : (value) {
+                          _setPref(
+                            () => ref
+                                .read(accountPreferencesProvider.notifier)
+                                .setFollow(BooleanPref(value)),
+                          );
+                        },
+                ),
+                SettingsListTile(
+                  settingsLabel: Text(context.l10n.letOtherPlayersChallengeYou),
+                  settingsValue: data.challenge.label(context.l10n),
+                  onTap: () {
+                    showChoicePicker(
+                      context,
+                      choices: Challenge.values,
+                      selectedItem: data.challenge,
+                      labelBuilder: (t) => Text(t.label(context.l10n)),
+                      onSelectedItemChanged: isLoading
+                          ? null
+                          : (Challenge? value) {
+                              _setPref(
+                                () => ref
+                                    .read(accountPreferencesProvider.notifier)
+                                    .setChallenge(value ?? data.challenge),
+                              );
+                            },
+                    );
+                  },
+                ),
+                SettingsListTile(
+                  settingsLabel: Text(context.l10n.letOtherPlayersMessageYou),
+                  settingsValue: data.message.label(context.l10n),
+                  onTap: () {
+                    showChoicePicker(
+                      context,
+                      choices: Message.values,
+                      selectedItem: data.message,
+                      labelBuilder: (t) => Text(t.label(context.l10n)),
+                      onSelectedItemChanged: isLoading
+                          ? null
+                          : (Message? value) {
+                              _setPref(
+                                () => ref
+                                    .read(accountPreferencesProvider.notifier)
+                                    .setMessage(value ?? data.message),
+                              );
+                            },
+                    );
+                  },
+                ),
+              ],
+            ),
+            ListSection(
+              header: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SettingsSectionTitle(context.l10n.kidMode),
+                  Text(
+                    context.l10n.kidModeExplanation,
+                    maxLines: 5,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+              hasLeading: true,
+              children: [
+                ListTile(
+                  leading: const Icon(Symbols.sentiment_satisfied),
+                  title: Text(kidMode ? context.l10n.disableKidMode : context.l10n.enableKidMode),
+                  trailing: const OpenInNewIcon(),
+                  onTap: () {
+                    _pendingKidModeRefresh = true;
+                    launchUrl(lichessUri('/account/kid'));
+                  },
+                ),
+              ],
+            ),
+            ListSection(
+              header: SettingsSectionTitle(context.l10n.security),
+              hasLeading: true,
+              children: [
+                ListTile(
+                  leading: const Icon(Symbols.lock),
+                  title: Text(context.l10n.changePassword),
+                  trailing: const OpenInNewIcon(),
+                  onTap: () {
+                    launchUrl(lichessUri('/account/passwd'));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Symbols.security),
+                  title: Text(context.l10n.tfaTwoFactorAuth),
+                  trailing: const OpenInNewIcon(),
+                  onTap: () {
+                    launchUrl(lichessUri('/account/twofactor'));
+                  },
+                ),
+              ],
+            ),
+            ListSection(
+              header: const SettingsSectionTitle('Danger zone'),
+              hasLeading: true,
+              children: [
+                if (Theme.of(context).platform == TargetPlatform.iOS)
+                  ListTile(
+                    leading: const Icon(Symbols.dangerous),
+                    title: const Text('Delete your account'),
+                    trailing: const OpenInNewIcon(),
+                    onTap: () {
+                      launchUrl(lichessUri('/account/delete'));
+                    },
+                  )
+                else
+                  ListTile(
+                    leading: const Icon(Icons.dangerous_outlined),
+                    title: Text(context.l10n.settingsCloseAccount),
+                    trailing: const OpenInNewIcon(),
+                    onTap: () {
+                      launchUrl(lichessUri('/account/close'));
+                    },
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator.adaptive()),
+      error: (err, _) {
+        return FullScreenRetryRequest(onRetry: () => ref.invalidate(accountPreferencesProvider));
+      },
+    );
+
+    return PlatformScaffold(
+      appBar: PlatformAppBar(
+        title: Text(context.l10n.mobileAccountPreferences),
+        actions: [if (isLoading) const PlatformAppBarLoadingIndicator()],
+      ),
+      body: content,
+    );
+  }
+}

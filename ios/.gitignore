@@ -10,14 +10,11 @@
 **/.vagrant/
 **/DerivedData/
 Icon?
-**/Pods/
-**/.symlinks/
 profile
 xcuserdata
 **/.generated/
 Flutter/App.framework
 Flutter/Flutter.framework
-Flutter/Flutter.podspec
 Flutter/Generated.xcconfig
 Flutter/ephemeral/
 Flutter/app.flx
@@ -26,6 +23,8 @@ Flutter/flutter_assets/
 Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
+Runner.ipa
+Runner.app.dSYM.zip
 
 # Exceptions to above rules.
 !default.mode1v3
