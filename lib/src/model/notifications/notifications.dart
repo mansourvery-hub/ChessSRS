@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/model/common/id.dart';
-import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:chess_srs/src/model/user/user.dart' show TemporaryBan;
 import 'package:chess_srs/src/utils/json.dart';
 import 'package:chess_srs/src/utils/l10n.dart' show relativeDate;
@@ -50,17 +47,9 @@ sealed class FcmMessage {
         case 'gameMove':
         case 'gameFinish':
           final gameFullId = message.data['lichess.fullId'] as String?;
-          final round = message.data['lichess.round'] as String?;
           if (gameFullId != null) {
             final fullId = GameFullId(gameFullId);
-            final game = round != null
-                ? PlayableGame.fromServerJson(jsonDecode(round) as Map<String, dynamic>)
-                : null;
-            return CorresGameUpdateFcmMessage(
-              fullId,
-              game: game,
-              notification: message.notification,
-            );
+            return CorresGameUpdateFcmMessage(fullId, notification: message.notification);
           } else {
             return MalformedFcmMessage(message.data);
           }
@@ -153,10 +142,9 @@ class NewMessageFcmMessage extends FcmMessage {
 /// An [FcmMessage] that represents a correspondence game update.
 @immutable
 class CorresGameUpdateFcmMessage extends FcmMessage {
-  const CorresGameUpdateFcmMessage(this.fullId, {required this.game, required this.notification});
+  const CorresGameUpdateFcmMessage(this.fullId, {required this.notification});
 
   final GameFullId fullId;
-  final PlayableGame? game;
 
   @override
   final RemoteNotification? notification;

@@ -28,8 +28,7 @@ enum AnalysisTab {
   explorer(Icons.explore),
   moves(LichessIcons.flow_cascade),
   summary(Icons.area_chart),
-  moveTimes(Icons.punch_clock),
-  conditionalPremoves(Icons.save);
+  moveTimes(Icons.punch_clock);
 
   const AnalysisTab(this.icon);
 
@@ -47,8 +46,6 @@ enum AnalysisTab {
         return l10n.computerAnalysis;
       case AnalysisTab.moveTimes:
         return l10n.moveTimes;
-      case AnalysisTab.conditionalPremoves:
-        return l10n.conditionalPremoves;
     }
   }
 }

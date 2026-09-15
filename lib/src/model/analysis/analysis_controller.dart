@@ -19,10 +19,8 @@ import 'package:chess_srs/src/model/engine/evaluation_mixin.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/game/game.dart';
-import 'package:chess_srs/src/model/game/game_repository.dart';
 import 'package:chess_srs/src/model/game/game_repository_providers.dart';
 import 'package:chess_srs/src/model/game/game_socket_events.dart';
-import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:chess_srs/src/model/game/player.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -66,25 +64,17 @@ sealed class AnalysisOptions with _$AnalysisOptions {
     required GameId gameId,
   }) = ArchivedGame;
 
-  const factory AnalysisOptions.activeCorrespondenceGame({
-    required Side orientation,
-    int? initialMoveCursor,
-    required GameFullId gameFullId,
-  }) = ActiveCorrespondenceGame;
-
   bool get isLichessGameAnalysis => this is ArchivedGame;
 
   GameId? get gameId => switch (this) {
     ArchivedGame(:final gameId) => gameId,
     Pgn() || Standalone() => null,
-    ActiveCorrespondenceGame(:final gameFullId) => gameFullId.gameId,
   };
 
   StringId get contextId => switch (this) {
     ArchivedGame(:final gameId) => gameId,
     Pgn(:final id) => id,
     Standalone() => const StringId('standalone'),
-    ActiveCorrespondenceGame(:final gameFullId) => gameFullId.gameId,
   };
 }
 
@@ -151,8 +141,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
   @protected
   Root get positionTree => _root;
 
-  GameRepository get _gameRepository => ref.read(gameRepositoryProvider);
-
   @override
   Future<AnalysisState> build() async {
     ref.onDispose(() {
@@ -174,7 +162,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
     late final LightOpening? opening;
     late final PlayersAnalysis? playersAnalysis;
     late final Division? division;
-    late final PlayableGame? activeCorrespondenceGame;
 
     ExportedGame? archivedGame;
 
@@ -187,7 +174,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
           opening = archivedGame.data.opening;
           division = archivedGame.meta.division;
           playersAnalysis = archivedGame.playersAnalysis;
-          activeCorrespondenceGame = null;
         }
       case Pgn(:final variant, pgn: final gamePgn):
         {
@@ -196,7 +182,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
           opening = null;
           division = null;
           playersAnalysis = null;
-          activeCorrespondenceGame = null;
         }
       case Standalone(:final variant):
         {
@@ -205,7 +190,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
           opening = null;
           division = null;
           playersAnalysis = null;
-          activeCorrespondenceGame = null;
 
           // We want to keep the standalone analysis session alive even if the user navigates away
           ref.onCancel(() {
@@ -213,16 +197,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
               _savedStandalone = (root: _root, path: _currentPath, variant: _variant);
             }
           });
-        }
-      case ActiveCorrespondenceGame(:final gameFullId):
-        {
-          final game = await _gameRepository.getActiveCorrespondenceGame(gameFullId);
-          _variant = game.meta.variant;
-          pgn = game.makePgn();
-          opening = game.meta.opening;
-          division = null;
-          playersAnalysis = null;
-          activeCorrespondenceGame = game;
         }
     }
 
@@ -256,7 +230,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
       Pgn(:final isComputerAnalysisAllowed) => isComputerAnalysisAllowed,
       ArchivedGame() => isGameFinished || archivedGame?.source == .import,
       Standalone() => true,
-      ActiveCorrespondenceGame() => false,
     };
 
     _root = switch (options) {
@@ -281,34 +254,7 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
     };
     final currentNode = _root.nodeAt(currentPath);
 
-    late final Forecast? forecast;
-
-    if (activeCorrespondenceGame != null) {
-      // Premove paths are saved on the server, so if the user has already added some premoves on web,
-      // we need to add them to our tree here as well.
-      final lastMainlineNode = _root.mainline.lastOrNull ?? _root;
-      // Adding nodes in the loop below changes _root.mainline, so save the current mainline path here
-      final gameMainlinePath = _root.mainlinePath;
-
-      final paths = <UciPath>[];
-      for (final line
-          in (activeCorrespondenceGame.correspondenceForecast ??
-              const IList<IList<SanMove>>.empty())) {
-        var position = lastMainlineNode.position;
-        final nodes = <Branch>[];
-        for (final sanMove in line) {
-          position = position.playUnchecked(sanMove.move);
-          nodes.add(Branch(position: position, sanMove: sanMove));
-        }
-        _root.addNodesAt(gameMainlinePath, nodes);
-
-        paths.add(UciPath.fromUciMoves(line.map((sanMove) => sanMove.move.uci)));
-      }
-
-      forecast = Forecast(onMyTurn: activeCorrespondenceGame.isMyTurn, lines: paths.lock);
-    } else {
-      forecast = null;
-    }
+    const Forecast? forecast = null;
 
     // don't use ref.watch here: we don't want to invalidate state when the
     // analysis preferences change
@@ -357,8 +303,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
           if (!ref.mounted) return;
           if (state.requireValue.isEngineAvailable(evaluationPrefs)) {
             requestEval();
-          } else if (options case ActiveCorrespondenceGame(:final gameFullId)) {
-            socketClient.send('startWatching', gameFullId.gameId.value);
           }
         });
 
@@ -370,17 +314,7 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
     ref.invalidateSelf();
   }
 
-  Future<void> onFocusRegained() async {
-    if (options case ActiveCorrespondenceGame(:final gameFullId)) {
-      final updatedGame = await _gameRepository.getActiveCorrespondenceGame(gameFullId);
-      _addNewLiveMoves(
-        updatedGame.steps
-            // Skip one more step, since the first one is the initial position
-            .skip(1 + state.requireValue.pathToLiveMove!.size)
-            .map((step) => step.sanMove!.move),
-      );
-    }
-  }
+  Future<void> onFocusRegained() async {}
 
   void _addNewLiveMoves(Iterable<Move> moves) {
     final newLiveMovePath = _root.addMovesAt(state.requireValue.pathToLiveMove!, moves);
@@ -558,65 +492,6 @@ class AnalysisController extends AsyncNotifier<AnalysisState>
     variant: state.requireValue.variant,
     includeVariations: includeVariations,
   );
-
-  void addCurrentPathAsPremove() {
-    state = AsyncData(
-      state.requireValue.copyWith(
-        forecast: state.requireValue.forecast!.add(
-          state.requireValue.currentPath.stripPrefix(state.requireValue.pathToLiveMove!),
-        ),
-      ),
-    );
-
-    if (!state.requireValue.forecast!.onMyTurn) {
-      _syncForecast();
-    }
-  }
-
-  void playPendingMoveAndSaveForecast() {
-    if (!state.hasValue || state.requireValue.pendingMove == null) return;
-
-    final moveToPlay = state.requireValue.pendingMove!.move;
-
-    final newForecast = state.requireValue.forecast!.playMove(moveToPlay);
-
-    final newLiveMovePath = UciPath.join(
-      state.requireValue.pathToLiveMove!,
-      UciPath.fromId(UciCharPair.fromUci(moveToPlay.uci)),
-    );
-
-    _gameRepository.saveForecast(
-      gameId: (options as ActiveCorrespondenceGame).gameFullId,
-      forecast: newForecast.toApiForecast(_root.branchAt(newLiveMovePath)!.view),
-      moveToPlay: moveToPlay,
-    );
-
-    state = AsyncData(
-      state.requireValue.copyWith(
-        forecast: state.requireValue.forecast!.playMove(moveToPlay),
-        pathToLiveMove: newLiveMovePath,
-      ),
-    );
-  }
-
-  void removePremovePath(UciPath path) {
-    state = AsyncData(
-      state.requireValue.copyWith(forecast: state.requireValue.forecast!.remove(path)),
-    );
-
-    _syncForecast();
-  }
-
-  void _syncForecast() {
-    final pathToLiveMove = state.requireValue.pathToLiveMove!;
-
-    _gameRepository.saveForecast(
-      gameId: (options as ActiveCorrespondenceGame).gameFullId,
-      forecast: state.requireValue.forecast!.toApiForecast(
-        pathToLiveMove.isEmpty ? _root.view : _root.branchAt(pathToLiveMove)!.view,
-      ),
-    );
-  }
 
   void updatePgnHeader(String key, String value) {
     final headers = state.requireValue.pgnHeaders.add(key, value);

@@ -1,12 +1,10 @@
 import 'package:chess_srs/src/model/account/account_pref_types.dart';
-import 'package:chess_srs/src/model/account/ongoing_game.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/aggregator.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:deep_pick/deep_pick.dart';
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// A provider that fetches the current user's account information.
@@ -46,22 +44,6 @@ class AccountRepository {
   Future<void> saveProfile(Map<String, String> profile) async {
     final uri = Uri(path: '/account/profile');
     await client.postRead(uri, headers: {'Accept': 'application/json'}, body: profile);
-  }
-
-  Future<IList<OngoingGame>> getOngoingGames({int? nb}) {
-    return aggregator.readJson(
-      Uri(path: '/api/account/playing', queryParameters: nb != null ? {'nb': nb.toString()} : null),
-      atomicMapper: ongoingGamesFromServerJson,
-      aggregatedMapper: (json) {
-        if (json is! List<dynamic>) {
-          throw Exception('Could not read json object as {nowPlaying: []}');
-        }
-        return json
-            .map((e) => OngoingGame.fromServerJson(e as Map<String, dynamic>))
-            .where((e) => e.variant.isPlaySupported)
-            .toIList();
-      },
-    );
   }
 
   Future<AccountPrefState> getPreferences() {

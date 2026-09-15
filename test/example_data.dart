@@ -2,7 +2,6 @@ import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/common/speed.dart';
-import 'package:chess_srs/src/model/correspondence/offline_correspondence_game.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
@@ -83,36 +82,3 @@ IList<GameStep> makeSteps(String pgn) {
   }
   return steps.toIList();
 }
-
-const offlineCorrespondenceGameId = GameId('g2bzFol8');
-final offlineCorrespondenceGame = OfflineCorrespondenceGame(
-  id: offlineCorrespondenceGameId,
-  meta: GameMeta(
-    createdAt: DateTime(2021, 1, 1),
-    rated: true,
-    perf: Perf.correspondence,
-    speed: Speed.correspondence,
-    variant: Variant.standard,
-  ),
-  fullId: const GameFullId('g2bzFol8fgty'),
-  steps: makeSteps('e4 Nc6 Bc4 e6 a3 g6 Nf3 Bg7 c3 Nge7 d3 O-O Be3 Na5 Ba2 b6 Qd2'),
-  clock: const CorrespondenceClockData(
-    white: Duration(days: 2, hours: 23, minutes: 59),
-    black: Duration(days: 3),
-  ),
-  rated: true,
-  status: GameStatus.started,
-  variant: Variant.standard,
-  speed: Speed.correspondence,
-  perf: Perf.classical,
-  white: const Player(
-    user: LightUser(id: UserId('whiteId'), name: 'White'),
-    rating: 1500,
-  ),
-  black: const Player(
-    user: LightUser(id: UserId('blackId'), name: 'Black'),
-    rating: 1500,
-  ),
-  youAre: Side.white,
-  daysPerTurn: 3,
-);

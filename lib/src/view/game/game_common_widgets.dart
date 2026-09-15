@@ -6,8 +6,6 @@ import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/utils/share.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
-import 'package:chess_srs/src/view/game/game_screen.dart';
-import 'package:chess_srs/src/view/game/game_screen_providers.dart';
 import 'package:chess_srs/src/view/game/gif_export_dialog.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -32,24 +30,13 @@ void openGameScreen(
 }) {
   if (game.variant.isReadSupported) {
     Navigator.of(context, rootNavigator: true).push(
-      game.fullId != null
-          ? GameScreen.buildRoute(
-              source: ExistingGameSource(game.fullId!),
-              loadingPosition: (
-                variant: game.variant,
-                fen: loadingFen,
-                lastMove: loadingLastMove,
-                orientation: orientation,
-              ),
-              lastMoveAt: lastMoveAt,
-            )
-          : AnalysisScreen.buildRoute(
-              AnalysisOptions.archivedGame(
-                orientation: orientation,
-                gameId: game.id,
-                initialMoveCursor: 0,
-              ),
-            ),
+      AnalysisScreen.buildRoute(
+        AnalysisOptions.archivedGame(
+          orientation: orientation,
+          gameId: game.id,
+          initialMoveCursor: 0,
+        ),
+      ),
     );
   } else {
     showSnackBar(context, 'This variant is not supported yet.', type: SnackBarType.info);

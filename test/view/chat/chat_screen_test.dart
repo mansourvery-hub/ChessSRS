@@ -65,7 +65,10 @@ class HangNotifier extends Notifier<bool> {
 }
 
 void main() {
-  const options = GameChatOptions(id: GameFullId('testGame1234'), opponent: null);
+  const options = StudyChatOptions(
+    options: (id: StudyId('testStudy'), initialChapter: null),
+    writeable: true,
+  );
 
   const authUser = AuthUser(
     token: 'testToken',

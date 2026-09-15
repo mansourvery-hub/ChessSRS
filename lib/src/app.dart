@@ -6,17 +6,14 @@ import 'package:chess_srs/src/app_links_service.dart';
 import 'package:chess_srs/src/binding.dart';
 import 'package:chess_srs/src/constants.dart';
 import 'package:chess_srs/src/model/account/account_service.dart';
-import 'package:chess_srs/src/model/account/ongoing_games_notifier.dart';
 import 'package:chess_srs/src/model/analysis/analysis_preferences.dart';
 import 'package:chess_srs/src/model/common/preloaded_data.dart';
-import 'package:chess_srs/src/model/correspondence/correspondence_service.dart';
 import 'package:chess_srs/src/model/log/app_log_service.dart';
 import 'package:chess_srs/src/model/message/message_service.dart';
 import 'package:chess_srs/src/model/notifications/notification_service.dart';
 import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
-import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/quick_actions.dart';
 import 'package:chess_srs/src/shared_pgn_service.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
@@ -68,8 +65,6 @@ class Application extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<Application> {
-  /// Whether the app has checked for online status for the first time.
-  bool _firstTimeOnlineCheck = false;
   final _navigatorKey = GlobalKey<NavigatorState>();
 
   // Adjusts some settings for small screens based on the MediaQuery data.
@@ -123,7 +118,6 @@ class _AppState extends ConsumerState<Application> {
     ref.read(notificationServiceProvider).start();
     ref.read(messageServiceProvider).start();
     ref.read(accountServiceProvider).start();
-    ref.read(correspondenceServiceProvider).start();
     ref.read(quickActionServiceProvider).start();
     ref.read(appLinksServiceProvider).start();
     ref.read(sharedPgnServiceProvider).start();
@@ -151,30 +145,6 @@ class _AppState extends ConsumerState<Application> {
         }
       }, fireImmediately: true);
     }
-
-    // Listening to the settled status rather than to [isDeviceOnlineProvider]: both actions are
-    // network calls, which must not be made on the optimistic assumption that a device whose
-    // status is not known yet is online.
-    ref.listenManual(connectivityChangesProvider, (prev, current) async {
-      // The previous state is read with [isDeviceOnlineIn], so that coming back from a check that
-      // failed — offline as far as the app is concerned — is an edge like any other.
-      final prevWasOffline = prev != null && !isDeviceOnlineIn(prev);
-      final currentIsOnline = current.value?.isOnline == true;
-
-      // Play registered moves whenever the app comes back online.
-      if (prevWasOffline && currentIsOnline) {
-        final nbMovesPlayed = await ref.read(correspondenceServiceProvider).playRegisteredMoves();
-        if (nbMovesPlayed > 0) {
-          ref.invalidate(ongoingGamesProvider);
-        }
-      }
-
-      // Perform actions once when the app comes online.
-      if (currentIsOnline && !_firstTimeOnlineCheck) {
-        _firstTimeOnlineCheck = true;
-        ref.read(correspondenceServiceProvider).syncGames();
-      }
-    });
 
     super.initState();
   }

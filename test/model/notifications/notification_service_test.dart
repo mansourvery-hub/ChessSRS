@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:chess_srs/src/model/common/id.dart';
-import 'package:chess_srs/src/model/correspondence/correspondence_service.dart';
 import 'package:chess_srs/src/model/notifications/notification_service.dart';
 import 'package:chess_srs/src/model/notifications/notifications.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -19,20 +18,16 @@ import '../auth/fake_auth_storage.dart';
 
 class NotificationDisplayMock extends Mock implements FlutterLocalNotificationsPlugin {}
 
-class CorrespondenceServiceMock extends Mock implements CorrespondenceService {}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final notificationDisplayMock = NotificationDisplayMock();
-  final correspondenceServiceMock = CorrespondenceServiceMock();
 
   int registerDeviceCalls = 0;
 
   tearDown(() {
     registerDeviceCalls = 0;
     reset(notificationDisplayMock);
-    reset(correspondenceServiceMock);
   });
 
   final registerMockClient = MockClient((request) {

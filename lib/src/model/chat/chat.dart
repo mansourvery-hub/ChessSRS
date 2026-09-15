@@ -22,19 +22,6 @@ sealed class ChatOptions {
 }
 
 @freezed
-abstract class GameChatOptions extends ChatOptions with _$GameChatOptions {
-  const GameChatOptions._();
-  const factory GameChatOptions({required GameFullId id, required LightUser? opponent}) =
-      _GameChatOptions;
-
-  @override
-  bool get isPublic => false;
-
-  @override
-  bool get writeable => true;
-}
-
-@freezed
 abstract class StudyChatOptions extends ChatOptions with _$StudyChatOptions {
   const StudyChatOptions._();
   const factory StudyChatOptions({required StudyOptions options, required bool writeable}) =

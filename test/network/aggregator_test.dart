@@ -1,4 +1,3 @@
-import 'package:chess_srs/src/model/account/ongoing_game.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/message/message.dart';
 import 'package:chess_srs/src/model/user/user.dart';
@@ -82,8 +81,8 @@ void main() {
         if (request.url.path == '/api/account') {
           return mockResponse(accountResponse, 200);
         }
-        if (request.url.path == '/api/account/playing') {
-          return mockResponse(ongoingGameResponse, 200);
+        if (request.url.path == '/inbox/unread-count') {
+          return mockResponse('{"unread": 0, "lichess": false}', 200);
         }
         return mockResponse('', 404);
       });
@@ -91,32 +90,25 @@ void main() {
       final aggregator = await mockClientAggregator(mockClient);
 
       final accountUri = Uri(path: '/api/account', queryParameters: {'playban': '1'});
-      final ongoingGamesUri = Uri(path: '/api/account/playing');
+      final inboxUri = Uri(path: '/inbox/unread-count');
 
-      final [account, ongoingGames] = await Future.wait([
+      final [account, inbox] = await Future.wait([
         aggregator.readJson(
           accountUri,
           atomicMapper: User.fromServerJson,
           aggregatedMapper: (json) => User.fromServerJson(json as Map<String, dynamic>),
         ),
         aggregator.readJson(
-          ongoingGamesUri,
-          atomicMapper: ongoingGamesFromServerJson,
-          aggregatedMapper: (json) {
-            if (json is! List<dynamic>) {
-              throw Exception('Could not read json object as {nowPlaying: []}');
-            }
-            return json
-                .map((e) => OngoingGame.fromServerJson(e as Map<String, dynamic>))
-                .where((e) => e.variant.isPlaySupported)
-                .toIList();
+          inboxUri,
+          atomicMapper: (Map<String, dynamic> json) {
+            return (unread: json['unread'] as int, lichess: json['lichess'] as bool? ?? false);
           },
         ),
       ]);
 
       expect(requestsCount, 2);
       expect(account, isA<User>());
-      expect(ongoingGames, isA<IList<OngoingGame>>());
+      expect(inbox, isA<UnreadMessages>());
     });
 
     test('aggregates home endpoint', () async {
@@ -133,28 +125,14 @@ void main() {
       final aggregator = await mockClientAggregator(mockClient);
 
       final accountUri = Uri(path: '/api/account', queryParameters: {'playban': '1'});
-      final ongoingGamesUri = Uri(path: '/api/account/playing');
       final recentGamesUri = Uri(path: '/api/games/user/testuser');
       final inboxUri = Uri(path: '/inbox/unread-count');
 
-      final [account, ongoingGames, recentGames, inbox] = await Future.wait([
+      final [account, recentGames, inbox] = await Future.wait([
         aggregator.readJson(
           accountUri,
           atomicMapper: User.fromServerJson,
           aggregatedMapper: (json) => User.fromServerJson(json as Map<String, dynamic>),
-        ),
-        aggregator.readJson(
-          ongoingGamesUri,
-          atomicMapper: ongoingGamesFromServerJson,
-          aggregatedMapper: (json) {
-            if (json is! List<dynamic>) {
-              throw Exception('Could not read json object as {nowPlaying: []}');
-            }
-            return json
-                .map((e) => OngoingGame.fromServerJson(e as Map<String, dynamic>))
-                .where((e) => e.variant.isPlaySupported)
-                .toIList();
-          },
         ),
         aggregator.readNdJsonList(recentGamesUri, mapper: LightExportedGame.fromServerJson),
         aggregator.readJson(
@@ -167,7 +145,6 @@ void main() {
 
       expect(requestsCount, 1);
       expect(account, isA<User>());
-      expect(ongoingGames, isA<IList<OngoingGame>>());
       expect(recentGames, isA<IList<LightExportedGame>>());
       expect(inbox, isA<UnreadMessages>());
     });
@@ -289,35 +266,5 @@ const accountResponse = '''
       "fideRating": 1800,
       "links": "http://test.com"
     }
-}
-''';
-
-const ongoingGameResponse = '''
-{
-  "nowPlaying": [
-    {
-      "gameId": "rCRw1AuO",
-      "fullId": "rCRw1AuOvonq",
-      "color": "black",
-      "fen": "r1bqkbnr/pppp2pp/2n1pp2/8/8/3PP3/PPPB1PPP/RN1QKBNR w KQkq - 2 4",
-      "hasMoved": true,
-      "isMyTurn": false,
-      "lastMove": "b8c6",
-      "opponent": {
-        "id": "philippe",
-        "rating": 1790,
-        "username": "Philippe"
-      },
-      "perf": "correspondence",
-      "rated": false,
-      "secondsLeft": 1209600,
-      "source": "friend",
-      "speed": "correspondence",
-      "variant": {
-        "key": "standard",
-        "name": "Standard"
-      }
-    }
-  ]
 }
 ''';

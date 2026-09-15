@@ -14,7 +14,6 @@ import 'package:chess_srs/src/view/analysis/analysis_layout.dart';
 import 'package:chess_srs/src/view/analysis/analysis_player_widget.dart';
 import 'package:chess_srs/src/view/analysis/analysis_settings_screen.dart';
 import 'package:chess_srs/src/view/analysis/analysis_share_screen.dart';
-import 'package:chess_srs/src/view/analysis/conditional_premoves.dart';
 import 'package:chess_srs/src/view/analysis/game_analysis_board.dart';
 import 'package:chess_srs/src/view/analysis/retro_screen.dart';
 import 'package:chess_srs/src/view/analysis/server_analysis.dart';
@@ -139,7 +138,6 @@ class _TabbedBodyState extends State<_TabbedBody> with SingleTickerProviderState
       AnalysisTab.moves,
       if (widget.options case ArchivedGame()) AnalysisTab.summary,
       if (widget.showMoveTimes) AnalysisTab.moveTimes,
-      if (widget.options case ActiveCorrespondenceGame()) AnalysisTab.conditionalPremoves,
     ];
 
     _tabController = TabController(
@@ -323,7 +321,6 @@ class _Body extends ConsumerWidget {
                 ),
               ],
             ),
-          if (options case ActiveCorrespondenceGame()) ConditionalPremoves(options),
         ],
       ),
     );

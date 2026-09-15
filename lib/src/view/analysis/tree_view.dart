@@ -1,6 +1,6 @@
 import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
 import 'package:chess_srs/src/model/analysis/analysis_preferences.dart';
-import 'package:chess_srs/src/view/game/game_result_dialog.dart';
+import 'package:chess_srs/src/view/game/status_l10n.dart';
 import 'package:chess_srs/src/widgets/pgn.dart';
 import 'package:chess_srs/src/widgets/variations_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

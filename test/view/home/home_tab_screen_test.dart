@@ -11,7 +11,6 @@ import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/view/account/profile_screen.dart';
 import 'package:chess_srs/src/view/auth/email_login_screen.dart';
 import 'package:chess_srs/src/view/game/game_list_tile.dart';
-import 'package:chess_srs/src/view/home/games_carousel.dart';
 import 'package:chess_srs/src/view/home/home_tab_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
@@ -142,40 +141,6 @@ void main() {
       expect(find.text('Recent games'), findsOneWidget);
       expect(find.byType(GameListTile), findsNWidgets(3));
       expect(find.text('MightyNanook'), findsOneWidget);
-    });
-
-    testWidgets('shows ongoing games if any', (tester) async {
-      int nbOngoingGamesRequests = 0;
-      final mockClient = MockClient((request) {
-        if (request.url.path == '/api/account/playing') {
-          nbOngoingGamesRequests++;
-          return mockResponse(mockAccountOngoingGamesResponse(), 200);
-        }
-        if (request.url.path == '/tournament/featured') {
-          return mockResponse('{"featured":[]}', 200);
-        }
-        return mockResponse('', 200);
-      });
-      final app = await makeTestProviderScope(
-        tester,
-        child: const Application(),
-        authUser: fakeAuthUser,
-        overrides: {
-          httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
-            (ref) => FakeHttpClientFactory(() => mockClient),
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      // wait for connectivity
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      await tester.pumpAndSettle();
-
-      expect(nbOngoingGamesRequests, 1);
-      expect(find.text('About Lichess...'), findsNothing);
-      expect(find.text('Recent games'), findsNothing);
-      expect(find.text('1 game in play'), findsOneWidget);
-      expect(find.byType(OngoingGameCarouselItem), findsOneWidget);
     });
   });
 

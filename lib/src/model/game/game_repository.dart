@@ -4,7 +4,6 @@ import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/game/game_filter.dart';
 import 'package:chess_srs/src/model/game/game_storage.dart';
-import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:chess_srs/src/network/aggregator.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:dartchess/dartchess.dart';
@@ -137,42 +136,12 @@ class GameRepository {
         );
   }
 
-  /// Returns the games of the current user, given a list of ids.
-  Future<IList<PlayableGame>> getMyGamesByIds(ISet<GameId> ids) {
-    if (ids.isEmpty) {
-      return Future.value(IList<PlayableGame>());
-    }
-    return client.readJsonList(
-      Uri(path: '/api/mobile/my-games', queryParameters: {'ids': ids.join(',')}),
-      mapper: PlayableGame.fromServerJson,
-    );
-  }
-
   Future<IList<LightExportedGame>> getGamesByIds(ISet<GameId> ids) {
     return client.postReadNdJsonList(
       Uri(path: '/api/games/export/_ids', queryParameters: {'moves': 'false', 'lastFen': 'true'}),
       headers: {'Accept': 'application/x-ndjson'},
       body: ids.join(','),
       mapper: LightExportedGame.fromServerJson,
-    );
-  }
-
-  Future<void> saveForecast({
-    required GameFullId gameId,
-    required String forecast,
-    Move? moveToPlay,
-  }) async {
-    final uri = Uri(
-      path: moveToPlay != null ? '$gameId/forecasts/${moveToPlay.uci}' : '$gameId/forecasts',
-    );
-    await client.postRead(uri, body: forecast, headers: {'Content-type': 'application/json'});
-  }
-
-  Future<PlayableGame> getActiveCorrespondenceGame(GameFullId id) {
-    return client.readJson(
-      Uri(path: '/$id/forecasts'),
-      headers: {'Accept': 'application/json'},
-      mapper: PlayableGame.fromServerJson,
     );
   }
 }

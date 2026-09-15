@@ -1,4 +1,5 @@
 import 'package:chess_srs/src/model/common/chess.dart';
+import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:dartchess/dartchess.dart';
@@ -68,5 +69,40 @@ String gameStatusL10n(
       }
     default:
       return status.toString();
+  }
+}
+
+class GameResult extends StatelessWidget {
+  const GameResult({required this.game, super.key});
+
+  final BaseGame game;
+
+  @override
+  Widget build(BuildContext context) {
+    final showWinner = game.winner != null
+        ? ' • ${game.winner == Side.white ? context.l10n.whiteIsVictorious : context.l10n.blackIsVictorious}'
+        : '';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (game.status.value >= GameStatus.mate.value)
+          Text(
+            game.winner == null
+                ? '½-½'
+                : game.winner == Side.white
+                ? '1-0'
+                : '0-1',
+            style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        const SizedBox(height: 6.0),
+        Text(
+          '${gameStatusL10n(context, variant: game.meta.variant, status: game.status, lastPosition: game.lastPosition, winner: game.winner, isThreefoldRepetition: game.isThreefoldRepetition)}$showWinner',
+          style: const TextStyle(fontStyle: FontStyle.italic),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
   }
 }
