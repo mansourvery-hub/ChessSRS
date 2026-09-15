@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:chess_srs/src/constants.dart';
 import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
-import 'package:chess_srs/src/model/challenge/challenge_repository.dart';
-import 'package:chess_srs/src/model/challenge/challenge_service.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/game/game_repository.dart';
@@ -155,8 +153,6 @@ class AppLinksService {
           );
           return [];
         }
-      // This might be a challenge or a game link. There's currently no API endpoint that resolves both games and challenges
-      // at the same time, so check if it's a game link first, and if that fails, we later check if it's a challenge link.
       case _:
         final gameRoutes = await _tryResolveGameLink(context, appLinkUri);
         if (gameRoutes != null) return gameRoutes;
@@ -175,22 +171,6 @@ class AppLinksService {
         launchUrl(targetUri, mode: LaunchMode.inAppBrowserView);
       }
     }
-  }
-
-  Future<bool> _tryResolveChallengeLink(BuildContext context, Uri appLinkUri) async {
-    try {
-      final challengeId = ChallengeId(appLinkUri.pathSegments[0]);
-      if (!challengeId.isValid) return false;
-      final challenge = await ref.read(challengeRepositoryProvider).show(challengeId);
-      if (!context.mounted) return false;
-
-      ref.read(challengeServiceProvider).showConfirmDialog(context, challenge, fromLink: true);
-
-      return true;
-    } catch (e, st) {
-      _logger.info('Not a challenge link:', e, st);
-    }
-    return false;
   }
 
   Future<List<Route<dynamic>>?> _tryResolveGameLink(BuildContext context, Uri appLinkUri) async {
@@ -238,9 +218,6 @@ class AppLinksService {
         _pushDeepLinkRoute(navigator, route, animated: animated);
       }
     } else {
-      final isChallengeLink = await _tryResolveChallengeLink(context, uri);
-      if (isChallengeLink) return;
-
       if (allowBrowserFallback) {
         launchUrl(uri);
       } else {

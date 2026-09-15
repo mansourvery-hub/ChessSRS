@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/binding.dart';
 import 'package:chess_srs/src/constants.dart';
 import 'package:chess_srs/src/db/secure_storage.dart';
 import 'package:chess_srs/src/model/notifications/notification_service.dart';
-import 'package:chess_srs/src/model/notifications/notifications.dart';
 import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/utils/chessboard.dart';
@@ -70,19 +68,14 @@ Future<void> initializeApp() async {
 }
 
 Future<void> initializeLocalNotifications(Locale locale) async {
-  final l10n = await AppLocalizations.delegate.load(locale);
   await FlutterLocalNotificationsPlugin().initialize(
-    settings: InitializationSettings(
-      android: const AndroidInitializationSettings('logo_black'),
+    settings: const InitializationSettings(
+      android: AndroidInitializationSettings('logo_black'),
       iOS: DarwinInitializationSettings(
         requestBadgePermission: false,
-        notificationCategories: <DarwinNotificationCategory>[
-          ChallengeNotification.darwinPlayableVariantCategory(l10n),
-          ChallengeNotification.darwinUnplayableVariantCategory(l10n),
-          AnnounceNotification.darwinCategory(l10n),
-        ],
+        notificationCategories: <DarwinNotificationCategory>[],
       ),
-      linux: const LinuxInitializationSettings(defaultActionName: 'Action'),
+      linux: LinuxInitializationSettings(defaultActionName: 'Action'),
     ),
     onDidReceiveNotificationResponse: NotificationService.onDidReceiveNotificationResponse,
     // onDidReceiveBackgroundNotificationResponse: notificationTapBackground,

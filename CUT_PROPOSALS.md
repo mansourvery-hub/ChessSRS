@@ -33,7 +33,7 @@ These are the authoritative decisions from the owner. Do not override them.
 | C1 Firebase | `[G]` GREY | Undecided — leave untouched |
 | C2 Notifications | `[G]` GREY | May be needed for SRS review reminders (like Anki) — leave untouched |
 | C3 Auth/login | `[K]` KEEP | Login is optional but enables importing Lichess/chess.com studies; app is 100% functional offline without it |
-| C4 Online play | `[ ]` REMOVE | Approved |
+| C4 Online play | `[x]` DONE | Removed 2026-09-15 — lobby, seeks, challenges, view/play, model/lobby, model/challenge |
 | C5 Server games | `[ ]` REMOVE | Approved — preserve offline game-frame widgets (board, move list) |
 | C6 Puzzles tab | `[x]` DONE | Removed 2026-09-15 — tab, model/view dirs, deep links, quick action; shared FeedbackTile/SideToPlayPiece moved to widgets/feedback.dart |
 | C7 Watch tab | `[x]` DONE | Removed (commit dd996ee74) — docs marked late in C6 commit |
@@ -78,8 +78,7 @@ Step 3  [x]  C7  — Watch tab (TV / tournaments / broadcasts)  DONE (dd996ee74)
 Step 4  [x]  C6  — Puzzles tab                                DONE
 Step 5  [x]  C11 — Over-the-board game & Clock tool             DONE
 Step 6  [x]  C10 — Blog / recap / announce (home carousels + model) DONE
-Step 7  [ ]  C4  — Online play: lobby / seek / challenges
-              (depends on: home_tab_screen already cleaned of play widgets)
+Step 7  [x]  C4  — Online play: lobby / seek / challenges           DONE
 Step 8  [ ]  C5  — Server game lifecycle + correspondence
               (depends on: C4 done; preserve game-frame board widgets)
 Step 9  [ ]  C8  — Social navigation entries from More tab
@@ -297,4 +296,5 @@ or HTTP consumers outside auth and study-import paths.
 | 3 / C7 | Watch tab (TV / tournaments / broadcasts) | `dd996ee74` | 2026-09-15 | — |
 | 4 / C6 | Puzzles tab (model/view, nav, deep links, quick action) | `fb4847be2` | 2026-09-15 | 1242 passing, analyze 0, linux build ok |
 | 5 / C11 | Over-the-board game & Clock tool | `4d1c4b211` & `1b7e18a03` | 2026-09-14 | — |
-| 6 / C10 | Blog / recap / announce (models, services, home carousel) | _(this commit)_ | 2026-09-15 | 1242 → 1235 passing, analyze 0, linux build ok |
+| 6 / C10 | Blog / recap / announce (models, services, home carousel) | `156d760fa` | 2026-09-15 | 1242 → 1235 passing, analyze 0, linux build ok |
+| 7 / C4 | Online play: lobby / seek / challenges | _(this commit)_ | 2026-09-15 | 1235 → 1182 passing, analyze 0, linux build ok |

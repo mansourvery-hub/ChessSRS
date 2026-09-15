@@ -1,4 +1,3 @@
-import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository_providers.dart';
@@ -6,9 +5,8 @@ import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
-import 'package:chess_srs/src/view/play/challenge_odd_bots_screen.dart';
-import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:chess_srs/src/view/user/user_context_menu.dart';
+import 'package:chess_srs/src/view/user/user_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
@@ -147,24 +145,7 @@ class _Body extends ConsumerWidget {
 }
 
 void _challengeBot(User bot, {required BuildContext context, required WidgetRef ref}) {
-  final authUser = ref.read(authControllerProvider);
-  if (authUser == null) {
-    showSnackBar(context, context.l10n.challengeRegisterToSendChallenges, type: SnackBarType.error);
-    return;
-  }
-  final isOddBot = oddBots.contains(bot.lightUser.name.toLowerCase());
-  if (isOddBot) {
-    Navigator.of(context).push(ChallengeOddBotsScreen.buildRoute(bot.lightUser));
-  } else {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      builder: (context) {
-        return CreateChallengeBottomSheet(user: bot.lightUser);
-      },
-    );
-  }
+  Navigator.of(context).push(UserScreen.buildRoute(bot.lightUser));
 }
 
 class _BotRatings extends StatelessWidget {

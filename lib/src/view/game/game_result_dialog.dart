@@ -10,7 +10,6 @@ import 'package:chess_srs/src/model/game/playable_game.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/game/status_l10n.dart';
-import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -61,19 +60,6 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
         ref.read(ctrlProvider.notifier).proposeOrAcceptRematch();
       };
     }
-    if (value.game.clock == null &&
-        value.game.me?.user != null &&
-        value.game.opponent?.user != null) {
-      return () async {
-        try {
-          await ref.read(ctrlProvider.notifier).challengeRematch();
-        } catch (_) {
-          if (context.mounted) {
-            showSnackBar(context, 'Could not send the rematch challenge', type: SnackBarType.error);
-          }
-        }
-      };
-    }
     return null;
   }
 
@@ -100,8 +86,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
               firstChild: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (value.game.me?.offeringRematch == true ||
-                      value.correspondenceRematchId != null) ...[
+                  if (value.game.me?.offeringRematch == true) ...[
                     Flexible(
                       flex: 3,
                       child: Text(
@@ -112,23 +97,7 @@ class _GameResultDialogState extends ConsumerState<GameResultDialog> {
                     ),
                     const Spacer(),
                     IconButton.outlined(
-                      onPressed: () async {
-                        if (value.game.me?.offeringRematch == true) {
-                          ref.read(ctrlProvider.notifier).declineRematch();
-                        } else {
-                          try {
-                            await ref.read(ctrlProvider.notifier).cancelRematchChallenge();
-                          } catch (_) {
-                            if (context.mounted) {
-                              showSnackBar(
-                                context,
-                                'Could not cancel the rematch challenge',
-                                type: SnackBarType.error,
-                              );
-                            }
-                          }
-                        }
-                      },
+                      onPressed: () => ref.read(ctrlProvider.notifier).declineRematch(),
                       tooltip: context.l10n.cancelRematchOffer,
                       icon: const Icon(Icons.cancel),
                     ),

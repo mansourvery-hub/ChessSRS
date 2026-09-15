@@ -13,8 +13,6 @@ import 'package:chess_srs/src/view/auth/email_login_screen.dart';
 import 'package:chess_srs/src/view/game/game_list_tile.dart';
 import 'package:chess_srs/src/view/home/games_carousel.dart';
 import 'package:chess_srs/src/view/home/home_tab_screen.dart';
-import 'package:chess_srs/src/view/play/quick_game_matrix.dart';
-import 'package:chess_srs/src/widgets/buttons.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:chess_srs/src/widgets/server_outage_display.dart';
@@ -28,7 +26,6 @@ import '../../example_data.dart';
 import '../../mock_server_responses.dart';
 import '../../model/auth/auth_repository_test.dart';
 import '../../model/auth/fake_auth_storage.dart';
-import '../../model/challenge/challenge_repository_test.dart';
 import '../../model/engine/fake_stockfish_nnue_service.dart';
 import '../../network/fake_http_client_factory.dart';
 import '../../network/server_down_client.dart';
@@ -37,60 +34,6 @@ import '../../test_provider_scope.dart';
 
 void main() {
   group('Home online', () {
-    testWidgets('shows Play button', (tester) async {
-      final app = await makeTestProviderScope(tester, child: const Application());
-      await tester.pumpWidget(app);
-
-      // wait for connectivity
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      await tester.pump();
-
-      expect(find.byType(FloatingActionButton), findsOneWidget);
-    });
-
-    testWidgets('shows challenge button if has challenges', (tester) async {
-      final app = await makeTestProviderScope(
-        tester,
-        child: const Application(),
-        authUser: fakeAuthUser,
-        overrides: {
-          httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
-            (ref) => FakeHttpClientFactory(
-              () => MockClient((request) {
-                if (request.url.path == '/api/challenge') {
-                  return mockResponse(challengesList, 200);
-                }
-                if (request.url.path == '/tournament/featured') {
-                  return mockResponse('{"featured":[]}', 200);
-                }
-                return mockResponse('', 200);
-              }),
-            ),
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-
-      // wait for connectivity
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      await tester.pump();
-
-      // wait for challenge list to load
-      await tester.pump();
-
-      expect(
-        tester
-            .widget<SemanticIconButton>(
-              find.ancestor(
-                of: find.byIcon(LichessIcons.crossed_swords),
-                matching: find.byType(SemanticIconButton),
-              ),
-            )
-            .onPressed,
-        isNotNull,
-      );
-    });
-
     testWidgets('no authUser, no stored game: shows welcome screen ', (tester) async {
       final app = await makeTestProviderScope(tester, child: const Application());
       await tester.pumpWidget(app);
@@ -246,18 +189,6 @@ void main() {
       await tester.pump();
 
       expect(find.byType(OfflineBanner), findsOneWidget);
-    });
-
-    testWidgets('shows Play button', (tester) async {
-      final app = await makeOfflineTestProviderScope(tester, child: const Application());
-
-      await tester.pumpWidget(app);
-
-      // wait for connectivity
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      await tester.pump();
-
-      expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
     testWidgets('no authUser, no stored game: shows welcome screen ', (tester) async {
@@ -539,31 +470,11 @@ void main() {
 
       // The outage message replaces the widgets that need the server...
       expect(find.byType(ServerOutageDisplay), findsOneWidget);
-      expect(find.byType(QuickGameMatrix), findsNothing);
       expect(find.byType(AccountPerfCards), findsNothing);
 
       // ...but the locally stored games are still listed below it.
       expect(find.text('Recent games'), findsOneWidget);
       expect(find.byType(GameListTile), findsNWidgets(3));
-    });
-
-    testWidgets('outage page shown and Play button still accessible', (tester) async {
-      final app = await makeTestProviderScope(
-        tester,
-        child: const Application(),
-        authUser: fakeAuthUser,
-        overrides: {
-          httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
-            return FakeHttpClientFactory(() => serverDownClient());
-          }),
-        },
-      );
-
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ServerOutageDisplay), findsOneWidget);
-      expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
     testWidgets('a 502 shows the outage message', (tester) async {

@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:chess_srs/src/constants.dart';
 import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
-import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/board_editor/board_editor_controller.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/chess960.dart';
@@ -18,8 +17,6 @@ import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_filters.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_positions.dart';
 import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
-import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
-import 'package:chess_srs/src/view/user/pick_player_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
 import 'package:chess_srs/src/widgets/bottom_bar.dart';
@@ -331,48 +328,6 @@ class _BottomBar extends ConsumerWidget {
                           notifier.loadFen(position.fen),
                           Navigator.of(context).pop(),
                         },
-                      ),
-                    );
-                  },
-                ),
-              if (editorState.variant == Variant.standard)
-                BottomSheetAction(
-                  // TODO: l10n
-                  makeLabel: (context) => const Text('Challenge from position'),
-                  onPressed: () {
-                    final authUser = ref.read(authControllerProvider);
-                    if (authUser == null) {
-                      showSnackBar(
-                        context,
-                        context.l10n.challengeRegisterToSendChallenges,
-                        type: SnackBarType.error,
-                      );
-                      return;
-                    }
-                    Navigator.of(context).push(
-                      PickPlayerScreen.buildRoute(
-                        onUserTap: (user) {
-                          if (user.id == authUser.user.id) {
-                            showSnackBar(
-                              context,
-                              'You cannot challenge yourself',
-                              type: SnackBarType.error,
-                            );
-                          }
-                          showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            useRootNavigator: true,
-                            builder: (context) {
-                              return CreateChallengeBottomSheet(
-                                user: user,
-                                positionFen: editorState.fen,
-                              );
-                            },
-                          );
-                        },
-                        // TODO: l10n
-                        title: const Text('Challenge from position'),
                       ),
                     );
                   },

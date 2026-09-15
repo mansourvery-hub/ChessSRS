@@ -3,12 +3,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/app_links_service.dart';
-import 'package:chess_srs/src/model/challenge/challenge.dart';
-import 'package:chess_srs/src/model/challenge/challenge_repository.dart';
-import 'package:chess_srs/src/model/common/chess.dart';
-import 'package:chess_srs/src/model/common/game.dart';
 import 'package:chess_srs/src/model/common/id.dart';
-import 'package:chess_srs/src/model/common/speed.dart';
 import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_repository.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
@@ -40,8 +35,6 @@ import 'test_provider_scope.dart';
 class MockAppLinks extends Mock implements AppLinks {}
 
 class MockGameRepository extends Mock implements GameRepository {}
-
-class MockChallengeRepository extends Mock implements ChallengeRepository {}
 
 class MockUserRepository extends Mock implements UserRepository {}
 
@@ -353,44 +346,6 @@ void main() {
 
       expect(find.text('go to study'), findsOneWidget);
       expect(find.byType(StudyScreen), findsNothing);
-    });
-
-    testWidgets('resolves /challengeId link for open challenge', (WidgetTester tester) async {
-      const challenge = Challenge(
-        id: ChallengeId('abcdefgh'),
-        challenger: (
-          user: LightUser(id: UserId('thibault'), name: 'Thibault'),
-          rating: 3000,
-          provisionalRating: null,
-          lagRating: null,
-        ),
-        status: ChallengeStatus.created,
-        variant: Variant.standard,
-        speed: Speed.blitz,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (increment: Duration.zero, time: Duration(minutes: 5)),
-        rated: true,
-        sideChoice: SideChoice.white,
-      );
-      final uri = Uri.parse('https://lichess.org/${challenge.id.value}');
-      final mockChallengeRepository = MockChallengeRepository();
-      when(() => mockChallengeRepository.show(challenge.id)).thenAnswer((_) async => challenge);
-
-      await triggerAppLink(
-        tester,
-        uri,
-        overrides: {
-          challengeRepositoryProvider: challengeRepositoryProvider.overrideWith(
-            (_) => mockChallengeRepository,
-          ),
-        },
-      );
-      await tester.pumpAndSettle(); // Wait for challenge screen to load
-
-      expect(find.text('Thibault challenges you: ♚ Black • Rated • 5+0'), findsOneWidget);
-      expect(find.text('Accept'), findsOneWidget);
-      // challenges from link cannot be declined
-      expect(find.text('Cancel'), findsOneWidget);
     });
 
     testWidgets('resolves /@/user link', (WidgetTester tester) async {

@@ -1,7 +1,6 @@
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/relation/following_user.dart';
 import 'package:chess_srs/src/model/relation/relation_repository.dart';
-import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
@@ -9,7 +8,6 @@ import 'package:chess_srs/src/utils/string.dart';
 import 'package:chess_srs/src/view/message/conversation_screen.dart';
 import 'package:chess_srs/src/view/relation/friend_screen.dart';
 import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
-import 'package:chess_srs/src/view/user/user_screen.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/platform_context_menu_button.dart';
 import 'package:chess_srs/src/widgets/shimmer.dart';
@@ -150,13 +148,6 @@ Widget _buildActionButtons(BuildContext context, WidgetRef ref, FollowingUser fr
                 context,
                 rootNavigator: true,
               ).push(ConversationScreen.buildRoute(user: friend.user));
-            },
-          ),
-          ContextMenuAction(
-            icon: LichessIcons.crossed_swords,
-            label: context.l10n.challengeChallengeToPlay,
-            onPressed: () {
-              UserScreen.challengeUser(friend.user, context: context, ref: ref);
             },
           ),
         ],

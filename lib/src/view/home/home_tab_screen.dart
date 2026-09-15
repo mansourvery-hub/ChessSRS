@@ -7,7 +7,6 @@ import 'package:chess_srs/src/model/account/home_widgets.dart';
 import 'package:chess_srs/src/model/account/ongoing_game.dart';
 import 'package:chess_srs/src/model/account/ongoing_games_notifier.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
-import 'package:chess_srs/src/model/challenge/challenges.dart';
 import 'package:chess_srs/src/model/correspondence/correspondence_game_storage.dart';
 import 'package:chess_srs/src/model/correspondence/offline_correspondence_game.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
@@ -16,7 +15,6 @@ import 'package:chess_srs/src/model/game/game_history.dart';
 import 'package:chess_srs/src/model/message/message_repository.dart';
 import 'package:chess_srs/src/model/relation/following_user.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
-import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/utils/focus_detector.dart';
@@ -32,16 +30,11 @@ import 'package:chess_srs/src/view/correspondence/offline_correspondence_game_sc
 import 'package:chess_srs/src/view/game/game_screen.dart';
 import 'package:chess_srs/src/view/game/game_screen_providers.dart';
 import 'package:chess_srs/src/view/game/offline_correspondence_games_screen.dart';
+import 'package:chess_srs/src/view/game/ongoing_games_screen.dart';
 import 'package:chess_srs/src/view/home/following_carousel.dart';
 import 'package:chess_srs/src/view/home/games_carousel.dart';
-import 'package:chess_srs/src/view/play/ongoing_games_screen.dart';
-import 'package:chess_srs/src/view/play/play_bottom_sheet.dart';
-import 'package:chess_srs/src/view/play/play_menu.dart';
-import 'package:chess_srs/src/view/play/quick_game_matrix.dart';
 import 'package:chess_srs/src/view/settings/engine_settings_screen.dart';
-import 'package:chess_srs/src/view/user/challenge_requests_screen.dart';
 import 'package:chess_srs/src/view/user/recent_games.dart';
-import 'package:chess_srs/src/widgets/buttons.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
 import 'package:chess_srs/src/widgets/list.dart';
@@ -186,24 +179,13 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...welcomeWidgets,
-                            const SizedBox(height: 32.0),
-                            const _TabletCreateAGameSection(),
-                          ],
+                          children: [...welcomeWidgets],
                         ),
                       ),
                     ],
                   )
-                else ...[
+                else
                   ...welcomeWidgets,
-                  if (hasServerContent)
-                    const _EditableWidget(
-                      widget: HomeEditableWidget.quickPairing,
-                      shouldShow: true,
-                      child: Padding(padding: Styles.bodySectionPadding, child: QuickGameMatrix()),
-                    ),
-                ],
               ];
             } else if (isTablet) {
               widgets = [
@@ -235,7 +217,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                       child: Column(
                         children: [
                           const SizedBox(height: 8.0),
-                          const _TabletCreateAGameSection(),
                           if (hasServerContent)
                             _OngoingGamesPreview(ongoingGames, maxGamesToShow: 5)
                           else
@@ -296,14 +277,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                   child: FollowingCarousel(followingAsync),
                 ),
                 _EditableWidget(
-                  widget: HomeEditableWidget.quickPairing,
-                  shouldShow: hasServerContent,
-                  child: const Padding(
-                    padding: Styles.bodySectionPadding,
-                    child: QuickGameMatrix(),
-                  ),
-                ),
-                _EditableWidget(
                   widget: HomeEditableWidget.ongoingGames,
                   shouldShow: hasOngoingGames,
                   child: hasServerContent
@@ -357,7 +330,7 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                           titleTextStyle: Theme.of(context).platform == TargetPlatform.iOS
                               ? Theme.of(context).textTheme.headlineSmall
                               : null,
-                          actions: const [_ChallengeScreenButton(), AccountMenuButton()],
+                          actions: const [AccountMenuButton()],
                         ),
                   body: widget.editModeEnabled
                       ? content
@@ -384,9 +357,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                           ),
                         )
                       : null,
-                  floatingActionButton: widget.editModeEnabled || isTablet
-                      ? null
-                      : const FloatingPlayButton(),
                   bottomSheet: widget.editModeEnabled ? null : const OfflineBanner(),
                 ),
               ),
@@ -401,7 +371,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
     try {
       await Future.wait([
         ref.refresh(myRecentGamesProvider.future),
-        if (isOnline) ref.refresh(challengesProvider.future),
         if (isOnline) ref.refresh(unreadMessagesProvider.future),
         if (isOnline) ref.refresh(accountProvider.future),
         if (isOnline) ref.refresh(ongoingGamesProvider.future),
@@ -487,11 +456,6 @@ class _EditableWidget extends ConsumerWidget {
               Expanded(
                 child: IgnorePointer(ignoring: isEditing, child: child),
               ),
-              if (widget == HomeEditableWidget.quickPairing)
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () => showTimeControlPicker(context, ref),
-                ),
             ],
           )
         : widget.alwaysEnabled || isEnabled
@@ -575,25 +539,6 @@ class _GreetingWidget extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _TabletCreateAGameSection extends StatelessWidget {
-  const _TabletCreateAGameSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _EditableWidget(
-          widget: HomeEditableWidget.quickPairing,
-          shouldShow: true,
-          child: Padding(padding: Styles.bodySectionPadding, child: QuickGameMatrix()),
-        ),
-        PlayMenu(),
-      ],
     );
   }
 }
@@ -777,44 +722,6 @@ class PreviewGameList<T> extends StatelessWidget {
           for (final data in list.take(maxGamesToShow)) builder(data),
         ],
       ),
-    );
-  }
-}
-
-class _ChallengeScreenButton extends ConsumerWidget {
-  const _ChallengeScreenButton();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authUser = ref.watch(authControllerProvider);
-    if (authUser == null) {
-      return const SizedBox.shrink();
-    }
-    // The home tab shows the outage message, so it is clear why this is
-    // disabled when the server is down.
-    final connectionStatus = ref.watch(lichessConnectionStatusProvider);
-    final challenges = ref.watch(challengesProvider);
-
-    final inwardCount = challenges.value?.inward.length ?? 0;
-    final outwardCount = challenges.value?.outward.length ?? 0;
-
-    if (inwardCount == 0 && outwardCount == 0) {
-      return const SizedBox.shrink();
-    }
-
-    return SemanticIconButton(
-      icon: Badge.count(
-        count: inwardCount,
-        isLabelVisible: inwardCount > 0,
-        child: const Icon(LichessIcons.crossed_swords, size: 18.0),
-      ),
-      semanticsLabel: context.l10n.preferencesNotifyChallenge,
-      onPressed: connectionStatus != LichessConnectionStatus.online
-          ? null
-          : () {
-              ref.invalidate(challengesProvider);
-              Navigator.of(context).push(ChallengeRequestsScreen.buildRoute());
-            },
     );
   }
 }

@@ -1,15 +1,11 @@
 import 'package:chess_srs/src/app_links_service.dart';
-import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository_providers.dart';
-import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/user/user_or_profile_screen.dart';
-import 'package:chess_srs/src/view/user/user_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_bottom_sheet.dart';
-import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/rich_link_text.dart';
 import 'package:chess_srs/src/widgets/user.dart';
@@ -25,8 +21,6 @@ class UserContextMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authUser = ref.watch(authControllerProvider);
-
     final AsyncValue<User> userAsync = user != null
         ? AsyncData(user!)
         : ref.watch(userProvider(userId!));
@@ -67,21 +61,6 @@ class UserContextMenu extends ConsumerWidget {
                   icon: Icons.person,
                   child: Text(context.l10n.profile),
                 ),
-                if (authUser != null && value.canChallenge != null)
-                  BottomSheetContextMenuAction(
-                    onPressed: value.canChallenge == true
-                        ? () =>
-                              UserScreen.challengeUser(value.lightUser, context: context, ref: ref)
-                        : () {
-                            Navigator.of(context).pop();
-                            showSnackBar(
-                              context,
-                              context.l10n.challengeXDoesNotAcceptChallenges(value.username),
-                            );
-                          },
-                    icon: LichessIcons.crossed_swords,
-                    child: Text(context.l10n.challengeChallengeToPlay),
-                  ),
               ],
             ),
           ],

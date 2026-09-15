@@ -9,7 +9,6 @@ import 'package:chess_srs/src/model/common/time_increment.dart';
 import 'package:chess_srs/src/model/engine/weights_service.dart';
 import 'package:chess_srs/src/model/game/game_board_params.dart';
 import 'package:chess_srs/src/model/game/offline_computer_game.dart';
-import 'package:chess_srs/src/model/lobby/game_setup_preferences.dart';
 import 'package:chess_srs/src/model/offline_computer/offline_computer_clock.dart';
 import 'package:chess_srs/src/model/offline_computer/offline_computer_game_controller.dart';
 import 'package:chess_srs/src/model/offline_computer/offline_computer_game_preferences.dart';

@@ -1,12 +1,9 @@
 import 'package:chess_srs/src/model/account/ongoing_game.dart';
-import 'package:chess_srs/src/model/challenge/challenge.dart';
-import 'package:chess_srs/src/model/challenge/challenge_repository.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
 import 'package:chess_srs/src/model/message/message.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/aggregator.dart';
 import 'package:chess_srs/src/network/http.dart';
-import 'package:deep_pick/deep_pick.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -138,16 +135,9 @@ void main() {
       final accountUri = Uri(path: '/api/account', queryParameters: {'playban': '1'});
       final ongoingGamesUri = Uri(path: '/api/account/playing');
       final recentGamesUri = Uri(path: '/api/games/user/testuser');
-      final challengesUri = Uri(path: '/api/challenge');
       final inboxUri = Uri(path: '/inbox/unread-count');
 
-      final [
-        account,
-        ongoingGames,
-        recentGames,
-        challenges,
-        inbox,
-      ] = await Future.wait([
+      final [account, ongoingGames, recentGames, inbox] = await Future.wait([
         aggregator.readJson(
           accountUri,
           atomicMapper: User.fromServerJson,
@@ -168,16 +158,6 @@ void main() {
         ),
         aggregator.readNdJsonList(recentGamesUri, mapper: LightExportedGame.fromServerJson),
         aggregator.readJson(
-          challengesUri,
-          atomicMapper: (json) {
-            final listPick = pick(json).required();
-            final inward = listPick('in').asListOrEmpty(Challenge.fromPick);
-            final outward = listPick('out').asListOrEmpty(Challenge.fromPick);
-
-            return (inward: inward.lock, outward: outward.lock);
-          },
-        ),
-        aggregator.readJson(
           inboxUri,
           atomicMapper: (Map<String, dynamic> json) {
             return (unread: json['unread'] as int, lichess: json['lichess'] as bool? ?? false);
@@ -189,7 +169,6 @@ void main() {
       expect(account, isA<User>());
       expect(ongoingGames, isA<IList<OngoingGame>>());
       expect(recentGames, isA<IList<LightExportedGame>>());
-      expect(challenges, isA<ChallengesList>());
       expect(inbox, isA<UnreadMessages>());
     });
   });

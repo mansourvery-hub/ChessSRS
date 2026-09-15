@@ -17,7 +17,7 @@ void main() {
 
     test('serialization round-trip preserves new fields', () {
       final prefs = HomePrefs(
-        disabledWidgets: IList(const [HomeEditableWidget.quickPairing]),
+        disabledWidgets: IList(const [HomeEditableWidget.friends]),
         disabledTimeControls: IList(const [TimeIncrement(60, 0), TimeIncrement(300, 0)]),
         customButtonEnabled: false,
       );
@@ -32,10 +32,10 @@ void main() {
     });
 
     test('fromJson with missing new fields returns defaults', () {
-      final oldJson = jsonDecode('{"disabledWidgets":["quickPairing"]}') as Map<String, dynamic>;
+      final oldJson = jsonDecode('{"disabledWidgets":["friends"]}') as Map<String, dynamic>;
       final prefs = HomePrefs.fromJson(oldJson);
 
-      expect(prefs.disabledWidgets, contains(HomeEditableWidget.quickPairing));
+      expect(prefs.disabledWidgets, contains(HomeEditableWidget.friends));
       expect(prefs.disabledTimeControls, isEmpty);
       expect(prefs.customButtonEnabled, isTrue);
     });
@@ -50,7 +50,7 @@ void main() {
 
   group('HomePrefs time control config', () {
     test('can batch-update disabled time controls and custom button', () {
-      const prefs = HomePrefs(disabledWidgets: IListConst([]));
+      const prefs = HomePrefs.defaults;
 
       final updated = prefs.copyWith(
         disabledTimeControls: IList(const [TimeIncrement(60, 0), TimeIncrement(300, 0)]),

@@ -6,7 +6,6 @@ enum HomeEditableWidget {
   perfCards(false),
   friends(false),
   ongoingGames(true),
-  quickPairing(false),
   recentGames(false);
 
   String label(AppLocalizations l10n) => switch (this) {
@@ -14,7 +13,6 @@ enum HomeEditableWidget {
     HomeEditableWidget.hello => 'Hello',
     HomeEditableWidget.perfCards => 'Performance Cards',
     HomeEditableWidget.friends => l10n.friends,
-    HomeEditableWidget.quickPairing => l10n.quickPairing,
     HomeEditableWidget.recentGames => l10n.recentGames,
   };
 

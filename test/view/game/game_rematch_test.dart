@@ -4,7 +4,6 @@ import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/view/game/game_body.dart';
 import 'package:chess_srs/src/view/game/game_screen.dart';
 import 'package:chess_srs/src/view/game/game_screen_providers.dart';
-import 'package:chess_srs/src/widgets/bottom_bar.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -98,87 +97,6 @@ void main() {
     await tester.pump();
     return requestedPaths;
   }
-
-  group('Correspondence rematch (offline opponent)', () {
-    testWidgets('result dialog enables the rematch button and posts a challenge', (tester) async {
-      final (:client, :requestedPaths) = makeRecordingClient();
-      await pumpFinishedGame(
-        tester,
-        client: client,
-        requestedPaths: requestedPaths,
-        opponentOnGame: false,
-      );
-
-      // The result dialog is shown after kGameEndDialogDelay, then its buttons
-      // activate after a further second.
-      await tester.pump(kGameEndDialogDelay);
-      await tester.pump(const Duration(seconds: 1));
-
-      final rematchButton = find.widgetWithText(FilledButton, 'Rematch');
-      expect(rematchButton, findsOneWidget);
-      expect(
-        tester.widget<FilledButton>(rematchButton).onPressed,
-        isNotNull,
-        reason: 'rematch must be enabled for a finished correspondence game vs an offline opponent',
-      );
-
-      await tester.tap(rematchButton);
-      await tester.pump();
-
-      expect(requestedPaths, contains('POST $rematchPath'));
-    });
-
-    testWidgets('result dialog shows an error snackbar when the challenge fails', (tester) async {
-      final (:client, :requestedPaths) = makeRecordingClient(rematchStatus: 400);
-      await pumpFinishedGame(
-        tester,
-        client: client,
-        requestedPaths: requestedPaths,
-        opponentOnGame: false,
-      );
-
-      await tester.pump(kGameEndDialogDelay);
-      await tester.pump(const Duration(seconds: 1));
-
-      await tester.tap(find.widgetWithText(FilledButton, 'Rematch'));
-      await tester.pump();
-      await tester.pump();
-
-      expect(find.text('Could not send the rematch challenge'), findsOneWidget);
-    });
-
-    testWidgets('game menu posts a challenge and shows an error snackbar on failure', (
-      tester,
-    ) async {
-      final (:client, :requestedPaths) = makeRecordingClient(rematchStatus: 400);
-      await pumpFinishedGame(
-        tester,
-        client: client,
-        requestedPaths: requestedPaths,
-        opponentOnGame: false,
-      );
-
-      // Let the auto result dialog appear, then pop it to reach the bottom bar
-      // menu underneath.
-      await tester.pump(kGameEndDialogDelay);
-      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
-      await tester.pumpAndSettle();
-
-      // Open the game menu (bottom sheet) and tap the rematch action.
-      await tester.tap(find.widgetWithIcon(BottomBarButton, Icons.menu));
-      await tester.pumpAndSettle();
-
-      final rematchAction = find.text('Rematch');
-      expect(rematchAction, findsOneWidget);
-
-      await tester.tap(rematchAction);
-      // The sheet is dismissed on tap; the snackbar must still render afterwards.
-      await tester.pumpAndSettle();
-
-      expect(requestedPaths, contains('POST $rematchPath'));
-      expect(find.text('Could not send the rematch challenge'), findsOneWidget);
-    });
-  });
 
   group('Correspondence rematch (online opponent)', () {
     testWidgets('rematch uses the socket path and does not post a challenge', (tester) async {

@@ -82,7 +82,7 @@ sealed class HomePrefs with _$HomePrefs implements Serializable {
   }
 }
 
-const _defaultList = IListConst<HomeEditableWidget>([HomeEditableWidget.quickPairing]);
+const _defaultList = IListConst<HomeEditableWidget>([]);
 
 class _TimeIncrementIListConverter implements JsonConverter<IList<TimeIncrement>, List<dynamic>> {
   const _TimeIncrementIListConverter();

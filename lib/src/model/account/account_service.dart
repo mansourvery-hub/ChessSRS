@@ -9,7 +9,7 @@ import 'package:chess_srs/src/model/notifications/notifications.dart'
     show LocalNotification, PlaybanNotification;
 import 'package:chess_srs/src/model/user/user.dart' show TemporaryBan, User;
 import 'package:chess_srs/src/tab_navigation.dart' show currentNavigatorKeyProvider;
-import 'package:chess_srs/src/view/play/playban.dart';
+import 'package:chess_srs/src/view/account/playban_dialog.dart';
 import 'package:chess_srs/src/widgets/platform_alert_dialog.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

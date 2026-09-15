@@ -7,14 +7,11 @@ import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/network/http.dart';
-import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/utils/share.dart';
 import 'package:chess_srs/src/view/message/conversation_screen.dart';
-import 'package:chess_srs/src/view/play/challenge_odd_bots_screen.dart';
-import 'package:chess_srs/src/view/play/create_challenge_bottom_sheet.dart';
 import 'package:chess_srs/src/view/user/game_history_screen.dart';
 import 'package:chess_srs/src/view/user/perf_cards.dart';
 import 'package:chess_srs/src/view/user/recent_games.dart';
@@ -44,35 +41,6 @@ class UserScreen extends ConsumerStatefulWidget {
 
   static Route<dynamic> buildRoute(LightUser user) {
     return buildScreenRoute(screen: UserScreen(user: user));
-  }
-
-  static void challengeUser(
-    LightUser user, {
-    required BuildContext context,
-    required WidgetRef ref,
-  }) {
-    final authUser = ref.read(authControllerProvider);
-    if (authUser == null) {
-      showSnackBar(
-        context,
-        context.l10n.challengeRegisterToSendChallenges,
-        type: SnackBarType.error,
-      );
-      return;
-    }
-    final isOddBot = oddBots.contains(user.name.toLowerCase());
-    if (isOddBot) {
-      Navigator.of(context).push(ChallengeOddBotsScreen.buildRoute(user));
-    } else {
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        useRootNavigator: true,
-        builder: (context) {
-          return CreateChallengeBottomSheet(user: user);
-        },
-      );
-    }
   }
 
   @override
@@ -225,18 +193,6 @@ class _UserProfileListView extends ConsumerWidget {
                 }(),
               ],
               if (authUser != null) ...[
-                if (user.canChallenge != null)
-                  ListTile(
-                    title: Text(context.l10n.challengeChallengeToPlay),
-                    leading: const Icon(LichessIcons.crossed_swords),
-                    onTap: user.canChallenge == true
-                        ? () => UserScreen.challengeUser(user.lightUser, context: context, ref: ref)
-                        : () => showSnackBar(
-                            context,
-                            context.l10n.challengeXDoesNotAcceptChallenges(user.username),
-                          ),
-                  ),
-
                 if (user.blocking != true && !user.isBot && kidMode.value == false)
                   ListTile(
                     leading: const Icon(Icons.chat_bubble_outline),

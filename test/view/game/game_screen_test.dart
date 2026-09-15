@@ -1,25 +1,16 @@
-import 'dart:async';
 import 'dart:convert';
 
-import 'package:chess_srs/src/constants.dart';
-import 'package:chess_srs/src/model/account/account_preferences.dart' hide Challenge;
-import 'package:chess_srs/src/model/auth/auth_controller.dart';
-import 'package:chess_srs/src/model/challenge/challenge.dart';
+import 'package:chess_srs/src/model/account/account_preferences.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
-import 'package:chess_srs/src/model/common/game.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/service/sound_service.dart';
 import 'package:chess_srs/src/model/common/socket.dart';
-import 'package:chess_srs/src/model/common/speed.dart';
 import 'package:chess_srs/src/model/game/game.dart';
 import 'package:chess_srs/src/model/game/game_controller.dart';
 import 'package:chess_srs/src/model/game/game_socket_events.dart';
 import 'package:chess_srs/src/model/game/game_status.dart';
-import 'package:chess_srs/src/model/lobby/create_game_service.dart';
-import 'package:chess_srs/src/model/lobby/game_seek.dart';
 import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
-import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/network/socket.dart';
 import 'package:chess_srs/src/styles/lichess_icons.dart';
@@ -43,7 +34,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wakelock_plus_platform_interface/messages.g.dart';
 
 import '../../model/game/game_socket_example_data.dart';
@@ -66,8 +56,6 @@ final client = MockClient((request) {
 
 class MockSoundService extends Mock implements SoundService {}
 
-class MockCreateGameService extends Mock implements CreateGameService {}
-
 void main() {
   const testGameFullId = GameFullId('qVChCOTcHSeW');
   final testGameSocketUri = GameController.socketUri(testGameFullId);
@@ -75,28 +63,6 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Variant.standard);
     registerFallbackValue(Sound.error);
-    registerFallbackValue(
-      const GameSeek(clock: (Duration(minutes: 3), Duration(seconds: 2)), rated: false),
-    );
-    registerFallbackValue(
-      const ChallengeRequest(
-        variant: Variant.standard,
-        timeControl: ChallengeTimeControlType.clock,
-        rated: false,
-        sideChoice: SideChoice.random,
-      ),
-    );
-    registerFallbackValue(
-      const Challenge(
-        id: ChallengeId('challeng'),
-        status: ChallengeStatus.created,
-        variant: Variant.standard,
-        speed: Speed.blitz,
-        timeControl: ChallengeTimeControlType.clock,
-        rated: false,
-        sideChoice: SideChoice.random,
-      ),
-    );
   });
 
   group('Loading', () {
@@ -150,140 +116,6 @@ void main() {
         reason: 'board position should not change',
       );
     });
-
-    testWidgets('a game from the pool with a seek', (WidgetTester tester) async {
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: const GameScreen(
-          source: LobbySource(
-            GameSeek(clock: (Duration(minutes: 3), Duration(seconds: 2)), rated: true),
-          ),
-        ),
-        overrides: {
-          lichessClientProvider: lichessClientProvider.overrideWith(
-            (ref) => LichessClient(client, ref),
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-
-      expect(find.byType(Chessboard), findsOneWidget);
-      expect(getBoardPieces(tester), isEmpty);
-      expect(find.text('Waiting for opponent to join...'), findsOneWidget);
-      expect(find.text('3+2'), findsOneWidget);
-      expect(find.widgetWithText(BottomBarButton, 'Cancel'), findsOneWidget);
-
-      final initialBoardPosition = tester.getTopLeft(find.byType(Chessboard));
-
-      // waiting for the game
-      await tester.pump(const Duration(seconds: 2));
-
-      // when a seek is accepted, server lobby sends a 'redirect' message with game id
-      sendServerSocketMessages(Uri(path: '/lobby/socket/v5'), [
-        '{"t": "redirect", "d": {"id": "qVChCOTcHSeW" }, "v": 1}',
-      ]);
-      // wait for socket message handling
-      await tester.pump(const Duration(milliseconds: 1));
-
-      // now the game controller is loading
-      expect(find.byType(Chessboard), findsOneWidget);
-      expect(getBoardPieces(tester), isEmpty);
-      expect(find.text('Waiting for opponent to join...'), findsNothing);
-      expect(find.text('3+2'), findsNothing);
-      expect(find.widgetWithText(BottomBarButton, 'Cancel'), findsNothing);
-      expect(
-        tester.getTopLeft(find.byType(Chessboard)),
-        initialBoardPosition,
-        reason: 'board position should not change',
-      );
-
-      // wait for game socket to connect
-      await tester.pump(kFakeWebSocketConnectionLag);
-
-      sendServerSocketMessages(GameController.socketUri(testGameFullId), [
-        makeFullEvent(
-          const GameId('qVChCOTc'),
-          '',
-          whiteUserName: 'Peter',
-          blackUserName: 'Steven',
-        ),
-      ]);
-      // wait for socket message handling
-      await tester.pump();
-
-      expect(getBoardPieces(tester).length, 32);
-      expect(find.text('Peter'), findsOneWidget);
-      expect(find.text('Steven'), findsOneWidget);
-      expect(find.text('Waiting for opponent to join...'), findsNothing);
-      expect(find.text('3+2'), findsNothing);
-      expect(
-        tester.getTopLeft(find.byType(Chessboard)),
-        initialBoardPosition,
-        reason: 'board position should not change',
-      );
-    });
-
-    for (final authUser in [
-      null,
-      AuthUser(
-        user: LightUser(id: UserId.fromUserName('John'), name: 'John'),
-        token: 'test-token',
-      ),
-    ]) {
-      testWidgets('displays game link for open challenge, logged in: ${authUser != null}', (
-        WidgetTester tester,
-      ) async {
-        const challengeRequest = ChallengeRequest(
-          destUser: null,
-          variant: Variant.standard,
-          timeControl: ChallengeTimeControlType.clock,
-          rated: true,
-          sideChoice: SideChoice.white,
-        );
-        final challenge = Challenge(
-          sideChoice: challengeRequest.sideChoice,
-          id: const ChallengeId('challengeId'),
-          variant: challengeRequest.variant,
-          timeControl: challengeRequest.timeControl,
-          rated: challengeRequest.rated,
-          speed: Speed.blitz,
-          status: ChallengeStatus.created,
-        );
-
-        final createGameService = MockCreateGameService();
-        when(
-          () => createGameService.newOpenOrRealTimeChallenge(challengeRequest),
-        ).thenAnswer((_) async => challenge);
-        when(
-          () => createGameService.waitForChallengeResponse(challenge),
-        ).thenAnswer((_) => Completer<ChallengeResponse>().future);
-
-        final app = await makeTestProviderScopeApp(
-          tester,
-          home: const GameScreen(source: UserChallengeSource(challengeRequest)),
-          authUser: authUser,
-          overrides: {
-            createGameServiceProvider: createGameServiceProvider.overrideWith(
-              (_) => createGameService,
-            ),
-          },
-        );
-        await tester.pumpWidget(app);
-
-        await tester.pumpAndSettle();
-
-        expect(find.byType(Chessboard), findsOneWidget);
-        expect(getBoardPieces(tester), isEmpty);
-        expect(find.text('To invite someone to play, give this URL'), findsOneWidget);
-        expect(find.text('Or let your opponent scan this QR code'), findsOneWidget);
-        expect(find.byType(QrImageView), findsOneWidget);
-        expect(find.textContaining('https://$kLichessHost/${challenge.id.value}'), findsOneWidget);
-        expect(
-          find.text('Or invite a Lichess user'),
-          authUser == null ? findsNothing : findsOneWidget,
-        );
-      });
-    }
   });
 
   group('Reconnecting title', () {
@@ -324,228 +156,6 @@ void main() {
       await tester.pump();
 
       expect(find.text('3+2 • Casual'), findsOneWidget);
-    });
-
-    testWidgets('lobby loading shows seek time control and mode', (WidgetTester tester) async {
-      const seek = GameSeek(clock: (Duration(minutes: 3), Duration(seconds: 2)), rated: true);
-      final createGameService = MockCreateGameService();
-      when(
-        () => createGameService.newLobbyGame(any()),
-      ).thenAnswer((_) => Completer<GameSeekResponse>().future);
-
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: const GameScreen(source: LobbySource(seek)),
-        overrides: {
-          createGameServiceProvider: createGameServiceProvider.overrideWith(
-            (_) => createGameService,
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      await tester.pump(kFakeWebSocketConnectionLag);
-      await tester.pump();
-
-      expect(find.text('3+2 • Rated'), findsOneWidget);
-    });
-
-    testWidgets('seek cancelled shows seek time control and mode', (WidgetTester tester) async {
-      const seek = GameSeek(clock: (Duration(minutes: 3), Duration(seconds: 2)), rated: true);
-      final createGameService = MockCreateGameService();
-      when(
-        () => createGameService.newLobbyGame(any()),
-      ).thenAnswer((_) async => const GameSeekCancelled());
-
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: const GameScreen(source: LobbySource(seek)),
-        overrides: {
-          createGameServiceProvider: createGameServiceProvider.overrideWith(
-            (_) => createGameService,
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      await tester.pump();
-
-      expect(find.text('3+2 • Rated'), findsOneWidget);
-    });
-
-    testWidgets('challenge loading with destUser shows challenge time control and mode', (
-      WidgetTester tester,
-    ) async {
-      final challengeRequest = ChallengeRequest(
-        destUser: LightUser(id: UserId.fromUserName('bob'), name: 'Bob'),
-        variant: Variant.standard,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: const Duration(minutes: 3), increment: const Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-      );
-      final createGameService = MockCreateGameService();
-      when(
-        () => createGameService.newOpenOrRealTimeChallenge(any()),
-      ).thenAnswer((_) => Completer<Challenge>().future);
-
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: GameScreen(source: UserChallengeSource(challengeRequest)),
-        overrides: {
-          createGameServiceProvider: createGameServiceProvider.overrideWith(
-            (_) => createGameService,
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      await tester.pump(kFakeWebSocketConnectionLag);
-      await tester.pump();
-
-      expect(find.text('3+2 • Rated'), findsOneWidget);
-    });
-
-    testWidgets('challenge cancelled shows challenge time control and mode', (
-      WidgetTester tester,
-    ) async {
-      final challengeRequest = ChallengeRequest(
-        destUser: LightUser(id: UserId.fromUserName('bob'), name: 'Bob'),
-        variant: Variant.standard,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: const Duration(minutes: 3), increment: const Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-      );
-      final challenge = Challenge(
-        id: const ChallengeId('challeng'),
-        status: ChallengeStatus.canceled,
-        variant: Variant.standard,
-        speed: Speed.blitz,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: const Duration(minutes: 3), increment: const Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-        destUser: (
-          user: LightUser(id: UserId.fromUserName('bob'), name: 'Bob'),
-          rating: null,
-          provisionalRating: null,
-          lagRating: null,
-        ),
-      );
-      final createGameService = MockCreateGameService();
-      when(
-        () => createGameService.newOpenOrRealTimeChallenge(any()),
-      ).thenAnswer((_) async => challenge);
-      when(
-        () => createGameService.waitForChallengeResponse(any()),
-      ).thenAnswer((_) async => const ChallengeResponseCancelled());
-
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: GameScreen(source: UserChallengeSource(challengeRequest)),
-        overrides: {
-          createGameServiceProvider: createGameServiceProvider.overrideWith(
-            (_) => createGameService,
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-
-      expect(find.text('3+2 • Rated'), findsOneWidget);
-    });
-
-    testWidgets('challenge declined shows challenge time control and mode', (
-      WidgetTester tester,
-    ) async {
-      final challengeRequest = ChallengeRequest(
-        destUser: LightUser(id: UserId.fromUserName('bob'), name: 'Bob'),
-        variant: Variant.standard,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: const Duration(minutes: 3), increment: const Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-      );
-      final challenge = Challenge(
-        id: const ChallengeId('challeng'),
-        status: ChallengeStatus.declined,
-        variant: Variant.standard,
-        speed: Speed.blitz,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: const Duration(minutes: 3), increment: const Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-        destUser: (
-          user: LightUser(id: UserId.fromUserName('bob'), name: 'Bob'),
-          rating: null,
-          provisionalRating: null,
-          lagRating: null,
-        ),
-      );
-      final createGameService = MockCreateGameService();
-      when(
-        () => createGameService.newOpenOrRealTimeChallenge(any()),
-      ).thenAnswer((_) async => challenge);
-      when(() => createGameService.waitForChallengeResponse(any())).thenAnswer(
-        (_) async => ChallengeResponseDeclined(challenge: challenge, declineReason: null),
-      );
-
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: GameScreen(source: UserChallengeSource(challengeRequest)),
-        overrides: {
-          createGameServiceProvider: createGameServiceProvider.overrideWith(
-            (_) => createGameService,
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      await tester.pumpAndSettle();
-
-      expect(find.text('3+2 • Rated'), findsOneWidget);
-    });
-
-    testWidgets('open challenge shows challenge time control and mode', (
-      WidgetTester tester,
-    ) async {
-      const challengeRequest = ChallengeRequest(
-        variant: Variant.standard,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: Duration(minutes: 3), increment: Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-      );
-      const challenge = Challenge(
-        id: ChallengeId('challeng'),
-        status: ChallengeStatus.created,
-        variant: Variant.standard,
-        speed: Speed.blitz,
-        timeControl: ChallengeTimeControlType.clock,
-        clock: (time: Duration(minutes: 3), increment: Duration(seconds: 2)),
-        rated: true,
-        sideChoice: .random,
-      );
-      final createGameService = MockCreateGameService();
-      when(
-        () => createGameService.newOpenOrRealTimeChallenge(any()),
-      ).thenAnswer((_) async => challenge);
-      when(
-        () => createGameService.waitForChallengeResponse(any()),
-      ).thenAnswer((_) => Completer<ChallengeResponse>().future);
-
-      final app = await makeTestProviderScopeApp(
-        tester,
-        home: const GameScreen(source: UserChallengeSource(challengeRequest)),
-        overrides: {
-          createGameServiceProvider: createGameServiceProvider.overrideWith(
-            (_) => createGameService,
-          ),
-        },
-      );
-      await tester.pumpWidget(app);
-      await tester.pump(); // challenge created, state = OpenChallengeCreatedState
-      await tester.pump(kFakeWebSocketConnectionLag); // wait for socket pong
-      await tester.pump();
-
-      expect(find.text('3+2 • Rated'), findsOneWidget);
     });
 
     testWidgets('finished game shows time control and mode', (WidgetTester tester) async {
