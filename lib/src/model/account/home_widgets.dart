@@ -6,7 +6,6 @@ enum HomeEditableWidget {
   perfCards(false),
   friends(false),
   ongoingGames(true),
-  blogCarousel(false),
   quickPairing(false),
   recentGames(false);
 
@@ -17,7 +16,6 @@ enum HomeEditableWidget {
     HomeEditableWidget.friends => l10n.friends,
     HomeEditableWidget.quickPairing => l10n.quickPairing,
     HomeEditableWidget.recentGames => l10n.recentGames,
-    HomeEditableWidget.blogCarousel => l10n.blog,
   };
 
   const HomeEditableWidget(this.alwaysEnabled);

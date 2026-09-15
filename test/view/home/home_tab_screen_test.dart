@@ -551,6 +551,7 @@ void main() {
       final app = await makeTestProviderScope(
         tester,
         child: const Application(),
+        authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
             return FakeHttpClientFactory(() => serverDownClient());
@@ -569,6 +570,7 @@ void main() {
       final app = await makeTestProviderScope(
         tester,
         child: const Application(),
+        authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
             return FakeHttpClientFactory(() => serverDownClient(statusCode: 502));
@@ -589,6 +591,7 @@ void main() {
       final app = await makeTestProviderScope(
         tester,
         child: const Application(),
+        authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
             return FakeHttpClientFactory(() => serverDownClient(statusCode: 503));

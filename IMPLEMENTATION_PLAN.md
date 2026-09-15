@@ -67,8 +67,8 @@ before the core review loop is in the owner's hands.
       2. `[x]` UI  — Lichess branding (donate, about, LichessMessage, welcome card) *(done: 1af79eab3 & 72c85e67f)*
       3. `[x]` C11 — Over-the-board game and standalone clock tool *(done)*
       4. `[x]` C7  — Watch tab (TV / tournaments / broadcasts) *(done: dd996ee74)*
-      5. `[x]` C6  — Puzzles tab *(done: this commit — analyze 0, tests 1242 passing, linux build ok)*
-      6. `[ ]` C10 — Blog / recap / announce (home carousels + model)
+      5. `[x]` C6  — Puzzles tab *(done: fb4847be2 — analyze 0, tests 1242 passing, linux build ok)*
+      6. `[x]` C10 — Blog / recap / announce (home carousels + model) *(done: this commit — analyze 0, tests 1235 passing, linux build ok)*
       7. `[ ]` C4  — Online play: lobby / seek / challenges
       8. `[ ]` C5  — Server game lifecycle + correspondence
       9. `[ ]` C8  — Social navigation entry points from More tab

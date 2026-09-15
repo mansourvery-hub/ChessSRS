@@ -39,7 +39,7 @@ These are the authoritative decisions from the owner. Do not override them.
 | C7 Watch tab | `[x]` DONE | Removed (commit dd996ee74) — docs marked late in C6 commit |
 | C8 Social | `[ ]` REMOVE | Approved (depends on C3 staying; see notes below) |
 | C9 Learn tab + coord training | `[x]` DONE | Removed 2026-09-14 |
-| C10 Blog/recap/announce | `[ ]` REMOVE | Approved |
+| C10 Blog/recap/announce | `[x]` DONE | Removed 2026-09-15 — models, services, home carousel, test |
 | C11 Over-the-board game | `[x]` DONE | Removed 2026-09-14 |
 | C11 Chess clock tool | `[x]` DONE | Removed by owner request 2026-09-14 |
 | C12 Offline computer play | `[ ]` REMOVE | Approved (follows from C13) |
@@ -76,8 +76,8 @@ Step 1  [x]  C9  — Learn tab + coordinate training                  DONE
 Step 2  [x]  UI  — Lichess branding strings from home + more screens DONE
 Step 3  [x]  C7  — Watch tab (TV / tournaments / broadcasts)  DONE (dd996ee74)
 Step 4  [x]  C6  — Puzzles tab                                DONE
-Step 5  [ ]  C11 — Over-the-board game (NOT clock tool)
-Step 6  [ ]  C10 — Blog / recap / announce (home carousels + model)
+Step 5  [x]  C11 — Over-the-board game & Clock tool             DONE
+Step 6  [x]  C10 — Blog / recap / announce (home carousels + model) DONE
 Step 7  [ ]  C4  — Online play: lobby / seek / challenges
               (depends on: home_tab_screen already cleaned of play widgets)
 Step 8  [ ]  C5  — Server game lifecycle + correspondence
@@ -295,4 +295,6 @@ or HTTP consumers outside auth and study-import paths.
 | 1 / C9 | Learn tab + coordinate training | `f74627873` | 2026-09-14 | 1570 → 1564 |
 | 2 / UI | Lichess branding (donate, about, LichessMessage, welcome card) | `1af79eab3` | 2026-09-14 | 1564 → 1564 |
 | 3 / C7 | Watch tab (TV / tournaments / broadcasts) | `dd996ee74` | 2026-09-15 | — |
-| 4 / C6 | Puzzles tab (model/view, nav, deep links, quick action) | _(this commit)_ | 2026-09-15 | 1242 passing, analyze 0, linux build ok |
+| 4 / C6 | Puzzles tab (model/view, nav, deep links, quick action) | `fb4847be2` | 2026-09-15 | 1242 passing, analyze 0, linux build ok |
+| 5 / C11 | Over-the-board game & Clock tool | `4d1c4b211` & `1b7e18a03` | 2026-09-14 | — |
+| 6 / C10 | Blog / recap / announce (models, services, home carousel) | _(this commit)_ | 2026-09-15 | 1242 → 1235 passing, analyze 0, linux build ok |
