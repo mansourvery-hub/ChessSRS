@@ -37,29 +37,28 @@ These are the authoritative decisions from the owner. Do not override them.
 | C5 Server games | `[x]` DONE | Removed 2026-09-15 — server game lifecycle, correspondence, GameScreen, ongoing games |
 | C6 Puzzles tab | `[x]` DONE | Removed 2026-09-15 — tab, model/view dirs, deep links, quick action; shared FeedbackTile/SideToPlayPiece moved to widgets/feedback.dart |
 | C7 Watch tab | `[x]` DONE | Removed (commit dd996ee74) — docs marked late in C6 commit |
-| C8 Social | `[x]` DONE | Removed 2026-09-15 — removed Community/Players/Friends and Inbox from More tab |
+| C8 Social | `[x]` DONE | Removed 2026-09-15 — removed Community/Players/Friends, Inbox from More tab & account menu, Home friends carousel, and message service poller |
 | C9 Learn tab + coord training | `[x]` DONE | Removed 2026-09-14 |
 | C10 Blog/recap/announce | `[x]` DONE | Removed 2026-09-15 — models, services, home carousel, test |
 | C11 Over-the-board game | `[x]` DONE | Removed 2026-09-14 |
 | C11 Chess clock tool | `[x]` DONE | Removed by owner request 2026-09-14 |
-| C12 Offline computer play | `[ ]` REMOVE | Approved (follows from C13) |
+| C12 Offline computer play | `[G]` GREY | Owner undecided; leave untouched until explicit approval |
 | C13 Engine (Stockfish) | `[G]` GREY | May be useful as optional import advisor — undecided |
 | C14 Opening explorer | `[K]` KEEP | Owner decision |
 | C15 Analysis screen | `[G]` GREY | Undecided — shares widgets with study; leave untouched |
 | C16 Board editor | `[K]` KEEP | Owner decision |
-| C17 WebSocket | `[ ]` REMOVE | Follows from C4–C10 |
-| C18 HTTP repos | `[ ]` REMOVE | Follows from C4–C10; keep auth HTTP for C3 |
-| UI-A Donate / patron links | `[ ]` REMOVE | Lichess branding; not our product |
-| UI-B "About Lichess" in More tab | `[ ]` REMOVE | Replace with ChessSRS about if needed later |
-| UI-C "Lichess is a free…" message (LichessMessage widget) | `[ ]` REMOVE | Lichess brand copy |
-| UI-D "Welcome to the Lichess app" card | `[ ]` REMOVE | Lichess brand copy |
-| UI-E "Not all features available" text | `[ ]` REMOVE | Part of Lichess welcome card |
+| C17 WebSocket | `[K]` KEEP | Owner decision (2026-09-16) — kept for study sync, cloud Stockfish evaluation, and future sync |
+| C18 HTTP repos | `[K]` KEEP | Owner decision (2026-09-16) — base HTTP, auth, study import, opening explorer, and tablebase kept; dead online repos trimmed |
+| UI-A Donate / patron links | `[x]` DONE | Removed (commit 1af79eab3) |
+| UI-B "About Lichess" in More tab | `[x]` DONE | Removed (commit 1af79eab3) |
+| UI-C "Lichess is a free…" message (LichessMessage widget) | `[x]` DONE | Removed (commit 1af79eab3) |
+| UI-D "Welcome to the Lichess app" card | `[x]` DONE | Removed (commit 1af79eab3) |
+| UI-E "Not all features available" text | `[x]` DONE | Removed (commit 1af79eab3) |
 
-**C8 Social note**: Friends list, inbox, player search, and relations all
-depend on C3 (auth) staying. Since C3 is kept, these screens remain loadable
-for logged-in users. However they are Lichess social features not relevant to
-ChessSRS. Remove the navigation entry points from More tab; the underlying
-model code can stay until a later cleanup pass when the HTTP layer is trimmed.
+**C8 Social note**: Friends list, inbox, player search, and relations navigation
+entries were removed from the More tab and Account menu; the Home screen friends
+carousel was removed; and the background message service was silenced. Base user/account
+models remain for C3 (auth).
 
 ---
 
@@ -80,11 +79,10 @@ Step 5  [x]  C11 — Over-the-board game & Clock tool             DONE
 Step 6  [x]  C10 — Blog / recap / announce (home carousels + model) DONE
 Step 7  [x]  C4  — Online play: lobby / seek / challenges           DONE
 Step 8  [x]  C5  — Server game lifecycle + correspondence       DONE
-Step 9  [x]  C8  — Social navigation entries from More tab          DONE
-Step 10 [ ]  C17 — WebSocket (no consumers left after C4–C8)
-Step 11 [ ]  C18 — HTTP repositories (online repos only; keep auth HTTP)
-Step 12 [ ]  Tab reduction: trim to Home + Settings (+ future Review tab)
-              (after C4–C8 the remaining tabs are Home and More/Settings only)
+Step 9  [x]  C8  — Social navigation & Home carousel & Message poller DONE
+Step 10 [K]  C17 — WebSocket (KEPT by owner decision for study sync / cloud eval)
+Step 11 [K]  C18 — HTTP network & core repositories (KEPT for auth / study / explorer)
+Step 12 [x]  Tab reduction: clean 2-tab shell (Home + More; future: + Review tab) DONE
 ```
 
 Steps beyond 12 (C12 offline computer, C13 engine) are blocked on owner

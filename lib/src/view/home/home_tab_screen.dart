@@ -8,8 +8,6 @@ import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
 import 'package:chess_srs/src/model/engine/weights_service.dart';
 import 'package:chess_srs/src/model/game/game_history.dart';
-import 'package:chess_srs/src/model/message/message_repository.dart';
-import 'package:chess_srs/src/model/relation/following_user.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
@@ -22,7 +20,6 @@ import 'package:chess_srs/src/view/account/account_menu.dart';
 import 'package:chess_srs/src/view/account/profile_screen.dart';
 import 'package:chess_srs/src/view/auth/sign_in_error.dart';
 import 'package:chess_srs/src/view/auth/sign_in_options.dart';
-import 'package:chess_srs/src/view/home/following_carousel.dart';
 import 'package:chess_srs/src/view/settings/engine_settings_screen.dart';
 import 'package:chess_srs/src/view/user/recent_games.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -30,7 +27,6 @@ import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
 import 'package:chess_srs/src/widgets/misc.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:chess_srs/src/widgets/server_outage_display.dart';
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/experimental/mutation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,15 +120,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
             final hasServerContent = isOnline && !isServerUnavailable;
             final showOutage = isServerUnavailable && !widget.editModeEnabled;
 
-            final followingAsync = authUser != null && hasServerContent
-                ? ref.watch(followingCarouselProvider)
-                : const AsyncValue.data(IListConst<FollowingUser>([]));
-
-            final hasFollowing = followingAsync.maybeWhen(
-              data: (following) => following.isNotEmpty,
-              orElse: () => true,
-            );
-
             // Show the welcome screen if not logged in and there are no recent games and no stored games
             // (i.e. first installation, or the user has never played a game)
             final shouldShowWelcomeScreen =
@@ -193,11 +180,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                     child: const AccountPerfCards(padding: Styles.bodySectionPadding),
                   ),
                 _EditableWidget(
-                  widget: HomeEditableWidget.friends,
-                  shouldShow: authUser != null && hasServerContent && hasFollowing,
-                  child: FollowingCarousel(followingAsync),
-                ),
-                _EditableWidget(
                   widget: HomeEditableWidget.recentGames,
                   shouldShow: true,
                   child: RecentGamesWidget(
@@ -225,11 +207,6 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
                   child: AccountPerfCards(
                     padding: Styles.horizontalBodyPadding.add(Styles.sectionBottomPadding),
                   ),
-                ),
-                _EditableWidget(
-                  widget: HomeEditableWidget.friends,
-                  shouldShow: authUser != null && hasServerContent && hasFollowing,
-                  child: FollowingCarousel(followingAsync),
                 ),
                 _EditableWidget(
                   widget: HomeEditableWidget.recentGames,
@@ -319,9 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeTabScreen> {
     try {
       await Future.wait([
         ref.refresh(myRecentGamesProvider.future),
-        if (isOnline) ref.refresh(unreadMessagesProvider.future),
         if (isOnline) ref.refresh(accountProvider.future),
-        if (isOnline) ref.refresh(followingCarouselProvider.future),
       ]);
     } catch (_) {
       // Refreshing while the server is unavailable is expected to fail. Each

@@ -2,7 +2,6 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:chess_srs/src/model/account/account_repository.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/preloaded_data.dart';
-import 'package:chess_srs/src/model/message/message_repository.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -15,7 +14,6 @@ import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/view/account/profile_screen.dart';
 import 'package:chess_srs/src/view/auth/sign_in_error.dart';
 import 'package:chess_srs/src/view/auth/sign_in_options.dart';
-import 'package:chess_srs/src/view/message/contacts_screen.dart';
 import 'package:chess_srs/src/view/settings/settings_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -92,7 +90,6 @@ class _AccountMenuScreenState extends ConsumerState<AccountMenuScreen> with Widg
     final authUser = ref.watch(authControllerProvider);
     final kidMode = account.value?.kid ?? false;
     final LightUser? user = account.value?.lightUser ?? authUser?.user;
-    final unreadMessages = ref.watch(unreadMessagesProvider).value?.unread ?? 0;
 
     return PlatformScaffold(
       appBar: PlatformAppBar(
@@ -179,22 +176,6 @@ class _AccountMenuScreenState extends ConsumerState<AccountMenuScreen> with Widg
           ],
           ListSection(
             children: [
-              if (user != null && account.hasValue && !kidMode)
-                ListTile(
-                  leading: Badge.count(
-                    isLabelVisible: unreadMessages > 0,
-                    count: unreadMessages,
-                    child: const Icon(Icons.mail_outline),
-                  ),
-                  trailing: Theme.of(context).platform == TargetPlatform.iOS
-                      ? const CupertinoListTileChevron()
-                      : null,
-                  title: Text(context.l10n.inbox),
-                  enabled: isOnline,
-                  onTap: () {
-                    _navigate(context, ContactsScreen.buildRoute());
-                  },
-                ),
               ListTile(
                 leading: const Icon(Icons.settings_outlined),
                 trailing: Theme.of(context).platform == TargetPlatform.iOS
@@ -320,8 +301,6 @@ class _AccountMenuButtonState extends ConsumerState<AccountMenuButton> {
   @override
   Widget build(BuildContext context) {
     final account = ref.watch(accountProvider);
-    final kidMode = account.value?.kid ?? false;
-    final unreadMessages = ref.watch(unreadMessagesProvider).value?.unread ?? 0;
     final client = ref.watch(defaultClientProvider);
 
     void openMenu() {
@@ -329,38 +308,33 @@ class _AccountMenuButtonState extends ConsumerState<AccountMenuButton> {
     }
 
     return switch (account) {
-      AsyncData(:final value) => Badge.count(
-        offset: const Offset(-4, 0),
-        count: unreadMessages,
-        isLabelVisible: !kidMode && unreadMessages > 0,
-        child: IconButton(
-          tooltip: value == null ? context.l10n.signIn : value.username,
-          icon: value == null
-              ? Icon(
-                  Icons.account_circle_outlined,
-                  size: Theme.of(context).platform == TargetPlatform.iOS
-                      ? _cupertinoAnonIconSize
-                      : _materialAnonIconSize,
-                )
-              : CircleAvatar(
-                  radius:
-                      (Theme.of(context).platform == TargetPlatform.iOS
-                          ? _cupertinoAnonIconSize / 2
-                          : _materialAnonIconSize / 2) +
-                      1,
-                  foregroundImage: value.flair != null && !_errorLoadingFlair
-                      ? HttpNetworkImage(lichessFlairSrc(value.flair!), client)
-                      : null,
-                  onForegroundImageError: value.flair != null
-                      ? (error, _) => setState(() => _errorLoadingFlair = true)
-                      : null,
-                  backgroundColor: value.flair == null || _errorLoadingFlair
-                      ? null
-                      : ColorScheme.of(context).surfaceContainer,
-                  child: value.flair == null || _errorLoadingFlair ? Text(value.initials) : null,
-                ),
-          onPressed: openMenu,
-        ),
+      AsyncData(:final value) => IconButton(
+        tooltip: value == null ? context.l10n.signIn : value.username,
+        icon: value == null
+            ? Icon(
+                Icons.account_circle_outlined,
+                size: Theme.of(context).platform == TargetPlatform.iOS
+                    ? _cupertinoAnonIconSize
+                    : _materialAnonIconSize,
+              )
+            : CircleAvatar(
+                radius:
+                    (Theme.of(context).platform == TargetPlatform.iOS
+                        ? _cupertinoAnonIconSize / 2
+                        : _materialAnonIconSize / 2) +
+                    1,
+                foregroundImage: value.flair != null && !_errorLoadingFlair
+                    ? HttpNetworkImage(lichessFlairSrc(value.flair!), client)
+                    : null,
+                onForegroundImageError: value.flair != null
+                    ? (error, _) => setState(() => _errorLoadingFlair = true)
+                    : null,
+                backgroundColor: value.flair == null || _errorLoadingFlair
+                    ? null
+                    : ColorScheme.of(context).surfaceContainer,
+                child: value.flair == null || _errorLoadingFlair ? Text(value.initials) : null,
+              ),
+        onPressed: openMenu,
       ),
       _ => IconButton(
         icon: Icon(

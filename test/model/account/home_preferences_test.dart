@@ -17,7 +17,7 @@ void main() {
 
     test('serialization round-trip preserves new fields', () {
       final prefs = HomePrefs(
-        disabledWidgets: IList(const [HomeEditableWidget.friends]),
+        disabledWidgets: IList(const [HomeEditableWidget.recentGames]),
         disabledTimeControls: IList(const [TimeIncrement(60, 0), TimeIncrement(300, 0)]),
         customButtonEnabled: false,
       );
@@ -32,10 +32,10 @@ void main() {
     });
 
     test('fromJson with missing new fields returns defaults', () {
-      final oldJson = jsonDecode('{"disabledWidgets":["friends"]}') as Map<String, dynamic>;
+      final oldJson = jsonDecode('{"disabledWidgets":["recentGames"]}') as Map<String, dynamic>;
       final prefs = HomePrefs.fromJson(oldJson);
 
-      expect(prefs.disabledWidgets, contains(HomeEditableWidget.friends));
+      expect(prefs.disabledWidgets, contains(HomeEditableWidget.recentGames));
       expect(prefs.disabledTimeControls, isEmpty);
       expect(prefs.customButtonEnabled, isTrue);
     });

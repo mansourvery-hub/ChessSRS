@@ -4,13 +4,11 @@ import 'package:chess_srs/l10n/l10n.dart';
 enum HomeEditableWidget {
   hello(false),
   perfCards(false),
-  friends(false),
   recentGames(false);
 
   String label(AppLocalizations l10n) => switch (this) {
     HomeEditableWidget.hello => 'Hello',
     HomeEditableWidget.perfCards => 'Performance Cards',
-    HomeEditableWidget.friends => l10n.friends,
     HomeEditableWidget.recentGames => l10n.recentGames,
   };
 

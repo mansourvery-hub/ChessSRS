@@ -59,26 +59,27 @@ before the core review loop is in the owner's hands.
       `chess-repertoire-srs` history (first-parent) and lichess upstream
       (merge), so the repo descends from both; old repo pushed fast-forward;
       `legacy` branch + `legacy/pre-reset` tag pushed.
-- [~] **F5+: Staged cuts** — execute `CUT_PROPOSALS.md` execution order
+- [x] **F5+: Staged cuts** — executed `CUT_PROPOSALS.md` execution order
       (one subsystem per commit; verify + launch after each). Owner has
       reviewed and approved/rejected each cut — see `CUT_PROPOSALS.md`
-      §Owner decisions for the full record. Current ordered plan:
+      §Owner decisions for the full record. Final ordered status:
       1. `[x]` C9  — Learn tab + coordinate training  *(done: f74627873)*
       2. `[x]` UI  — Lichess branding (donate, about, LichessMessage, welcome card) *(done: 1af79eab3 & 72c85e67f)*
-      3. `[x]` C11 — Over-the-board game and standalone clock tool *(done)*
+      3. `[x]` C11 — Over-the-board game and standalone clock tool *(done: 4d1c4b211 & 1b7e18a03)*
       4. `[x]` C7  — Watch tab (TV / tournaments / broadcasts) *(done: dd996ee74)*
-      5. `[x]` C6  — Puzzles tab *(done: fb4847be2 — analyze 0, tests 1242 passing, linux build ok)*
-      6. `[x]` C10 — Blog / recap / announce (home carousels + model) *(done: 156d760fa — analyze 0, tests 1235 passing, linux build ok)*
-      7. `[x]` C4  — Online play: lobby / seek / challenges *(done: c2094c070 — analyze 0, tests 1182 passing, linux build ok)*
-      8. `[x]` C5  — Server game lifecycle + correspondence *(done: this commit — analyze 0, tests 1084 passing, linux build ok)*
-      9. `[x]` C8  — Social navigation entry points from More tab *(done: 790bb99c2 — analyze 0, tests 1182 passing, linux build ok)*
-      10. `[ ]` C17 — WebSocket
-      11. `[ ]` C18 — HTTP repositories (online only; auth HTTP kept)
-      12. `[ ]` Tab reduction → Home + Settings (future: + Review tab)
-      Grey/undecided (do NOT touch without owner approval): C1, C2, C13, C15.
-      Kept by owner decision: C3, C14, C16.
-- [ ] **F-end: Foundation stable** — a clean, coherent, Lichess-derived
-      offline application shell with our tabs. Owner reviews cut result.
+      5. `[x]` C6  — Puzzles tab *(done: fb4847be2)*
+      6. `[x]` C10 — Blog / recap / announce (home carousels + model) *(done: 156d760fa)*
+      7. `[x]` C4  — Online play: lobby / seek / challenges *(done: c2094c070)*
+      8. `[x]` C5  — Server game lifecycle + correspondence *(done: bc7b4dcc4)*
+      9. `[x]` C8  — Social cleanup: More tab entries, Home friends carousel, and message service poller *(done)*
+      10. `[K]` C17 — WebSocket *(KEPT by owner decision for study sync & cloud eval)*
+      11. `[K]` C18 — HTTP network & core repositories *(KEPT for auth, study import, explorer, tablebase)*
+      12. `[x]` Tab reduction → Clean 2-tab shell: Home + More/Settings *(done; future: + Review tab)*
+      Grey/undecided (untouched): C1, C2, C12, C13, C15.
+      Kept by owner decision: C3, C14, C16, C17, C18.
+- [x] **F-end: Foundation stable** — a clean, coherent, Lichess-derived
+      application shell with Home and More tabs. 0 analyzer warnings,
+      1,084 passing tests, desktop runtime verified. Ready for Phase 2.
 
 ## Phase 2 — Minimal product vertical slice
 
