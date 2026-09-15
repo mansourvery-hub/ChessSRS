@@ -15,7 +15,6 @@ import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/utils/string.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
-import 'package:chess_srs/src/view/puzzle/dashboard_screen.dart';
 import 'package:chess_srs/src/view/user/game_history_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -140,44 +139,6 @@ class _Body extends ConsumerWidget {
     final loggedInUser = ref.watch(authControllerProvider);
     const statGroupSpace = SizedBox(height: 16.0);
     const subStatSpace = SizedBox(height: 10);
-
-    // For puzzle perfs, only show the rating history chart
-    if (perf == Perf.puzzle) {
-      return ListView(
-        padding: Styles.bodyPadding.add(MediaQuery.paddingOf(context)),
-        children: [
-          ratingHistory.when(
-            data: (ratingHistoryData) {
-              final ratingHistoryPerfData = ratingHistoryData.firstWhereOrNull(
-                (element) => element.perf == perf,
-              );
-
-              if (ratingHistoryPerfData == null || ratingHistoryPerfData.points.length <= 1) {
-                return const SizedBox.shrink();
-              }
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _EloChart(ratingHistoryPerfData),
-                ),
-              );
-            },
-            error: (error, stackTrace) {
-              debugPrint(
-                'SEVERE: [PerfStatsScreen] could not load rating history data; $error\n$stackTrace',
-              );
-              return const Center(child: Text('Could not show rating chart'));
-            },
-            loading: () => const CenterLoadingIndicator(),
-          ),
-          // Show puzzle dashboard if viewing own puzzle perf
-          if (user.id == loggedInUser?.user.id) ...[
-            const SizedBox(height: 16),
-            const PuzzleDashboardWidget(showDaysSelector: true),
-          ],
-        ],
-      );
-    }
 
     final perfStats = ref.watch(userPerfStatsProvider((user.id, perf)));
 

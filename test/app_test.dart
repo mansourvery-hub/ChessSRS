@@ -88,7 +88,6 @@ void main() {
     expect(find.byType(MainTabScaffold), findsOneWidget);
 
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Puzzles'), findsOneWidget);
     expect(find.text('More'), findsOneWidget);
   });
 

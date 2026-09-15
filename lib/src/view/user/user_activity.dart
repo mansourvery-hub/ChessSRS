@@ -4,7 +4,6 @@ import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
-import 'package:chess_srs/src/view/puzzle/puzzle_history_screen.dart';
 import 'package:chess_srs/src/view/user/game_history_screen.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/rating.dart';
@@ -162,7 +161,6 @@ class UserActivityEntry extends ConsumerWidget {
               draw: 0,
               loss: entry.puzzles!.loss,
             ),
-            onTap: () => Navigator.of(context).push(PuzzleHistoryScreen.buildRoute()),
           ),
         if (entry.streak != null)
           _UserActivityListTile(

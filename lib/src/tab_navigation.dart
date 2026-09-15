@@ -6,15 +6,12 @@ import 'package:material_ui/material_ui.dart';
 
 enum BottomTab {
   home,
-  puzzles,
   more;
 
   String label(AppLocalizations strings) {
     switch (this) {
       case BottomTab.home:
         return strings.mobileHomeTab;
-      case BottomTab.puzzles:
-        return strings.mobilePuzzlesTab;
       case BottomTab.more:
         return strings.more;
     }
@@ -24,8 +21,6 @@ enum BottomTab {
     switch (this) {
       case BottomTab.home:
         return Symbols.home_rounded;
-      case BottomTab.puzzles:
-        return Symbols.extension_rounded;
       case BottomTab.more:
         return Symbols.menu_rounded;
     }
@@ -39,8 +34,6 @@ final currentNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>((ref) {
   switch (currentTab) {
     case BottomTab.home:
       return homeNavigatorKey;
-    case BottomTab.puzzles:
-      return puzzlesNavigatorKey;
     case BottomTab.more:
       return moreNavigatorKey;
   }
@@ -51,19 +44,15 @@ final currentRootScrollControllerProvider = Provider<ScrollController>((ref) {
   switch (currentTab) {
     case BottomTab.home:
       return homeScrollController;
-    case BottomTab.puzzles:
-      return puzzlesScrollController;
     case BottomTab.more:
       return moreScrollController;
   }
 });
 
 final homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
-final puzzlesNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'puzzles');
 final moreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'more');
 
 final homeScrollController = ScrollController(debugLabel: 'HomeScroll');
-final puzzlesScrollController = ScrollController(debugLabel: 'PuzzlesScroll');
 final moreScrollController = ScrollController(debugLabel: 'MoreScroll');
 
 /// A [NavigatorObserver] that keeps track of the routes currently on the
@@ -126,7 +115,6 @@ class BottomTabInteraction extends ChangeNotifier {
 }
 
 final homeTabInteraction = BottomTabInteraction();
-final puzzlesTabInteraction = BottomTabInteraction();
 final moreTabInteraction = BottomTabInteraction();
 
 class MainTabScaffoldProperties extends InheritedWidget {

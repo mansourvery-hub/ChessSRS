@@ -4,13 +4,10 @@ import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/common/speed.dart';
 import 'package:chess_srs/src/model/lobby/game_seek.dart';
-import 'package:chess_srs/src/model/puzzle/puzzle_angle.dart';
-import 'package:chess_srs/src/model/puzzle/puzzle_theme.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/view/game/game_screen.dart';
 import 'package:chess_srs/src/view/game/game_screen_providers.dart';
 import 'package:chess_srs/src/view/offline_computer/offline_computer_game_screen.dart';
-import 'package:chess_srs/src/view/puzzle/puzzle_screen.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,11 +54,6 @@ class QuickActionService {
             rootNavigator: true,
           ).push(GameScreen.buildRoute(source: LobbySource(recentSeeks[index])));
         }
-      } else if (shortcutType == 'play_puzzles') {
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).push(PuzzleScreen.buildRoute(angle: const PuzzleTheme(PuzzleThemeKey.mix)));
       } else if (shortcutType == 'play_computer') {
         Navigator.of(context, rootNavigator: true).push(OfflineComputerGameScreen.buildRoute());
       }
@@ -71,11 +63,6 @@ class QuickActionService {
 
   void setQuickActions(IList<GameSeek> recentSeeks) {
     quickActions.setShortcutItems(<ShortcutItem>[
-      ShortcutItem(
-        type: 'play_puzzles',
-        localizedTitle: l10n.puzzleDesc,
-        icon: platform == TargetPlatform.iOS ? 'ExtensionIcon' : 'extension',
-      ),
       ShortcutItem(
         type: 'play_computer',
         localizedTitle: l10n.playAgainstComputer,

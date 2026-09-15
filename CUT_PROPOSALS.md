@@ -35,8 +35,8 @@ These are the authoritative decisions from the owner. Do not override them.
 | C3 Auth/login | `[K]` KEEP | Login is optional but enables importing Lichess/chess.com studies; app is 100% functional offline without it |
 | C4 Online play | `[ ]` REMOVE | Approved |
 | C5 Server games | `[ ]` REMOVE | Approved — preserve offline game-frame widgets (board, move list) |
-| C6 Puzzles tab | `[ ]` REMOVE | Approved |
-| C7 Watch tab | `[ ]` REMOVE | Approved |
+| C6 Puzzles tab | `[x]` DONE | Removed 2026-09-15 — tab, model/view dirs, deep links, quick action; shared FeedbackTile/SideToPlayPiece moved to widgets/feedback.dart |
+| C7 Watch tab | `[x]` DONE | Removed (commit dd996ee74) — docs marked late in C6 commit |
 | C8 Social | `[ ]` REMOVE | Approved (depends on C3 staying; see notes below) |
 | C9 Learn tab + coord training | `[x]` DONE | Removed 2026-09-14 |
 | C10 Blog/recap/announce | `[ ]` REMOVE | Approved |
@@ -74,8 +74,8 @@ launches, manual spot-check) before proceeding to the next step.
 ```
 Step 1  [x]  C9  — Learn tab + coordinate training                  DONE
 Step 2  [x]  UI  — Lichess branding strings from home + more screens DONE
-Step 3  [ ]  C7  — Watch tab (TV / tournaments / broadcasts)
-Step 4  [ ]  C6  — Puzzles tab
+Step 3  [x]  C7  — Watch tab (TV / tournaments / broadcasts)  DONE (dd996ee74)
+Step 4  [x]  C6  — Puzzles tab                                DONE
 Step 5  [ ]  C11 — Over-the-board game (NOT clock tool)
 Step 6  [ ]  C10 — Blog / recap / announce (home carousels + model)
 Step 7  [ ]  C4  — Online play: lobby / seek / challenges
@@ -294,3 +294,5 @@ or HTTP consumers outside auth and study-import paths.
 |---|---|---|---|---|
 | 1 / C9 | Learn tab + coordinate training | `f74627873` | 2026-09-14 | 1570 → 1564 |
 | 2 / UI | Lichess branding (donate, about, LichessMessage, welcome card) | `1af79eab3` | 2026-09-14 | 1564 → 1564 |
+| 3 / C7 | Watch tab (TV / tournaments / broadcasts) | `dd996ee74` | 2026-09-15 | — |
+| 4 / C6 | Puzzles tab (model/view, nav, deep links, quick action) | _(this commit)_ | 2026-09-15 | 1242 passing, analyze 0, linux build ok |

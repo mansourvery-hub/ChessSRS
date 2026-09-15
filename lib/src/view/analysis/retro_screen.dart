@@ -17,7 +17,6 @@ import 'package:chess_srs/src/view/analysis/analysis_layout.dart';
 import 'package:chess_srs/src/view/analysis/retro_settings_screen.dart';
 import 'package:chess_srs/src/view/engine/engine_button.dart';
 import 'package:chess_srs/src/view/engine/engine_gauge.dart';
-import 'package:chess_srs/src/view/puzzle/puzzle_feedback_widget.dart';
 import 'package:chess_srs/src/view/settings/toggle_sound_button.dart';
 import 'package:chess_srs/src/widgets/bottom_bar.dart';
 import 'package:chess_srs/src/widgets/buttons.dart';

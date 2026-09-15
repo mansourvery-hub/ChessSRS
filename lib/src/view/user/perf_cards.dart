@@ -5,7 +5,6 @@ import 'package:chess_srs/src/styles/lichess_icons.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/account/rating_pref_aware.dart';
-import 'package:chess_srs/src/view/puzzle/storm_dashboard.dart';
 import 'package:chess_srs/src/view/user/perf_stats_screen.dart';
 import 'package:chess_srs/src/widgets/rating.dart';
 import 'package:material_ui/material_ui.dart';
@@ -159,9 +158,6 @@ class PerfCards extends StatelessWidget {
   }
 
   void _handlePerfCardTap(BuildContext context, Perf perf) {
-    Navigator.of(context).push(switch (perf) {
-      Perf.storm => StormDashboardModal.buildRoute(user.lightUser),
-      _ => PerfStatsScreen.buildRoute(user: user, perf: perf),
-    });
+    Navigator.of(context).push(PerfStatsScreen.buildRoute(user: user, perf: perf));
   }
 }
