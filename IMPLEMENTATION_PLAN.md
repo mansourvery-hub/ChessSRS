@@ -69,9 +69,9 @@ before the core review loop is in the owner's hands.
       4. `[x]` C7  — Watch tab (TV / tournaments / broadcasts) *(done: dd996ee74)*
       5. `[x]` C6  — Puzzles tab *(done: fb4847be2 — analyze 0, tests 1242 passing, linux build ok)*
       6. `[x]` C10 — Blog / recap / announce (home carousels + model) *(done: 156d760fa — analyze 0, tests 1235 passing, linux build ok)*
-      7. `[x]` C4  — Online play: lobby / seek / challenges *(done: this commit — analyze 0, tests 1182 passing, linux build ok)*
+      7. `[x]` C4  — Online play: lobby / seek / challenges *(done: c2094c070 — analyze 0, tests 1182 passing, linux build ok)*
       8. `[ ]` C5  — Server game lifecycle + correspondence
-      9. `[ ]` C8  — Social navigation entry points from More tab
+      9. `[x]` C8  — Social navigation entry points from More tab *(done: this commit — analyze 0, tests 1182 passing, linux build ok)*
       10. `[ ]` C17 — WebSocket
       11. `[ ]` C18 — HTTP repositories (online only; auth HTTP kept)
       12. `[ ]` Tab reduction → Home + Settings (future: + Review tab)

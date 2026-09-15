@@ -3,7 +3,6 @@ import 'package:chess_srs/src/model/analysis/analysis_controller.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/id.dart';
-import 'package:chess_srs/src/model/message/message_repository.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
@@ -12,11 +11,8 @@ import 'package:chess_srs/src/view/account/profile_screen.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
 import 'package:chess_srs/src/view/explorer/opening_explorer_screen.dart';
-import 'package:chess_srs/src/view/message/contacts_screen.dart';
 import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
-import 'package:chess_srs/src/view/relation/friend_screen.dart';
 import 'package:chess_srs/src/view/settings/settings_screen.dart';
-import 'package:chess_srs/src/view/user/player_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/misc.dart';
@@ -137,35 +133,6 @@ class _Body extends ConsumerWidget {
               ),
             ],
           ),
-          ListSection(
-            header: SettingsSectionTitle(context.l10n.community),
-            hasLeading: true,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.groups_3_outlined),
-                title: Text(context.l10n.players),
-                enabled: isOnline,
-                trailing: Theme.of(context).platform == TargetPlatform.iOS
-                    ? const CupertinoListTileChevron()
-                    : null,
-                onTap: () {
-                  Navigator.of(context, rootNavigator: true).push(PlayerScreen.buildRoute());
-                },
-              ),
-              if (authUser != null)
-                ListTile(
-                  leading: const Icon(Icons.people_outline),
-                  title: Text(context.l10n.friends),
-                  enabled: isOnline,
-                  trailing: Theme.of(context).platform == TargetPlatform.iOS
-                      ? const CupertinoListTileChevron()
-                      : null,
-                  onTap: () {
-                    Navigator.of(context, rootNavigator: true).push(FriendScreen.buildRoute());
-                  },
-                ),
-            ],
-          ),
           const _AccountSection(),
         ],
       ),
@@ -179,10 +146,7 @@ class _AccountSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = ref.watch(isDeviceOnlineProvider);
-    final account = ref.watch(accountProvider);
     final authUser = ref.watch(authControllerProvider);
-    final kidMode = account.value?.kid ?? false;
-    final unreadMessages = ref.watch(unreadMessagesProvider).value?.unread ?? 0;
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     final user = authUser?.user;
@@ -191,7 +155,7 @@ class _AccountSection extends ConsumerWidget {
       header: user != null ? SettingsSectionTitle(user.name) : null,
       hasLeading: true,
       children: [
-        if (user != null) ...[
+        if (user != null)
           ListTile(
             leading: const Icon(Icons.person_outlined),
             title: Text(context.l10n.profile),
@@ -202,21 +166,6 @@ class _AccountSection extends ConsumerWidget {
               Navigator.of(context).push(ProfileScreen.buildRoute());
             },
           ),
-          if (!kidMode)
-            ListTile(
-              leading: Badge.count(
-                isLabelVisible: unreadMessages > 0,
-                count: unreadMessages,
-                child: const Icon(Icons.mail_outline),
-              ),
-              title: Text(context.l10n.inbox),
-              trailing: isIOS ? const CupertinoListTileChevron() : null,
-              enabled: isOnline,
-              onTap: () {
-                Navigator.of(context).push(ContactsScreen.buildRoute());
-              },
-            ),
-        ],
         ListTile(
           leading: const Icon(Icons.settings_outlined),
           title: Text(context.l10n.settingsSettings),
