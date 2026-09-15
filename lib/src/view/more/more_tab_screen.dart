@@ -13,7 +13,6 @@ import 'package:chess_srs/src/view/board_editor/board_editor_screen.dart';
 import 'package:chess_srs/src/view/explorer/opening_explorer_screen.dart';
 import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
 import 'package:chess_srs/src/view/settings/settings_screen.dart';
-import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/misc.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
@@ -60,7 +59,6 @@ class _Body extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = ref.watch(isDeviceOnlineProvider);
-    final authUser = ref.watch(authControllerProvider);
 
     return ListTileTheme.merge(
       iconColor: Theme.of(context).colorScheme.primary,
@@ -99,11 +97,6 @@ class _Body extends ConsumerWidget {
                 title: Text(context.l10n.openingExplorer),
                 enabled: isOnline,
                 onTap: () {
-                  if (authUser == null) {
-                    showSnackBar(context, context.l10n.youNeedAnAccountToDoThat);
-                    return;
-                  }
-
                   Navigator.of(context, rootNavigator: true).push(
                     OpeningExplorerScreen.buildRoute(
                       const AnalysisOptions.pgn(

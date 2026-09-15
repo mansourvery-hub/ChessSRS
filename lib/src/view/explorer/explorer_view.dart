@@ -1,5 +1,4 @@
 import 'package:chess_srs/src/model/analysis/opening_service.dart';
-import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/explorer/tablebase.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
@@ -74,11 +73,6 @@ class ExplorerView extends ConsumerWidget {
     }
     if (position.isInsufficientMaterial) {
       return Center(child: Text(context.l10n.insufficientMaterial));
-    }
-
-    final isLoggedIn = ref.watch(isLoggedInProvider);
-    if (!isLoggedIn) {
-      return Center(child: Text(context.l10n.youNeedAnAccountToDoThat));
     }
 
     if (tablebaseRelevant && isComputerAnalysisAllowed) {

@@ -249,6 +249,68 @@ void main() {
       expect(find.text('Kh4'), findsOneWidget);
     });
 
+    testWidgets('shows login prompt when signed out for initial position', (
+      WidgetTester tester,
+    ) async {
+      const position = Chess.initial;
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: Scaffold(
+          body: ExplorerView(
+            pov: Side.white,
+            position: position,
+            onMoveSelected: (move) {},
+            isComputerAnalysisAllowed: true,
+          ),
+        ),
+        overrides: {
+          httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
+            return FakeHttpClientFactory(() => mockClient);
+          }),
+        },
+      );
+      await tester.pumpWidget(app);
+      await tester.pump();
+
+      expect(find.byType(OpeningExplorerView), findsOneWidget);
+      expect(
+        find.text('A free Lichess account is required to query the online opening database.'),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
+    });
+
+    testWidgets('shows tablebase for endgame position even when signed out', (
+      WidgetTester tester,
+    ) async {
+      final position = Chess.fromSetup(Setup.parseFen('4k3/8/4q3/4PR2/5P2/6NK/8/8 w - - 3 131'));
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: Scaffold(
+          body: ExplorerView(
+            pov: Side.white,
+            position: position,
+            onMoveSelected: (move) => {},
+            isComputerAnalysisAllowed: true,
+          ),
+        ),
+        overrides: {
+          httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
+            return FakeHttpClientFactory(() => mockClient);
+          }),
+        },
+      );
+      await tester.pumpWidget(app);
+
+      // wait for tablebase data to load
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(find.byType(TablebaseView), findsOneWidget);
+      expect(find.byType(OpeningExplorerView), findsNothing);
+    });
+
     testWidgets('shows checkmate message for checkmate position', (WidgetTester tester) async {
       // Fool's mate position
       final position = Chess.fromSetup(
