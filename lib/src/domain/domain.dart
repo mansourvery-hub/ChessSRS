@@ -1,0 +1,19 @@
+// Copyright (C) 2024 ChessSRS contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/// ChessSRS domain module.
+///
+/// Pure Dart — zero imports of Flutter, chessground, or sqflite.
+/// All domain contracts are defined and enforced here.
+library;
+
+export 'chapter.dart';
+export 'clock.dart';
+export 'ids.dart';
+export 'repertoire_decision.dart';
+export 'repertoire_move.dart';
+export 'repertoire_node.dart';
+export 'review_result.dart';
+export 'review_state.dart';
+export 'scheduler.dart';
+export 'study.dart';
