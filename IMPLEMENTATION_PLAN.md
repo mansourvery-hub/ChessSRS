@@ -121,10 +121,10 @@ before the core review loop is in the owner's hands.
       1. `ReviewMode` parameter on session (`srs` vs `practice`).
       2. In `practice` mode, tests moves on the board without updating `ReviewState` or logging `ReviewEvent` (zero SRS writes/interval corruption).
       3. Entry points: "Rehearse Moves" on "All Caught Up" screen and in study drawer options. *(done: 4d9bd9762)*
-- [ ] **B4: Automatic Opening Classification & Cross-Study Opening Hubs**
+- [x] **B4: Automatic Opening Classification & Cross-Study Opening Hubs**
       1. Automatic opening name & ECO tag derivation from PGN headers or position FEN.
       2. `ReviewScope.opening(String name)` virtual scope aggregating decisions across studies.
-      3. Opening Hub section in `ReviewScopeDrawer`.
+      3. Opening Hub section in `ReviewScopeDrawer`. *(done: eebb20632)*
 
 ## Phase 4 — Listudy integration (isolated modules)
 
