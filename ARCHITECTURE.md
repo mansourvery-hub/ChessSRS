@@ -111,24 +111,31 @@ Lichess Mobile foundation (GPL-3.0 fork)
 
 ### Presentation (Lichess-derived)
 
-- App shell, tab navigation (reduced to: **Review** primary, repertoire
-  selector, settings), theming (`styles/`), reusable `widgets/`.
+- App shell, tab navigation (reduced to: **Review** primary, settings in More),
+  theming (`styles/`), reusable `widgets/`.
 - **Review scene**: board-dominant screen; the board is the product.
+- **Review modes**:
+  - `ReviewMode.srs`: standard spaced-repetition training updating review states and logging events.
+  - `ReviewMode.practice`: non-destructive rehearsal (cram mode) allowing active board testing without altering SRS intervals.
+- **Review scopes**:
+  - `ReviewScope.all()`: all active studies in the review pool.
+  - `ReviewScope.study(id)`: specific study.
+  - `ReviewScope.opening(name)`: virtual cross-study opening hub.
 
 ## 4. Review state machine (preserved product semantics)
 
 ```text
                 ┌───────────────┐
-                │ Select Scope  │  (all / one study / one opening)
+                │ Select Scope  │  (all active / one study / one opening)
                 └───────┬───────┘
                         ▼
                 ┌───────────────┐
-                │ Due Decision? ├─── No ──► calm idle state ("up to date")
+                │ Due Decision? ├─── No ──► calm idle state (option: Explore / Practice)
                 └───────┬───────┘
                         │ Yes
                         ▼
                 ┌───────────────┐
-                │ Show Position │  (board oriented to repertoire side)
+                │ Show Position │  (board oriented; move comments strictly hidden)
                 └───────┬───────┘
                         ▼
                   User plays move
@@ -137,10 +144,10 @@ Lichess Mobile foundation (GPL-3.0 fork)
           ▼                           ▼
     [Repertoire move]           [Other move]
           │                           │
-   • record success           • record lapse
-   • SRS +interval            • SRS reset streak, short relearn
-   • auto-traverse non-due    • reveal expected move (no modal)
-   • opponent auto-reply      • allow observing line
+   • record success (if SRS)   • record lapse (if SRS)
+   • reveal move comment       • reveal expected move & comment
+   • auto-traverse non-due     • keep board interactive for reguess
+   • opponent auto-reply       • re-queue failed item
           │                           │
           └─────────────┬─────────────┘
                         ▼
@@ -151,7 +158,9 @@ Key semantics (from PRODUCT/QUALITY + reference projects):
 - Any valid repertoire branch is accepted; the played branch is followed.
 - Auto-traversal is **never permanent exclusion** — learned moves return when due.
 - No session-complete screen; review is an ongoing utility.
-- Wrong-move feedback shows the expected move and continues (chessrs pattern).
+- Move comments are withheld during recall to prevent spoilers, then displayed post-move.
+- Wrong-move feedback leaves the board interactive so the user can immediately reguess.
+- Practice mode traverses lines identically to SRS mode but performs zero database writes.
 
 ## 5. Identity & determinism
 

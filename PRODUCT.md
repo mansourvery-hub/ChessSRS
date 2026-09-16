@@ -23,24 +23,37 @@ The application is not a general tactics trainer, an engine analysis cockpit, or
 
 ### Journey 1: Daily Repertoire Review (Default)
 1. User opens the application.
-2. The app immediately presents the chessboard on the first due position across all imported studies.
-3. User recalls and makes their prepared move on the board.
-4. If correct: subtle positive feedback, automatic traversal through already-learned opponent/user continuations, and stopping at the next due decision.
-5. If incorrect: immediate subtle feedback showing the expected repertoire continuation, recording a failed recall, and advancing.
-6. User reviews as long as they wish; when all items are up to date, a calm idle state is displayed.
+2. The app immediately presents the chessboard on the first due position across all active imported studies.
+3. User recalls and makes their prepared move on the board. (Crucial: move comments and annotations are strictly hidden during recall to prevent move spoilers).
+4. If correct: subtle positive feedback, automatic traversal through already-learned opponent/user continuations, and stopping at the next due decision. Any explanatory move comment is revealed post-move.
+5. If incorrect: non-blocking feedback indicating the expected repertoire continuation with an on-board arrow, recording a lapse, and keeping the board interactive so the user can immediately reguess and play the correct move.
+6. User reviews as long as they wish; when all items are up to date, a calm idle state is displayed with options to explore moves or start pre-match rehearsal.
 
 ### Journey 2: First Launch & PGN Import
 1. User opens the app for the very first time (zero studies exist).
 2. The app presents a clean, focused import interface.
 3. User supplies a PGN file containing one or many games/chapters with variations, comments, and annotations.
 4. The system validates chess legality, preserves full variation trees, normalizes chapters, and derives scheduled decision points.
-5. User is immediately transitioned into Review of the newly imported material.
+5. User is immediately transitioned into Review of the newly imported material (active scope automatically switches to the new study).
 
-### Journey 3: Constrained Review Scope
-1. User is preparing for a specific match (e.g. against 1.e4) and wants to focus on their Sicilian repertoire.
+### Journey 3: Constrained Review Scope & Opening Hubs
+1. User is preparing for a specific opening (e.g. against 1.e4) and wants to focus on their Sicilian repertoire.
 2. User opens the lightweight study/opening filter drawer.
-3. User selects the target study or opening category.
+3. User selects a target study or an Opening Hub (e.g. "Sicilian Defense" which aggregates lines across multiple studies automatically classified by standard opening name/ECO/FEN).
 4. The Review scene updates its active pool to only test due positions matching that filter.
+
+### Journey 4: Pre-Match Rehearsal / Cram Mode (Custom Review)
+1. User has an upcoming tournament or match in 20 minutes and wants to rehearse lines in a specific repertoire.
+2. The system indicates 0 positions are due for review.
+3. User enters Rehearsal Mode for the chosen repertoire.
+4. The app actively tests the user on the board through the lines, giving feedback and reguess opportunities.
+5. Invariant: Rehearsal Mode is non-destructive — it does not update SRS intervals, increment repetitions, or record lapses in the SRS database.
+
+### Journey 5: Active Review Pool Focus (Deck Suspension)
+1. User maintains multiple repertoires over time (e.g. alternate defenses against 1.e4 or experimental openings).
+2. User toggles specific studies active or inactive in their daily review pool.
+3. The "All Studies" review queue and due count only pull from active repertoires, preventing review fatigue from sidelines not currently in play.
+4. Inactive studies remain fully accessible for individual review, explore mode, or cram mode at any time.
 
 ---
 
@@ -56,12 +69,20 @@ The application is not a general tactics trainer, an engine analysis cockpit, or
    - Training evaluates whether the player remembered **their repertoire**, not whether the move is engine-optimal.
    - Opponent mistakes and prepared punishments are first-class repertoire content.
    - Player decision points are derived for the user's perspective.
+   - Move comments and annotations are strictly hidden during recall to prevent giving away the move, and revealed post-guess or during explore mode.
+   - Mistakes allow immediate reguess on the board without modal locking.
 
-3. **Spaced Repetition System (SRS)**:
+3. **Spaced Repetition System (SRS) & Review Modes**:
    - Every repertoire decision maintains its own SRS state (repetition count, lapse count, stability/interval, next due timestamp).
    - Non-due (already learned) positions are automatically traversed during review so the user is only tested on what is currently due.
    - Previously learned moves return as active testable questions once their interval elapses.
    - Scheduler algorithm is replaceable behind an abstract contract.
+   - Dual review modes: Standard SRS mode (updates intervals and logs recall events) and Pre-Match Rehearsal mode (trains positions on the board without altering SRS intervals or history).
+   - Studies can be toggled active or inactive in the daily review pool.
+
+4. **Opening Hubs & Classification**:
+   - Openings are automatically classified from standard PGN headers (Event, ECO, Opening) or position FEN.
+   - Openings form lightweight virtual review scopes aggregating lines across multiple studies without data duplication.
 
 4. **Offline & Performance**:
    - The entire review and move-validation loop is 100% local and requires zero network access.

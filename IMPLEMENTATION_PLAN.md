@@ -104,12 +104,27 @@ before the core review loop is in the owner's hands.
       restart. Runtime validation (Linux desktop build & launch) + automated
       end-to-end vertical slice gate test. **Beta-ready.** *(done: 00160c1c5)*
 
-## Phase 3 — Beta
+## Phase 3 — Beta & Owner Feedback Refinements
 
-- [ ] Deliver build to owner for daily use.
-- [ ] Collect UX problems, missing workflows, visual issues, performance
-      problems (cluster feedback before building).
-- [ ] Fix blocking issues only.
+- [x] Deliver initial vertical slice build to owner for daily use. *(done: 2026-09-16)*
+- [x] Clustered beta feedback audit 1: move pacing, unblocking reguess on error, quiet positive feedback, study explore mode, Home tab removal. *(done: b313f61ce & 29c3db19e)*
+- [ ] **B1: Immediate Import Transition & Move Comment Spoiler Prevention**
+      1. Immediate scope transition: upon successful PGN import, automatically switch active `ReviewScope` to the newly imported study.
+      2. Move comments strictly hidden during active recall prompt to prevent move spoilers.
+      3. Move comments revealed post-guess (on success or lapse) with multiline wrapped text.
+- [ ] **B2: Active Review Pool Toggle (Deck Muting / Study Suspension)**
+      1. Persistence update: `isActive` boolean (default `true`) on `Study` / `srs_study`.
+      2. `ReviewScope.all()` and total due count query only active studies.
+      3. Quick toggle switch next to each study in `ReviewScopeDrawer`.
+      4. Inactive studies remain fully accessible for individual study review, explore mode, and cram mode.
+- [ ] **B3: Pre-Match Rehearsal / Cram Mode (Custom Review)**
+      1. `ReviewMode` parameter on session (`srs` vs `practice`).
+      2. In `practice` mode, tests moves on the board without updating `ReviewState` or logging `ReviewEvent` (zero SRS writes/interval corruption).
+      3. Entry points: "Rehearse Moves" on "All Caught Up" screen and in study drawer options.
+- [ ] **B4: Automatic Opening Classification & Cross-Study Opening Hubs**
+      1. Automatic opening name & ECO tag derivation from PGN headers or position FEN.
+      2. `ReviewScope.opening(String name)` virtual scope aggregating decisions across studies.
+      3. Opening Hub section in `ReviewScopeDrawer`.
 
 ## Phase 4 — Listudy integration (isolated modules)
 
