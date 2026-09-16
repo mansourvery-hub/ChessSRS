@@ -117,10 +117,10 @@ before the core review loop is in the owner's hands.
       2. `ReviewScope.all()` and total due count query only active studies.
       3. Quick toggle switch next to each study in `ReviewScopeDrawer`.
       4. Inactive studies remain fully accessible for individual study review, explore mode, and cram mode. *(done: 4ee5a030f)*
-- [ ] **B3: Pre-Match Rehearsal / Cram Mode (Custom Review)**
+- [x] **B3: Pre-Match Rehearsal / Cram Mode (Custom Review)**
       1. `ReviewMode` parameter on session (`srs` vs `practice`).
       2. In `practice` mode, tests moves on the board without updating `ReviewState` or logging `ReviewEvent` (zero SRS writes/interval corruption).
-      3. Entry points: "Rehearse Moves" on "All Caught Up" screen and in study drawer options.
+      3. Entry points: "Rehearse Moves" on "All Caught Up" screen and in study drawer options. *(done: 4d9bd9762)*
 - [ ] **B4: Automatic Opening Classification & Cross-Study Opening Hubs**
       1. Automatic opening name & ECO tag derivation from PGN headers or position FEN.
       2. `ReviewScope.opening(String name)` virtual scope aggregating decisions across studies.
