@@ -4,6 +4,7 @@
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/clock.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
+import 'package:chess_srs/src/domain/review/review_mode.dart';
 import 'package:chess_srs/src/domain/review/review_scope.dart';
 import 'package:chess_srs/src/domain/review/review_session.dart';
 import 'package:chess_srs/src/domain/review_state.dart';
@@ -23,6 +24,7 @@ class ReviewEngine {
     required List<RepertoireDecision> decisions,
     required Map<String, ReviewState> reviewStates,
     ReviewScope scope = const ReviewScope.all(),
+    ReviewMode mode = ReviewMode.srs,
   }) {
     return ReviewSession(
       studies: studies,
@@ -30,6 +32,7 @@ class ReviewEngine {
       decisions: decisions,
       reviewStates: reviewStates,
       scope: scope,
+      mode: mode,
       scheduler: scheduler,
       clock: clock,
     );

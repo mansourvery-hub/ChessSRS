@@ -97,7 +97,17 @@ class ReviewScopeDrawer extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
-                          const SizedBox(width: 4.0),
+                          const SizedBox(width: 2.0),
+                          IconButton(
+                            icon: const Icon(Symbols.fitness_center_rounded, size: 20),
+                            tooltip: 'Rehearse (Cram)',
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              ref
+                                  .read(reviewControllerProvider.notifier)
+                                  .startPracticeMode(scope: ReviewScope.study(study.id));
+                            },
+                          ),
                           IconButton(
                             icon: const Icon(Symbols.explore_rounded, size: 20),
                             tooltip: 'Explore moves',

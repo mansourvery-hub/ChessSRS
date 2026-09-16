@@ -6,6 +6,7 @@ import 'package:chess_srs/src/domain/clock.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
 import 'package:chess_srs/src/domain/repertoire_move.dart';
 import 'package:chess_srs/src/domain/repertoire_node.dart';
+import 'package:chess_srs/src/domain/review/review_mode.dart';
 import 'package:chess_srs/src/domain/review/review_prompt.dart';
 import 'package:chess_srs/src/domain/review/review_scope.dart';
 import 'package:chess_srs/src/domain/review/review_step_result.dart';
@@ -27,6 +28,7 @@ class ReviewSession {
     required List<RepertoireDecision> decisions,
     required Map<String, ReviewState> reviewStates,
     this.scope = const ReviewScope.all(),
+    this.mode = ReviewMode.srs,
     this.scheduler = const SimpleScheduler(),
     this.clock = const SystemClock(),
   }) : _studies = {for (final s in studies) s.id: s},
@@ -47,7 +49,7 @@ class ReviewSession {
         continue;
       }
       final state = _reviewStates[d.id];
-      if (state == null || state.isDueAt(now)) {
+      if (mode == ReviewMode.practice || state == null || state.isDueAt(now)) {
         _dueQueue.add(d);
       }
     }
@@ -57,6 +59,7 @@ class ReviewSession {
   }
 
   final ReviewScope scope;
+  final ReviewMode mode;
   final Scheduler scheduler;
   final Clock clock;
 
@@ -113,20 +116,24 @@ class ReviewSession {
       // -----------------------------------------------------------------------
       // CORRECT MOVE
       // -----------------------------------------------------------------------
-      final nextState = scheduler.schedule(
-        previous: prevState,
-        result: ReviewResult.correct,
-        now: now,
-      );
-      _reviewStates[decision.id] = nextState;
+      ReviewState nextState;
+      ReviewEvent? event;
 
-      final event = ReviewEvent(
-        decisionId: decision.id,
-        when: now,
-        result: ReviewResult.correct,
-        oldState: prevState,
-        newState: nextState,
-      );
+      if (mode == ReviewMode.practice) {
+        nextState = prevState;
+        event = null;
+      } else {
+        nextState = scheduler.schedule(previous: prevState, result: ReviewResult.correct, now: now);
+        _reviewStates[decision.id] = nextState;
+
+        event = ReviewEvent(
+          decisionId: decision.id,
+          when: now,
+          result: ReviewResult.correct,
+          oldState: prevState,
+          newState: nextState,
+        );
+      }
 
       _completedCount++;
 
@@ -142,20 +149,28 @@ class ReviewSession {
       // -----------------------------------------------------------------------
       final movePlayed = RepertoireMove(from: from, to: to, promotion: promotion);
 
-      final nextState = scheduler.schedule(
-        previous: prevState,
-        result: ReviewResult.incorrect,
-        now: now,
-      );
-      _reviewStates[decision.id] = nextState;
+      ReviewState nextState;
+      ReviewEvent? event;
 
-      final event = ReviewEvent(
-        decisionId: decision.id,
-        when: now,
-        result: ReviewResult.incorrect,
-        oldState: prevState,
-        newState: nextState,
-      );
+      if (mode == ReviewMode.practice) {
+        nextState = prevState;
+        event = null;
+      } else {
+        nextState = scheduler.schedule(
+          previous: prevState,
+          result: ReviewResult.incorrect,
+          now: now,
+        );
+        _reviewStates[decision.id] = nextState;
+
+        event = ReviewEvent(
+          decisionId: decision.id,
+          when: now,
+          result: ReviewResult.incorrect,
+          oldState: prevState,
+          newState: nextState,
+        );
+      }
 
       // Re-queue the failed decision at the end of the session queue
       // so the user can re-test it before completing the session
@@ -253,7 +268,7 @@ class ReviewSession {
       final nextDecision = _decisionForNode[opponentChild.id];
       if (nextDecision != null) {
         final decState = _reviewStates[nextDecision.id];
-        final isDue = decState == null || decState.isDueAt(now);
+        final isDue = mode == ReviewMode.practice || decState == null || decState.isDueAt(now);
         if (isDue) {
           // Found next due decision along this branch!
           _dueQueue.removeWhere((d) => d.id == nextDecision.id);

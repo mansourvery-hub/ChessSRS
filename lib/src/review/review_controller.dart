@@ -26,6 +26,7 @@ class ReviewScreenState {
     this.expectedMove,
     this.isLapseAcknowledged = true,
     this.revealedComment,
+    this.mode = ReviewMode.srs,
   });
 
   final List<Study> studies;
@@ -41,10 +42,13 @@ class ReviewScreenState {
   final RepertoireMove? expectedMove;
   final bool isLapseAcknowledged;
   final String? revealedComment;
+  final ReviewMode mode;
 
   bool get hasStudies => studies.isNotEmpty;
-  bool get hasDuePositions => totalDueCount > 0 && currentPrompt != null;
-  bool get isComplete => hasStudies && (totalDueCount == 0 || currentPrompt == null);
+  bool get hasDuePositions => (totalDueCount > 0 || isPracticeMode) && currentPrompt != null;
+  bool get isComplete =>
+      hasStudies && ((totalDueCount == 0 && !isPracticeMode) || currentPrompt == null);
+  bool get isPracticeMode => mode == ReviewMode.practice;
 
   ReviewScreenState copyWith({
     List<Study>? studies,
@@ -64,6 +68,7 @@ class ReviewScreenState {
     bool? isLapseAcknowledged,
     String? revealedComment,
     bool clearRevealedComment = false,
+    ReviewMode? mode,
   }) {
     return ReviewScreenState(
       studies: studies ?? this.studies,
@@ -79,6 +84,7 @@ class ReviewScreenState {
       expectedMove: clearExpectedMove ? null : (expectedMove ?? this.expectedMove),
       isLapseAcknowledged: isLapseAcknowledged ?? this.isLapseAcknowledged,
       revealedComment: clearRevealedComment ? null : (revealedComment ?? this.revealedComment),
+      mode: mode ?? this.mode,
     );
   }
 }
@@ -109,7 +115,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     return await _loadState(const ReviewScope.all());
   }
 
-  Future<ReviewScreenState> _loadState(ReviewScope scope) async {
+  Future<ReviewScreenState> _loadState(
+    ReviewScope scope, [
+    ReviewMode mode = ReviewMode.srs,
+  ]) async {
     final studies = await _repository.getAllStudies();
     final studyDueCounts = <String, int>{};
     for (final study in studies) {
@@ -122,12 +131,13 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       return ReviewScreenState(
         studies: studies,
         scope: scope,
+        mode: mode,
         totalDueCount: 0,
         studyDueCounts: studyDueCounts,
       );
     }
 
-    final session = await _service.startSession(scope: scope);
+    final session = await _service.startSession(scope: scope, mode: mode);
     final prompt = session.currentPrompt;
 
     Position? position;
@@ -142,6 +152,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     return ReviewScreenState(
       studies: studies,
       scope: scope,
+      mode: mode,
       totalDueCount: totalDueCount,
       studyDueCounts: studyDueCounts,
       session: session,
@@ -162,9 +173,25 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Reloads the session and due counts for the current scope.
   Future<void> reload() async {
+    final currentState = state.asData?.value;
+    final currentScope = currentState?.scope ?? const ReviewScope.all();
+    final currentMode = currentState?.mode ?? ReviewMode.srs;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _loadState(currentScope, currentMode));
+  }
+
+  /// Starts non-destructive pre-match rehearsal / cram mode (PRODUCT.md Journey 4).
+  Future<void> startPracticeMode({ReviewScope? scope}) async {
+    final targetScope = scope ?? state.asData?.value.scope ?? const ReviewScope.all();
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => _loadState(targetScope, ReviewMode.practice));
+  }
+
+  /// Exits practice mode and returns to standard SRS review.
+  Future<void> exitPracticeMode() async {
     final currentScope = state.asData?.value.scope ?? const ReviewScope.all();
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _loadState(currentScope));
+    state = await AsyncValue.guard(() => _loadState(currentScope, ReviewMode.srs));
   }
 
   /// Toggles whether a study is included in the daily review pool (PRODUCT.md Journey 5).
@@ -212,6 +239,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final opponentMoves = result.autoPlayedMoves.where((m) => !m.isUserMove).toList();
     if (opponentMoves.isNotEmpty) {
       await Future<void>.delayed(const Duration(milliseconds: 350));
+      if (!ref.mounted) return;
       final oppMove = opponentMoves.first;
       final oppNormalMove = NormalMove(
         from: Square.fromName(oppMove.move.from),
@@ -222,6 +250,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
       state = AsyncData(state.value!.copyWith(boardPosition: oppPos, lastMove: oppNormalMove));
       await Future<void>.delayed(const Duration(milliseconds: 200));
+      if (!ref.mounted) return;
     }
 
     // 3. Advance to next prompt

@@ -303,5 +303,55 @@ void main() {
       // Verify study toggle icon updated to suspended state
       expect(find.byTooltip('Suspended from review pool (tap to activate)'), findsOneWidget);
     });
+
+    testWidgets('tapping Rehearse Moves enters cram mode when 0 items are due', (tester) async {
+      final importResult = importPgn(
+        '1. e4 e5 2. Nf3 Nc6 *',
+        studyTitle: 'Rehearse Study',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+        // Mark all decisions as already learned (due in future)
+        for (final d in importResult.decisions) {
+          await repo.saveReviewState(
+            ReviewState(decisionId: d.id, nextDueAt: DateTime.utc(2026, 10, 1), repetitionCount: 3),
+          );
+        }
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Initially 0 items due -> shows All Caught Up view
+      expect(find.text('All Caught Up!'), findsOneWidget);
+
+      // Tap 'Rehearse Moves (Cram)'
+      await tester.tap(find.text('Rehearse Moves (Cram)'));
+      await pumpAsync(tester);
+
+      // Now board is active in cram mode with Cram badge in AppBar!
+      expect(find.byType(Chessboard), findsOneWidget);
+      expect(find.text('Cram'), findsOneWidget);
+
+      // Exit rehearsal mode via AppBar button
+      await tester.tap(find.byTooltip('Exit Rehearsal'));
+      await pumpAsync(tester);
+
+      // Returned to All Caught Up view
+      expect(find.text('All Caught Up!'), findsOneWidget);
+    });
   });
 }

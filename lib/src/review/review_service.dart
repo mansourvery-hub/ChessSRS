@@ -42,7 +42,10 @@ class ReviewService {
   ReviewSession? get activeSession => _activeSession;
 
   /// Starts a new review session for the given [scope].
-  Future<ReviewSession> startSession({ReviewScope scope = const ReviewScope.all()}) async {
+  Future<ReviewSession> startSession({
+    ReviewScope scope = const ReviewScope.all(),
+    ReviewMode mode = ReviewMode.srs,
+  }) async {
     final studies = await repository.getAllStudies();
     final allChapters = <Chapter>[];
     for (final study in studies) {
@@ -65,6 +68,7 @@ class ReviewService {
       decisions: decisions,
       reviewStates: reviewStates,
       scope: scope,
+      mode: mode,
     );
 
     _activeSession = session;

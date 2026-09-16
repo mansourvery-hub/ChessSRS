@@ -243,5 +243,40 @@ void main() {
       final updatedStudies = state.studies;
       expect(updatedStudies.firstWhere((s) => s.id == res2.study.id).isActive, isFalse);
     });
+
+    test('startPracticeMode trains study without updating SRS review states', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      final res = await controller.importPgnText(
+        pgnText: '1. e4 e5 2. Nf3 Nc6 *',
+        title: 'Openings',
+        repertoireSide: Side.white,
+      );
+
+      // Complete all items in normal review so due count is 0
+      await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await controller.onUserMove(const NormalMove(from: Square.g1, to: Square.f3));
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.totalDueCount, 0);
+      expect(state.isComplete, isTrue);
+
+      // Enter Practice Mode (Cram)
+      await controller.startPracticeMode(scope: ReviewScope.study(res.study.id));
+
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.isPracticeMode, isTrue);
+      expect(state.isComplete, isFalse);
+      expect(state.currentPrompt, isNotNull);
+
+      // Exit Practice Mode
+      await controller.exitPracticeMode();
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.isPracticeMode, isFalse);
+      expect(state.isComplete, isTrue);
+    });
   });
 }

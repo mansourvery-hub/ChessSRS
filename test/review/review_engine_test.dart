@@ -325,5 +325,62 @@ void main() {
       // dec-1 is now at the end of the queue
       expect(session.remainingDueCount, 3);
     });
+
+    test(
+      'ReviewMode.practice tests all decisions even when none are due, without modifying states',
+      () {
+        final (study, chapter, decisions) = buildTestRepertoire();
+        final engine = ReviewEngine(clock: clock);
+
+        // All decisions scheduled for next month (not due)
+        final future = baseTime.add(const Duration(days: 30));
+        final futureStates = {
+          for (final d in decisions)
+            d.id: ReviewState(
+              decisionId: d.id,
+              nextDueAt: future,
+              repetitionCount: 5,
+              stability: 30.0,
+            ),
+        };
+
+        // In standard SRS mode: session is empty (isComplete == true)
+        final srsSession = engine.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: decisions,
+          reviewStates: futureStates,
+          mode: ReviewMode.srs,
+        );
+        expect(srsSession.isComplete, isTrue);
+
+        // In practice mode: all 3 decisions are queued for training!
+        final practiceSession = engine.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: decisions,
+          reviewStates: futureStates,
+          mode: ReviewMode.practice,
+        );
+        expect(practiceSession.isComplete, isFalse);
+        expect(practiceSession.remainingDueCount, 3);
+        expect(practiceSession.currentPrompt?.decision.id, 'dec-1');
+
+        // Submit correct move in practice mode
+        final result1 = practiceSession.submitMove(from: 'e2', to: 'e4');
+        expect(result1.isCorrect, isTrue);
+        // Invariant: Practice mode produces NO ReviewEvent and preserves previous ReviewState
+        expect(result1.event, isNull);
+        expect(result1.updatedState.repetitionCount, 5); // Unchanged!
+        expect(result1.updatedState.stability, 30.0); // Unchanged!
+
+        // Submit incorrect move in practice mode
+        final result2 = practiceSession.submitMove(from: 'd2', to: 'd4');
+        expect(result2.isCorrect, isFalse);
+        expect(result2.event, isNull);
+        expect(result2.updatedState.lapseCount, 0); // No lapse recorded!
+        expect(result2.updatedState.repetitionCount, 5); // Repetitions not reset!
+      },
+    );
   });
 }

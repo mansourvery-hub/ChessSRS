@@ -43,6 +43,19 @@ class ReviewScreen extends ConsumerWidget {
         actions: [
           reviewStateAsync.maybeWhen(
             data: (state) {
+              if (state.isPracticeMode) {
+                return IconButton(
+                  icon: const Icon(Symbols.close_rounded),
+                  tooltip: 'Exit Rehearsal',
+                  onPressed: () => ref.read(reviewControllerProvider.notifier).exitPracticeMode(),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            orElse: () => const SizedBox.shrink(),
+          ),
+          reviewStateAsync.maybeWhen(
+            data: (state) {
               if (state.hasStudies) {
                 return IconButton(
                   icon: const Icon(Symbols.explore_rounded),
@@ -138,6 +151,24 @@ class _AppBarTitle extends StatelessWidget {
             style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
           ),
         ),
+        if (state.isPracticeMode) ...[
+          const SizedBox(width: 6.0),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiaryContainer,
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Text(
+              'Cram',
+              style: TextStyle(
+                fontSize: 11.0,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onTertiaryContainer,
+              ),
+            ),
+          ),
+        ],
         const SizedBox(width: 8.0),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
@@ -226,6 +257,11 @@ class _AllCaughtUpView extends ConsumerWidget {
               runSpacing: 12.0,
               alignment: WrapAlignment.center,
               children: [
+                FilledButton.tonalIcon(
+                  icon: const Icon(Symbols.fitness_center_rounded),
+                  label: const Text('Rehearse Moves (Cram)'),
+                  onPressed: () => ref.read(reviewControllerProvider.notifier).startPracticeMode(),
+                ),
                 FilledButton.icon(
                   icon: const Icon(Symbols.explore_rounded),
                   label: const Text('Explore Study Moves'),
