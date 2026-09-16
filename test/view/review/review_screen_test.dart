@@ -221,5 +221,44 @@ void main() {
       // AnalysisScreen is now opened
       expect(find.byType(AnalysisScreen), findsOneWidget);
     });
+
+    testWidgets(
+      'comments are withheld during active recall to prevent move spoilers and revealed on lapse',
+      (tester) async {
+        final importResult = importPgn(
+          '1. e4 {Best by test} 1... e5 2. Nf3 {Attacks the e5 pawn} *',
+          studyTitle: 'King Pawn with Comments',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(importResult);
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        // Verify comment is NOT shown before guessing (anti-spoiler)
+        expect(find.text('Best by test'), findsNothing);
+
+        // Play incorrect move: d2 -> d4 instead of e2 -> e4
+        await playMove(tester, 'd2', 'd4');
+        await pumpAsync(tester, 100);
+
+        // Now the comment is revealed as explanation
+        expect(find.text('Best by test'), findsOneWidget);
+      },
+    );
   });
 }

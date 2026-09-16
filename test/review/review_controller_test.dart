@@ -87,6 +87,7 @@ void main() {
 
       final state = container.read(reviewControllerProvider).requireValue;
       expect(state.hasStudies, isTrue);
+      expect(state.scope, ReviewScope.study(importResult.study.id));
       expect(state.totalDueCount, 2);
       expect(state.currentPrompt, isNotNull);
       expect(state.boardOrientation, Side.black);
@@ -205,6 +206,7 @@ void main() {
 
       await controller.importPgnText(pgnText: pgn1, title: 'Open', repertoireSide: Side.white);
       await controller.importPgnText(pgnText: pgn2, title: 'Closed', repertoireSide: Side.white);
+      await controller.changeScope(const ReviewScope.all());
 
       final firstPrompt = container.read(reviewControllerProvider).requireValue.currentPrompt;
       controller.skip();

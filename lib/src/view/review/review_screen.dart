@@ -312,21 +312,7 @@ class _TopReviewInfo extends StatelessWidget {
           SideToPlayPiece(side: orientation),
           const SizedBox(width: 8.0),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (title.isNotEmpty)
-                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Styles.bold),
-                if (prompt.comment != null && prompt.comment!.isNotEmpty)
-                  Text(
-                    prompt.comment!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Styles.formDescription,
-                  ),
-              ],
-            ),
+            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Styles.bold),
           ),
         ],
       ),
@@ -348,6 +334,7 @@ class _BottomReviewFeedback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLapse = state.feedback == ReviewFeedback.incorrect;
+    final comment = state.revealedComment;
 
     if (isLapse) {
       return Container(
@@ -357,27 +344,45 @@ class _BottomReviewFeedback extends StatelessWidget {
           color: Theme.of(context).colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(Symbols.info_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
-            const SizedBox(width: 8.0),
-            Expanded(
-              child: Text(
-                state.expectedMove?.san != null
-                    ? 'Repertoire was ${state.expectedMove!.san} — try it on the board!'
-                    : 'Not in repertoire — try another move!',
+            Row(
+              children: [
+                Icon(Symbols.info_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    state.expectedMove?.san != null
+                        ? 'Repertoire was ${state.expectedMove!.san} — try it on the board!'
+                        : 'Not in repertoire — try another move!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.0,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Symbols.skip_next_rounded, size: 18),
+                  label: const Text('Skip'),
+                  onPressed: onContinue,
+                ),
+              ],
+            ),
+            if (comment != null && comment.trim().isNotEmpty) ...[
+              const SizedBox(height: 6.0),
+              Text(
+                comment.trim(),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.0,
-                  color: Theme.of(context).colorScheme.onErrorContainer,
+                  fontSize: 13.0,
+                  color: Theme.of(context).colorScheme.onErrorContainer.withValues(alpha: 0.9),
                 ),
               ),
-            ),
-            TextButton.icon(
-              icon: const Icon(Symbols.skip_next_rounded, size: 18),
-              label: const Text('Skip'),
-              onPressed: onContinue,
-            ),
+            ],
           ],
         ),
       );
@@ -386,18 +391,33 @@ class _BottomReviewFeedback extends StatelessWidget {
     // Default quiet idle prompt (no "Good move!" message clutter)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Your move (${state.boardOrientation == Side.white ? 'White' : 'Black'})',
-            style: Styles.subtitle,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Your move (${state.boardOrientation == Side.white ? 'White' : 'Black'})',
+                style: Styles.subtitle,
+              ),
+              TextButton.icon(
+                icon: const Icon(Symbols.skip_next_rounded),
+                label: const Text('Skip'),
+                onPressed: onSkip,
+              ),
+            ],
           ),
-          TextButton.icon(
-            icon: const Icon(Symbols.skip_next_rounded),
-            label: const Text('Skip'),
-            onPressed: onSkip,
-          ),
+          if (comment != null && comment.trim().isNotEmpty) ...[
+            const SizedBox(height: 4.0),
+            Text(
+              comment.trim(),
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: Styles.formDescription,
+            ),
+          ],
         ],
       ),
     );

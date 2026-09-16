@@ -25,6 +25,7 @@ class ReviewScreenState {
     this.feedback = ReviewFeedback.none,
     this.expectedMove,
     this.isLapseAcknowledged = true,
+    this.revealedComment,
   });
 
   final List<Study> studies;
@@ -39,6 +40,7 @@ class ReviewScreenState {
   final ReviewFeedback feedback;
   final RepertoireMove? expectedMove;
   final bool isLapseAcknowledged;
+  final String? revealedComment;
 
   bool get hasStudies => studies.isNotEmpty;
   bool get hasDuePositions => totalDueCount > 0 && currentPrompt != null;
@@ -60,6 +62,8 @@ class ReviewScreenState {
     RepertoireMove? expectedMove,
     bool clearExpectedMove = false,
     bool? isLapseAcknowledged,
+    String? revealedComment,
+    bool clearRevealedComment = false,
   }) {
     return ReviewScreenState(
       studies: studies ?? this.studies,
@@ -74,6 +78,7 @@ class ReviewScreenState {
       feedback: feedback ?? this.feedback,
       expectedMove: clearExpectedMove ? null : (expectedMove ?? this.expectedMove),
       isLapseAcknowledged: isLapseAcknowledged ?? this.isLapseAcknowledged,
+      revealedComment: clearRevealedComment ? null : (revealedComment ?? this.revealedComment),
     );
   }
 }
@@ -190,6 +195,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
+        revealedComment: _resolveComment(
+          currentState.currentPrompt,
+          result.expectedMoves.firstOrNull,
+        ),
       ),
     );
 
@@ -244,6 +253,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
+        clearRevealedComment: true,
       ),
     );
   }
@@ -276,6 +286,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
             feedback: ReviewFeedback.incorrect,
             expectedMove: result.expectedMoves.firstOrNull,
             isLapseAcknowledged: false,
+            revealedComment: _resolveComment(
+              currentState.currentPrompt,
+              result.expectedMoves.firstOrNull,
+            ),
           ),
         );
       }
@@ -299,6 +313,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
           feedback: ReviewFeedback.incorrect,
           expectedMove: result.expectedMoves.firstOrNull,
           isLapseAcknowledged: false,
+          revealedComment: _resolveComment(
+            currentState.currentPrompt,
+            result.expectedMoves.firstOrNull,
+          ),
         ),
       );
     }
@@ -332,6 +350,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         clearExpectedMove: true,
         isLapseAcknowledged: true,
         clearLastMove: true,
+        clearRevealedComment: true,
       ),
     );
   }
@@ -360,6 +379,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         clearExpectedMove: true,
         isLapseAcknowledged: true,
         clearLastMove: true,
+        clearRevealedComment: true,
       ),
     );
   }
@@ -377,8 +397,19 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     );
 
     await _repository.saveImportResult(result);
-    await reload();
+    await changeScope(ReviewScope.study(result.study.id));
     return result;
+  }
+
+  String? _resolveComment(ReviewPrompt? prompt, RepertoireMove? expectedMove) {
+    if (prompt == null) return null;
+    if (expectedMove != null && prompt.currentNode != null) {
+      final child = prompt.currentNode!.childForMove(expectedMove);
+      if (child?.comment != null && child!.comment!.trim().isNotEmpty) {
+        return child.comment!.trim();
+      }
+    }
+    return prompt.comment?.trim();
   }
 
   Position _parseFen(String fen) {
