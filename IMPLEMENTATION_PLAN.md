@@ -102,7 +102,7 @@ before the core review loop is in the owner's hands.
 - [x] **V6: Vertical slice gate** — full loop proven at runtime on device:
       import real PGN → review → correct/incorrect → state persisted across
       restart. Runtime validation (Linux desktop build & launch) + automated
-      end-to-end vertical slice gate test. **Beta-ready.** *(done)*
+      end-to-end vertical slice gate test. **Beta-ready.** *(done: 00160c1c5)*
 
 ## Phase 3 — Beta
 
