@@ -83,18 +83,18 @@ before the core review loop is in the owner's hands.
 
 ## Phase 2 — Minimal product vertical slice
 
-- [ ] **V1: Domain module** — pure-Dart domain (Study, Chapter, repertoire
+- [x] **V1: Domain module** — pure-Dart domain (Study, Chapter, repertoire
       tree, RepertoireDecision, ReviewState, Scheduler + SimpleScheduler,
-      Clock) with unit tests. Contract-first; no UI.
-- [ ] **V2: Import pipeline** — PGN file → dartchess `PgnParser` →
+      Clock) with unit tests. Contract-first; no UI. *(done: 9f879c5e0)*
+- [x] **V2: Import pipeline** — PGN file → dartchess `PgnParser` →
       normalized Study/Chapter/tree (RAVs preserved, FEN headers honored);
       structured error reporting. Tests: legacy contract references
-      translated (variation preservation, multi-chapter).
-- [ ] **V3: Local persistence** — sqflite store for studies/decisions/review
-      states; incremental writes. Tests: durability across restart.
-- [ ] **V4: Review session engine** — due selection, move validation against
+      translated (variation preservation, multi-chapter). *(done: f65aa3184)*
+- [x] **V3: Local persistence** — sqflite store for studies/decisions/review
+      states; incremental writes. Tests: durability across restart. *(done: 2c44df649)*
+- [x] **V4: Review session engine** — due selection, move validation against
       repertoire, auto-traversal of non-due material, opponent auto-reply,
-      feedback state machine. Deterministic Clock tests.
+      feedback state machine. Deterministic Clock tests. *(done: pending commit)*
 - [ ] **V5: Review scene UI** — board-dominant Review screen on chessground,
       oriented to repertoire side, quiet correct/incorrect feedback,
       due-count indicator, scope drawer (all/one study). First launch with
