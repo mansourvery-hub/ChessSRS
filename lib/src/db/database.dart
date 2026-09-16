@@ -64,7 +64,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
   return dbFactory.openDatabase(
     path,
     options: OpenDatabaseOptions(
-      version: 7,
+      version: 8,
       onConfigure: (db) async {
         final version = await _getDatabaseVersion(db);
         _logger.info('SQLite version: $version');
@@ -113,8 +113,13 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
         }
         if (oldVersion < 6) {
           createSrsTables(batch);
-        } else if (oldVersion < 7) {
-          batch.execute('ALTER TABLE $kTableSrsStudy ADD COLUMN isActive INTEGER NOT NULL DEFAULT 1');
+        } else {
+          if (oldVersion < 7) {
+            batch.execute('ALTER TABLE $kTableSrsStudy ADD COLUMN isActive INTEGER NOT NULL DEFAULT 1');
+          }
+          if (oldVersion < 8) {
+            batch.execute('ALTER TABLE $kTableSrsChapter ADD COLUMN opening TEXT');
+          }
         }
         await batch.commit();
       },

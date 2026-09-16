@@ -45,6 +45,7 @@ class SqliteStudyRepository implements StudyRepository {
           'startingFen': chapter.startingFen,
           'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
           'treeJson': treeJson,
+          'opening': chapter.opening,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await chapterBatch.commit(noResult: true);
@@ -157,6 +158,7 @@ class SqliteStudyRepository implements StudyRepository {
       'startingFen': chapter.startingFen,
       'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
       'treeJson': treeJson,
+      'opening': chapter.opening,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -176,6 +178,7 @@ class SqliteStudyRepository implements StudyRepository {
         'startingFen': chapter.startingFen,
         'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
         'treeJson': treeJson,
+        'opening': chapter.opening,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await batch.commit(noResult: true);
@@ -438,6 +441,7 @@ class SqliteStudyRepository implements StudyRepository {
       startingFen: row['startingFen'] as String?,
       root: root,
       createdAt: DateTime.parse(row['createdAt']! as String),
+      opening: row['opening'] as String?,
     );
   }
 

@@ -24,7 +24,8 @@ class ReviewScopeDrawer extends ConsumerWidget {
       return const Drawer(child: Center(child: CircularProgressIndicator()));
     }
 
-    final isAllSelected = reviewState.scope.studyId == null;
+    final isAllSelected =
+        reviewState.scope.studyId == null && reviewState.scope.openingFamily == null;
 
     return Drawer(
       child: SafeArea(
@@ -62,7 +63,33 @@ class ReviewScopeDrawer extends ConsumerWidget {
                           .changeScope(const ReviewScope.all());
                     },
                   ),
-                  if (reviewState.studies.isNotEmpty) const Divider(),
+                  if (reviewState.openingDueCounts.isNotEmpty) ...[
+                    const Divider(),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Text('Opening Hubs', style: Styles.sectionTitle),
+                    ),
+                    for (final entry in reviewState.openingDueCounts.entries)
+                      ListTile(
+                        leading: const Icon(Symbols.hub_rounded),
+                        title: Text(entry.key, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        selected: reviewState.scope.openingFamily == entry.key,
+                        trailing: _DueChip(count: entry.value),
+                        onTap: () {
+                          Navigator.of(context).pop();
+                          ref
+                              .read(reviewControllerProvider.notifier)
+                              .changeScope(ReviewScope.opening(entry.key));
+                        },
+                      ),
+                  ],
+                  if (reviewState.studies.isNotEmpty) ...[
+                    const Divider(),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: Text('Repertoires', style: Styles.sectionTitle),
+                    ),
+                  ],
                   for (final study in reviewState.studies)
                     ListTile(
                       leading: IconButton(

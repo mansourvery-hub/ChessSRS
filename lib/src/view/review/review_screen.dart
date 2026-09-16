@@ -131,14 +131,19 @@ class _AppBarTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = state.scope.studyId != null
-        ? state.studies
-              .firstWhere(
-                (s) => s.id == state.scope.studyId,
-                orElse: () => const Study(id: '', title: 'Study'),
-              )
-              .title
-        : 'All Studies';
+    final String title;
+    if (state.scope.openingFamily != null) {
+      title = state.scope.openingFamily!;
+    } else if (state.scope.studyId != null) {
+      title = state.studies
+          .firstWhere(
+            (s) => s.id == state.scope.studyId,
+            orElse: () => const Study(id: '', title: 'Study'),
+          )
+          .title;
+    } else {
+      title = 'All Studies';
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,

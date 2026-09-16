@@ -55,7 +55,9 @@ class ReviewService {
 
     final decisions = scope.studyId != null
         ? await repository.getDecisionsByStudy(scope.studyId!)
-        : await _getActiveDecisions(studies);
+        : (scope.openingFamily != null
+              ? await _getOpeningDecisions(allChapters, scope.openingFamily!)
+              : await _getActiveDecisions(studies));
 
     final reviewStatesList = await repository.getAllReviewStates();
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
@@ -123,9 +125,17 @@ class ReviewService {
   /// Returns the number of due decisions for the given [scope] at current clock time.
   Future<int> getDueCount({ReviewScope scope = const ReviewScope.all()}) async {
     final studies = await repository.getAllStudies();
+    final allChapters = <Chapter>[];
+    for (final study in studies) {
+      allChapters.addAll(await repository.getChaptersByStudy(study.id));
+    }
+    final chapterOpeningMap = {for (final c in allChapters) c.id: c.opening};
+
     final decisions = scope.studyId != null
         ? await repository.getDecisionsByStudy(scope.studyId!)
-        : await _getActiveDecisions(studies);
+        : (scope.openingFamily != null
+              ? await _getOpeningDecisions(allChapters, scope.openingFamily!)
+              : await _getActiveDecisions(studies));
 
     final reviewStatesList = await repository.getAllReviewStates();
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
@@ -133,7 +143,11 @@ class ReviewService {
     final now = clock.now();
     var count = 0;
     for (final d in decisions) {
-      if (!scope.matches(studyId: d.studyId, chapterId: d.chapterId)) {
+      if (!scope.matches(
+        studyId: d.studyId,
+        chapterId: d.chapterId,
+        openingFamily: chapterOpeningMap[d.chapterId],
+      )) {
         continue;
       }
       final state = reviewStates[d.id];
@@ -148,5 +162,17 @@ class ReviewService {
     final activeStudyIds = studies.where((s) => s.isActive).map((s) => s.id).toSet();
     final allDecisions = await repository.getAllDecisions();
     return allDecisions.where((d) => activeStudyIds.contains(d.studyId)).toList();
+  }
+
+  Future<List<RepertoireDecision>> _getOpeningDecisions(
+    List<Chapter> allChapters,
+    String openingFamily,
+  ) async {
+    final matchingChapterIds = allChapters
+        .where((c) => c.opening == openingFamily)
+        .map((c) => c.id)
+        .toSet();
+    final allDecisions = await repository.getAllDecisions();
+    return allDecisions.where((d) => matchingChapterIds.contains(d.chapterId)).toList();
   }
 }

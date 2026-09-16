@@ -151,12 +151,15 @@ ImportResult importPgn(
 
     errors.addAll(chapterErrors);
 
+    final opening = extractOpeningFamily(headers);
+
     final chapter = Chapter.create(
       studyId: study.id,
       sourceOrder: i,
       title: chapterTitle,
       startingFen: headers.containsKey('FEN') ? startingFen : null,
       root: root,
+      opening: opening,
     );
     chapters.add(chapter);
 
@@ -317,4 +320,107 @@ void _deriveDecisions(
       _deriveDecisions(child, studyId, chapterId, nextSide, repertoireSide, out);
     }
   }
+}
+
+/// Automatically extracts a normalized opening family name from PGN headers.
+String? extractOpeningFamily(PgnHeaders headers) {
+  // 1. Direct Opening header (e.g. "Sicilian Defense: Najdorf Variation")
+  final opening = headers['Opening'];
+  if (opening != null && opening.trim().isNotEmpty && opening != '?') {
+    return _simplifyOpeningName(opening.trim());
+  }
+
+  // 2. Check Event header (e.g. "Sicilian Defense", "French Defence - Winawer")
+  final event = headers['Event'];
+  if (event != null && event.trim().isNotEmpty && event != '?' && !event.startsWith('Game ')) {
+    final simplified = _simplifyOpeningName(event.trim());
+    if (_isLikelyOpeningName(simplified)) {
+      return simplified;
+    }
+  }
+
+  // 3. Fallback: ECO code classification (standard FIDE/ChessBase ECO families)
+  final eco = headers['ECO'];
+  if (eco != null && eco.trim().isNotEmpty && eco != '?') {
+    return _ecoToOpeningFamily(eco.trim().toUpperCase());
+  }
+
+  return null;
+}
+
+String _simplifyOpeningName(String raw) {
+  final splitColon = raw.split(RegExp('[:,-]'));
+  if (splitColon.isNotEmpty && splitColon.first.trim().isNotEmpty) {
+    return splitColon.first.trim();
+  }
+  return raw.trim();
+}
+
+bool _isLikelyOpeningName(String name) {
+  final lower = name.toLowerCase();
+  const keywords = [
+    'defense',
+    'defence',
+    'game',
+    'gambit',
+    'opening',
+    'attack',
+    'system',
+    'sicilian',
+    'french',
+    'caro-kann',
+    'caro',
+    'ruy lopez',
+    'italian',
+    'scotch',
+    "king's indian",
+    'kings indian',
+    "queen's indian",
+    'queens indian',
+    'nimzo',
+    'gruenfeld',
+    'grunfeld',
+    'dutch',
+    'english',
+    'reti',
+    'slav',
+    'london',
+    'catalan',
+    'scandinavian',
+    'pirc',
+    'modern',
+    'alekhine',
+    'vienna',
+  ];
+  return keywords.any((k) => lower.contains(k));
+}
+
+String? _ecoToOpeningFamily(String eco) {
+  if (eco.length < 2) return null;
+  final letter = eco[0];
+  final number = int.tryParse(eco.substring(1, 3)) ?? -1;
+  if (number < 0) return null;
+
+  if (letter == 'B') {
+    if (number >= 20 && number <= 99) return 'Sicilian Defense';
+    if (number >= 10 && number <= 19) return 'Caro-Kann Defense';
+    if (number >= 0 && number <= 9) return 'Scandinavian / Alekhine';
+  } else if (letter == 'C') {
+    if (number >= 0 && number <= 19) return 'French Defense';
+    if (number >= 20 && number <= 59) return 'Open Game';
+    if (number >= 60 && number <= 99) return 'Ruy Lopez';
+  } else if (letter == 'D') {
+    if (number >= 10 && number <= 19) return 'Slav Defense';
+    if (number >= 0 && number <= 69) return "Queen's Gambit";
+    if (number >= 70 && number <= 99) return 'Grünfeld Defense';
+  } else if (letter == 'E') {
+    if (number >= 20 && number <= 59) return 'Nimzo-Indian Defense';
+    if (number >= 60 && number <= 99) return "King's Indian Defense";
+    if (number >= 0 && number <= 9) return 'Catalan Opening';
+  } else if (letter == 'A') {
+    if (number >= 10 && number <= 39) return 'English Opening';
+    if (number >= 40 && number <= 44) return "Queen's Pawn Game";
+    if (number >= 80 && number <= 99) return 'Dutch Defense';
+  }
+  return null;
 }

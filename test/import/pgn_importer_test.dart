@@ -50,6 +50,33 @@ void main() {
       expect(result.errors, isEmpty);
     });
 
+    test('extracts opening family from Opening header', () {
+      const pgn = '''
+[Opening "Sicilian Defense: Najdorf Variation"]
+1. e4 c5 2. Nf3 d6 *
+''';
+      final result = importPgn(pgn);
+      expect(result.chapters.first.opening, 'Sicilian Defense');
+    });
+
+    test('extracts opening family from Event header', () {
+      const pgn = '''
+[Event "French Defence - Winawer"]
+1. e4 e6 2. d4 d5 *
+''';
+      final result = importPgn(pgn);
+      expect(result.chapters.first.opening, 'French Defence');
+    });
+
+    test('classifies opening family from ECO header fallback', () {
+      const pgn = '''
+[ECO "B90"]
+1. e4 c5 *
+''';
+      final result = importPgn(pgn);
+      expect(result.chapters.first.opening, 'Sicilian Defense');
+    });
+
     test('study title is set', () {
       final result = importPgn(singleGame, studyTitle: 'My Repertoire');
       expect(result.study.title, equals('My Repertoire'));
@@ -63,8 +90,7 @@ void main() {
 
     test('chapter root has the correct starting FEN key', () {
       final result = importPgn(singleGame);
-      const expectedKey =
-          'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
+      const expectedKey = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
       expect(result.chapters.first.root!.fenKey, equals(expectedKey));
     });
 
@@ -322,7 +348,8 @@ void main() {
     });
 
     test('no decisions when tree is empty (position only chapter)', () {
-      const pgn = '[FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]\n[SetUp "1"]\n\n*';
+      const pgn =
+          '[FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]\n[SetUp "1"]\n\n*';
       final result = importPgn(pgn);
       expect(result.decisions, isEmpty);
     });
@@ -349,10 +376,7 @@ void main() {
       const pgn = '1. e4 *\n\n1. d4 *';
       final result = importPgn(pgn);
       if (result.chapters.length >= 2) {
-        expect(
-          result.chapters[0].root!.id,
-          isNot(equals(result.chapters[1].root!.id)),
-        );
+        expect(result.chapters[0].root!.id, isNot(equals(result.chapters[1].root!.id)));
       }
     });
   });

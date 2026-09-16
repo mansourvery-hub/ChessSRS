@@ -353,5 +353,54 @@ void main() {
       // Returned to All Caught Up view
       expect(find.text('All Caught Up!'), findsOneWidget);
     });
+
+    testWidgets('Opening Hubs section appears in drawer and filters review scope', (tester) async {
+      const pgn1 = '''
+[Opening "Sicilian Defense: Najdorf"]
+1. e4 c5 2. Nf3 d6 *
+''';
+      const pgn2 = '''
+[Opening "French Defense: Advance"]
+1. e4 e6 2. d4 d5 *
+''';
+      final import1 = importPgn(pgn1, studyTitle: 'Najdorf PGN', repertoireSide: Side.black);
+      final import2 = importPgn(pgn2, studyTitle: 'French PGN', repertoireSide: Side.black);
+
+      await tester.runAsync(() async {
+        await repo.saveImportResult(import1);
+        await repo.saveImportResult(import2);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      // Verify Opening Hubs section exists
+      expect(find.text('Opening Hubs'), findsOneWidget);
+      expect(find.text('Sicilian Defense'), findsOneWidget);
+      expect(find.text('French Defense'), findsOneWidget);
+
+      // Tap 'Sicilian Defense' hub
+      await tester.tap(find.text('Sicilian Defense'));
+      await pumpAsync(tester);
+
+      // Verify AppBar now shows 'Sicilian Defense' as the active scope
+      expect(find.text('Sicilian Defense'), findsOneWidget);
+    });
   });
 }

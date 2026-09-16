@@ -27,12 +27,14 @@ class ReviewScreenState {
     this.isLapseAcknowledged = true,
     this.revealedComment,
     this.mode = ReviewMode.srs,
+    this.openingDueCounts = const {},
   });
 
   final List<Study> studies;
   final ReviewScope scope;
   final int totalDueCount;
   final Map<String, int> studyDueCounts;
+  final Map<String, int> openingDueCounts;
   final ReviewSession? session;
   final ReviewPrompt? currentPrompt;
   final Position? boardPosition;
@@ -55,6 +57,7 @@ class ReviewScreenState {
     ReviewScope? scope,
     int? totalDueCount,
     Map<String, int>? studyDueCounts,
+    Map<String, int>? openingDueCounts,
     ReviewSession? session,
     ReviewPrompt? currentPrompt,
     bool clearPrompt = false,
@@ -75,6 +78,7 @@ class ReviewScreenState {
       scope: scope ?? this.scope,
       totalDueCount: totalDueCount ?? this.totalDueCount,
       studyDueCounts: studyDueCounts ?? this.studyDueCounts,
+      openingDueCounts: openingDueCounts ?? this.openingDueCounts,
       session: session ?? this.session,
       currentPrompt: clearPrompt ? null : (currentPrompt ?? this.currentPrompt),
       boardPosition: boardPosition ?? this.boardPosition,
@@ -121,10 +125,24 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   ]) async {
     final studies = await _repository.getAllStudies();
     final studyDueCounts = <String, int>{};
+    final openingFamilies = <String>{};
+
     for (final study in studies) {
       final count = await _service.getDueCount(scope: ReviewScope.study(study.id));
       studyDueCounts[study.id] = count;
+      final chapters = await _repository.getChaptersByStudy(study.id);
+      for (final c in chapters) {
+        if (c.opening != null && c.opening!.trim().isNotEmpty) {
+          openingFamilies.add(c.opening!.trim());
+        }
+      }
     }
+
+    final openingDueCounts = <String, int>{};
+    for (final opening in openingFamilies) {
+      openingDueCounts[opening] = await _service.getDueCount(scope: ReviewScope.opening(opening));
+    }
+
     final totalDueCount = await _service.getDueCount(scope: scope);
 
     if (studies.isEmpty) {
@@ -134,6 +152,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         mode: mode,
         totalDueCount: 0,
         studyDueCounts: studyDueCounts,
+        openingDueCounts: openingDueCounts,
       );
     }
 
@@ -155,6 +174,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       mode: mode,
       totalDueCount: totalDueCount,
       studyDueCounts: studyDueCounts,
+      openingDueCounts: openingDueCounts,
       session: session,
       currentPrompt: prompt,
       boardPosition: position,

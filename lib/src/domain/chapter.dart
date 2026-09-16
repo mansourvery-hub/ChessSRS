@@ -18,6 +18,7 @@ class Chapter {
     this.startingFen,
     this.root,
     this.createdAt,
+    this.opening,
   });
 
   /// Creates a new [Chapter] with a freshly-generated UUID.
@@ -28,6 +29,7 @@ class Chapter {
     String? startingFen,
     RepertoireNode? root,
     DateTime? createdAt,
+    String? opening,
   }) {
     return Chapter(
       id: newId(),
@@ -37,6 +39,7 @@ class Chapter {
       startingFen: startingFen,
       root: root,
       createdAt: createdAt ?? DateTime.now(),
+      opening: opening,
     );
   }
 
@@ -57,11 +60,10 @@ class Chapter {
 
   final DateTime? createdAt;
 
-  Chapter copyWith({
-    String? title,
-    String? startingFen,
-    RepertoireNode? root,
-  }) {
+  /// Classified opening family name (e.g. "Sicilian Defense", "French Defense").
+  final String? opening;
+
+  Chapter copyWith({String? title, String? startingFen, RepertoireNode? root, String? opening}) {
     return Chapter(
       id: id,
       studyId: studyId,
@@ -70,6 +72,7 @@ class Chapter {
       startingFen: startingFen ?? this.startingFen,
       root: root ?? this.root,
       createdAt: createdAt,
+      opening: opening ?? this.opening,
     );
   }
 
@@ -82,11 +85,12 @@ class Chapter {
           other.sourceOrder == sourceOrder &&
           other.title == title &&
           other.startingFen == startingFen &&
-          other.root == root;
+          other.root == root &&
+          other.opening == opening;
 
   @override
-  int get hashCode => Object.hash(id, studyId, sourceOrder, title, startingFen, root);
+  int get hashCode => Object.hash(id, studyId, sourceOrder, title, startingFen, root, opening);
 
   @override
-  String toString() => 'Chapter(id: $id, studyId: $studyId, title: $title)';
+  String toString() => 'Chapter(id: $id, studyId: $studyId, title: $title, opening: $opening)';
 }

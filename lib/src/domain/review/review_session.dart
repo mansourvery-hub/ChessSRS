@@ -45,7 +45,12 @@ class ReviewSession {
     // Build initial due queue
     final now = clock.now();
     for (final d in decisions) {
-      if (!scope.matches(studyId: d.studyId, chapterId: d.chapterId)) {
+      final chapter = _chapters[d.chapterId];
+      if (!scope.matches(
+        studyId: d.studyId,
+        chapterId: d.chapterId,
+        openingFamily: chapter?.opening,
+      )) {
         continue;
       }
       final state = _reviewStates[d.id];

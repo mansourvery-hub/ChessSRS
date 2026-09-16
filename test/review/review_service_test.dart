@@ -151,5 +151,85 @@ void main() {
         await db.close();
       }
     });
+
+    test(
+      'ReviewScope.opening aggregates decisions across multiple studies with matching opening',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+        final service = ReviewService(repository: repo, clock: clock);
+
+        try {
+          const study1 = Study(id: 's_sicilian_1', title: 'Najdorf');
+          const study2 = Study(id: 's_sicilian_2', title: 'Dragon');
+          const study3 = Study(id: 's_french', title: 'French');
+
+          await repo.saveStudy(study1);
+          await repo.saveStudy(study2);
+          await repo.saveStudy(study3);
+
+          final ch1 = Chapter.create(
+            studyId: 's_sicilian_1',
+            sourceOrder: 0,
+            opening: 'Sicilian Defense',
+          );
+          final ch2 = Chapter.create(
+            studyId: 's_sicilian_2',
+            sourceOrder: 0,
+            opening: 'Sicilian Defense',
+          );
+          final ch3 = Chapter.create(
+            studyId: 's_french',
+            sourceOrder: 0,
+            opening: 'French Defense',
+          );
+
+          await repo.saveChapter(ch1);
+          await repo.saveChapter(ch2);
+          await repo.saveChapter(ch3);
+
+          final d1 = RepertoireDecision.create(
+            studyId: 's_sicilian_1',
+            chapterId: ch1.id,
+            nodeId: 'n1',
+            expectedMoves: const [RepertoireMove(from: 'c7', to: 'c5', san: 'c5')],
+          );
+          final d2 = RepertoireDecision.create(
+            studyId: 's_sicilian_2',
+            chapterId: ch2.id,
+            nodeId: 'n2',
+            expectedMoves: const [RepertoireMove(from: 'd7', to: 'd6', san: 'd6')],
+          );
+          final d3 = RepertoireDecision.create(
+            studyId: 's_french',
+            chapterId: ch3.id,
+            nodeId: 'n3',
+            expectedMoves: const [RepertoireMove(from: 'e7', to: 'e6', san: 'e6')],
+          );
+
+          await repo.saveDecision(d1);
+          await repo.saveDecision(d2);
+          await repo.saveDecision(d3);
+
+          // Scope by Sicilian Opening Hub: should pull d1 and d2 (2 decisions), excluding French (d3)
+          final sicilianDue = await service.getDueCount(
+            scope: const ReviewScope.opening('Sicilian Defense'),
+          );
+          expect(sicilianDue, 2);
+
+          final frenchDue = await service.getDueCount(
+            scope: const ReviewScope.opening('French Defense'),
+          );
+          expect(frenchDue, 1);
+
+          final session = await service.startSession(
+            scope: const ReviewScope.opening('Sicilian Defense'),
+          );
+          expect(session.remainingDueCount, 2);
+        } finally {
+          await db.close();
+        }
+      },
+    );
   });
 }

@@ -29,6 +29,7 @@ void createSrsTables(Batch batch) {
       startingFen TEXT,
       createdAt TEXT NOT NULL,
       treeJson TEXT,
+      opening TEXT,
       FOREIGN KEY (studyId) REFERENCES $kTableSrsStudy(id) ON DELETE CASCADE
     );
   ''');

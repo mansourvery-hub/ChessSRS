@@ -3,20 +3,34 @@
 
 /// Scope filter for a review session.
 class ReviewScope {
-  const ReviewScope.all() : studyId = null, chapterId = null;
+  const ReviewScope.all()
+      : studyId = null,
+        chapterId = null,
+        openingFamily = null;
 
-  const ReviewScope.study(String this.studyId) : chapterId = null;
+  const ReviewScope.study(String this.studyId)
+      : chapterId = null,
+        openingFamily = null;
 
-  const ReviewScope.chapter({required String this.studyId, required String this.chapterId});
+  const ReviewScope.chapter({required String this.studyId, required String this.chapterId})
+      : openingFamily = null;
+
+  const ReviewScope.opening(String this.openingFamily)
+      : studyId = null,
+        chapterId = null;
 
   final String? studyId;
   final String? chapterId;
+  final String? openingFamily;
 
-  bool matches({required String studyId, required String chapterId}) {
+  bool matches({required String studyId, required String chapterId, String? openingFamily}) {
     if (this.studyId != null && this.studyId != studyId) {
       return false;
     }
     if (this.chapterId != null && this.chapterId != chapterId) {
+      return false;
+    }
+    if (this.openingFamily != null && this.openingFamily != openingFamily) {
       return false;
     }
     return true;
@@ -25,11 +39,15 @@ class ReviewScope {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ReviewScope && other.studyId == studyId && other.chapterId == chapterId;
+      other is ReviewScope &&
+          other.studyId == studyId &&
+          other.chapterId == chapterId &&
+          other.openingFamily == openingFamily;
 
   @override
-  int get hashCode => Object.hash(studyId, chapterId);
+  int get hashCode => Object.hash(studyId, chapterId, openingFamily);
 
   @override
-  String toString() => 'ReviewScope(study: $studyId, chapter: $chapterId)';
+  String toString() =>
+      'ReviewScope(study: $studyId, chapter: $chapterId, opening: $openingFamily)';
 }
