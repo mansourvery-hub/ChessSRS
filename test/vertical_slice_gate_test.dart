@@ -56,6 +56,8 @@ void main() {
         await Future<void>.delayed(Duration(milliseconds: ms));
       });
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 300));
     }
 
     testWidgets(
@@ -129,11 +131,9 @@ void main() {
         // Step 4: Play correct move 1. e4
         // -----------------------------------------------------------------------
         await playMove(tester, 'e2', 'e4');
-        await pumpAsync(tester, 100);
-        expect(find.text('Good move!'), findsOneWidget);
 
         // Auto-traverses Black's response 1... e5; board is set up for 2. Nf3
-        await pumpAsync(tester, 500);
+        await pumpAsync(tester, 700);
 
         // -----------------------------------------------------------------------
         // Step 5: Intentional Lapse on move 2 (play 2. d4 instead of 2. Nf3)
@@ -142,19 +142,11 @@ void main() {
         await pumpAsync(tester, 100);
 
         // Verify lapse feedback banner and arrow
-        expect(find.textContaining('Repertoire move was Nf3'), findsOneWidget);
-        expect(find.text('Continue'), findsOneWidget);
+        expect(find.textContaining('Repertoire was Nf3'), findsOneWidget);
 
-        // Continue after lapse: prompt is re-queued for practice
-        await tester.tap(find.text('Continue'));
-        await pumpAsync(tester, 100);
-
-        // Verify we are back on the board
-        expect(find.byType(Chessboard), findsOneWidget);
-
-        // Now play the correct move 2. Nf3
+        // Reguess on the board: play the correct move 2. Nf3
         await playMove(tester, 'g1', 'f3');
-        await pumpAsync(tester, 100);
+        await pumpAsync(tester, 700);
 
         // -----------------------------------------------------------------------
         // Step 6: Simulate App Restart / Restart Durability (Invariants §1.3 & §3.1)

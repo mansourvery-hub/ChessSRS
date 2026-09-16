@@ -116,11 +116,44 @@ void main() {
       expect(result!.isCorrect, isTrue);
 
       state = container.read(reviewControllerProvider).requireValue;
-      expect(state.feedback, ReviewFeedback.correct);
+      expect(state.feedback, ReviewFeedback.none);
       expect(state.totalDueCount, 1);
       // Auto-traversal played 1... e5, so next prompt is for 2. Nf3
       expect(state.currentPrompt, isNotNull);
       expect(state.currentPrompt!.expectedMoves.first.san, 'Nf3');
+    });
+
+    test('handles incorrect move (lapse) and allows user to reguess on the board', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      const pgn = '''
+[Event "Queen Pawn"]
+1. d4 d5 *
+''';
+
+      await controller.importPgnText(pgnText: pgn, title: 'Queen Pawn', repertoireSide: Side.white);
+
+      // Play wrong move 1. e4 instead of 1. d4
+      final result1 = await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+
+      expect(result1, isNotNull);
+      expect(result1!.isCorrect, isFalse);
+
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.feedback, ReviewFeedback.incorrect);
+      expect(state.expectedMove, isNotNull);
+      expect(state.expectedMove!.san, 'd4');
+
+      // Reguess on board with correct move 1. d4
+      final result2 = await controller.onUserMove(const NormalMove(from: Square.d2, to: Square.d4));
+
+      expect(result2, isNotNull);
+      expect(result2!.isCorrect, isTrue);
+
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.feedback, ReviewFeedback.none);
+      expect(state.expectedMove, isNull);
     });
 
     test(

@@ -5,6 +5,7 @@ import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
+import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -67,7 +68,21 @@ class ReviewScopeDrawer extends ConsumerWidget {
                       leading: const Icon(Symbols.chess_rounded),
                       title: Text(study.title, maxLines: 1, overflow: TextOverflow.ellipsis),
                       selected: reviewState.scope.studyId == study.id,
-                      trailing: _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
+                          const SizedBox(width: 4.0),
+                          IconButton(
+                            icon: const Icon(Symbols.explore_rounded, size: 20),
+                            tooltip: 'Explore moves',
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              openStudyExplorer(context, ref, studyId: study.id);
+                            },
+                          ),
+                        ],
+                      ),
                       onTap: () {
                         Navigator.of(context).pop();
                         ref

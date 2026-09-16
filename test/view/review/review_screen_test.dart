@@ -5,6 +5,7 @@ import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_service.dart';
+import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:chessground/chessground.dart';
@@ -39,11 +40,13 @@ void main() {
       await db.close();
     });
 
-    Future<void> pumpAsync(WidgetTester tester, [int ms = 60]) async {
+    Future<void> pumpAsync(WidgetTester tester, [int ms = 80]) async {
       await tester.runAsync(() async {
         await Future<void>.delayed(Duration(milliseconds: ms));
       });
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 300));
     }
 
     testWidgets('shows first launch empty state when no studies exist', (tester) async {
@@ -121,23 +124,19 @@ void main() {
 
       // Play correct move: e2 -> e4
       await playMove(tester, 'e2', 'e4');
-      await pumpAsync(tester, 100);
 
-      // Shows subtle "Good move!" feedback
-      expect(find.text('Good move!'), findsOneWidget);
-
-      // Wait for the perceptual delay to advance to next position
-      await pumpAsync(tester, 500);
+      // Wait for move pacing (user move -> pause -> opponent reply 1... e5 -> pause)
+      await pumpAsync(tester, 700);
 
       // Next due move is 2. Nf3 (opponent move e5 was auto-played)
       await playMove(tester, 'g1', 'f3');
-      await pumpAsync(tester, 100);
+      await pumpAsync(tester, 700);
 
       // Session is now complete (0 due)
       expect(find.text('All Caught Up!'), findsOneWidget);
     });
 
-    testWidgets('displays lapse feedback and arrow when incorrect move is played', (tester) async {
+    testWidgets('displays lapse feedback and allows user to reguess on the board', (tester) async {
       final importResult = importPgn(
         '1. d4 d5 *',
         studyTitle: 'Queen Pawn',
@@ -164,18 +163,63 @@ void main() {
 
       // Play incorrect move: e2 -> e4 instead of d2 -> d4
       await playMove(tester, 'e2', 'e4');
-      await pumpAsync(tester);
+      await pumpAsync(tester, 100);
 
       // Shows lapse feedback banner
-      expect(find.textContaining('Repertoire move was d4'), findsOneWidget);
-      expect(find.text('Continue'), findsOneWidget);
+      expect(find.textContaining('Repertoire was d4'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
 
-      // Tap Continue
-      await tester.tap(find.text('Continue'));
+      // Reguess on the board by playing the correct repertoire move d2 -> d4
+      await playMove(tester, 'd2', 'd4');
+      await pumpAsync(tester, 700);
+
+      // Re-prompted for the failed item (re-queued for practice)
+      expect(find.byType(Chessboard), findsOneWidget);
+      expect(find.text('Your move (White)'), findsOneWidget);
+
+      // Play 1. d4 successfully on the re-test
+      await playMove(tester, 'd2', 'd4');
+      await pumpAsync(tester, 700);
+
+      // Session is now complete (0 due)
+      expect(find.text('All Caught Up!'), findsOneWidget);
+    });
+
+    testWidgets('tapping explore moves button opens AnalysisScreen with study PGN', (tester) async {
+      final importResult = importPgn(
+        '1. e4 e5 2. Nf3 Nc6 *',
+        studyTitle: 'King Pawn Repertoire',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
       await pumpAsync(tester);
 
-      // Re-prompted for the position (since failed item was re-queued)
-      expect(find.byType(Chessboard), findsOneWidget);
+      // Find the explore action in the AppBar
+      final exploreButton = find.byTooltip('Explore moves');
+      expect(exploreButton, findsOneWidget);
+
+      await tester.tap(exploreButton);
+      await pumpAsync(tester, 200);
+      await tester.pumpAndSettle();
+
+      // AnalysisScreen is now opened
+      expect(find.byType(AnalysisScreen), findsOneWidget);
     });
   });
 }

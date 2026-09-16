@@ -12,7 +12,7 @@ class ReviewStepResult {
     required this.movePlayed,
     required this.expectedMoves,
     required this.updatedState,
-    required this.event,
+    this.event,
     required this.autoPlayedMoves,
     this.nextPrompt,
     this.sessionComplete = false,
@@ -22,7 +22,7 @@ class ReviewStepResult {
   final RepertoireMove movePlayed;
   final List<RepertoireMove> expectedMoves;
   final ReviewState updatedState;
-  final ReviewEvent event;
+  final ReviewEvent? event;
   final List<AutoPlayedMove> autoPlayedMoves;
   final ReviewPrompt? nextPrompt;
   final bool sessionComplete;

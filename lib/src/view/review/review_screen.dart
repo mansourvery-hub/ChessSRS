@@ -7,6 +7,7 @@ import 'package:chess_srs/src/model/game/game_board_params.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_scope_drawer.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -40,6 +41,19 @@ class ReviewScreen extends ConsumerWidget {
           orElse: () => const Text('Review'),
         ),
         actions: [
+          reviewStateAsync.maybeWhen(
+            data: (state) {
+              if (state.hasStudies) {
+                return IconButton(
+                  icon: const Icon(Symbols.explore_rounded),
+                  tooltip: 'Explore moves',
+                  onPressed: () => openStudyExplorer(context, ref),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            orElse: () => const SizedBox.shrink(),
+          ),
           reviewStateAsync.maybeWhen(
             data: (state) {
               if (state.hasDuePositions && state.isLapseAcknowledged) {
@@ -184,13 +198,13 @@ class _FirstLaunchEmptyView extends StatelessWidget {
 }
 
 /// Calm idle view when all items are caught up (PRODUCT.md Journey 1 §6).
-class _AllCaughtUpView extends StatelessWidget {
+class _AllCaughtUpView extends ConsumerWidget {
   const _AllCaughtUpView({required this.state});
 
   final ReviewScreenState state;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -212,6 +226,11 @@ class _AllCaughtUpView extends StatelessWidget {
               runSpacing: 12.0,
               alignment: WrapAlignment.center,
               children: [
+                FilledButton.icon(
+                  icon: const Icon(Symbols.explore_rounded),
+                  label: const Text('Explore Study Moves'),
+                  onPressed: () => openStudyExplorer(context, ref),
+                ),
                 OutlinedButton.icon(
                   icon: const Icon(Symbols.menu_book_rounded),
                   label: const Text('Change Study'),
@@ -252,9 +271,7 @@ class _ActiveReviewView extends ConsumerWidget {
       } catch (_) {}
     }
 
-    final playerSide = isLapse
-        ? PlayerSide.none
-        : (state.boardOrientation == Side.white ? PlayerSide.white : PlayerSide.black);
+    final playerSide = state.boardOrientation == Side.white ? PlayerSide.white : PlayerSide.black;
 
     return GameLayout(
       orientation: state.boardOrientation,
@@ -331,71 +348,42 @@ class _BottomReviewFeedback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLapse = state.feedback == ReviewFeedback.incorrect;
-    final isCorrect = state.feedback == ReviewFeedback.correct;
 
     if (isLapse) {
       return Container(
-        margin: const EdgeInsets.all(12.0),
-        padding: const EdgeInsets.all(12.0),
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(12.0),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Symbols.info_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    state.expectedMove?.san != null
-                        ? 'Repertoire move was ${state.expectedMove!.san}'
-                        : 'Move not in repertoire',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.0,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10.0),
-            FilledButton(onPressed: onContinue, child: const Text('Continue')),
-          ],
-        ),
-      );
-    }
-
-    if (isCorrect) {
-      return Container(
-        margin: const EdgeInsets.all(12.0),
-        padding: const EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
         child: Row(
           children: [
-            const Icon(Symbols.check_circle_rounded, color: LichessColors.secondary),
+            Icon(Symbols.info_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
             const SizedBox(width: 8.0),
-            Text(
-              'Good move!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16.0,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
+            Expanded(
+              child: Text(
+                state.expectedMove?.san != null
+                    ? 'Repertoire was ${state.expectedMove!.san} — try it on the board!'
+                    : 'Not in repertoire — try another move!',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.0,
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                ),
               ),
+            ),
+            TextButton.icon(
+              icon: const Icon(Symbols.skip_next_rounded, size: 18),
+              label: const Text('Skip'),
+              onPressed: onContinue,
             ),
           ],
         ),
       );
     }
 
-    // Default quiet idle prompt
+    // Default quiet idle prompt (no "Good move!" message clutter)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -414,4 +402,25 @@ class _BottomReviewFeedback extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Opens the study in analysis/explore mode using [ImportPgnScreen.handlePgnText].
+Future<void> openStudyExplorer(BuildContext context, WidgetRef ref, {String? studyId}) async {
+  final reviewState = ref.read(reviewControllerProvider).asData?.value;
+  if (reviewState == null) return;
+
+  final targetId = studyId ?? reviewState.scope.studyId ?? reviewState.studies.firstOrNull?.id;
+  if (targetId == null) {
+    showSnackBar(context, 'No studies available to explore', type: SnackBarType.info);
+    return;
+  }
+
+  final pgn = await ref.read(reviewControllerProvider.notifier).exportStudyPgn(targetId);
+  if (!context.mounted) return;
+  if (pgn == null || pgn.trim().isEmpty) {
+    showSnackBar(context, 'Study has no moves to explore', type: SnackBarType.info);
+    return;
+  }
+
+  ImportPgnScreen.handlePgnText(context, pgn);
 }

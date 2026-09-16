@@ -130,83 +130,11 @@ class ReviewSession {
 
       _completedCount++;
 
-      // Auto-traverse opponent replies and non-due continuations (Invariant §2.4)
-      final autoPlayed = <AutoPlayedMove>[];
-      var activeNode = _findChildForMove(prompt.currentNode, expectedMatch);
-
-      while (activeNode != null) {
-        if (activeNode.children.isEmpty) {
-          // Line finished in this chapter
-          activeNode = null;
-          break;
-        }
-
-        // Opponent turn: first child represents opponent continuation
-        final opponentChild = activeNode.children.first;
-        final opponentMove = opponentChild.incomingMove!;
-        autoPlayed.add(
-          AutoPlayedMove(
-            move: opponentMove,
-            fenBefore: activeNode.fen,
-            fenAfter: opponentChild.fen,
-            isUserMove: false,
-            comment: opponentChild.comment,
-          ),
-        );
-
-        // Now at opponentChild, which is user's turn
-        final nextDecision = _decisionForNode[opponentChild.id];
-        if (nextDecision != null) {
-          final decState = _reviewStates[nextDecision.id];
-          final isDue = decState == null || decState.isDueAt(now);
-          if (isDue) {
-            // Found next due decision along this branch!
-            _dueQueue.removeWhere((d) => d.id == nextDecision.id);
-            _currentPrompt = _buildPrompt(decision: nextDecision, node: opponentChild);
-            return ReviewStepResult(
-              isCorrect: true,
-              movePlayed: expectedMatch,
-              expectedMoves: prompt.expectedMoves,
-              updatedState: nextState,
-              event: event,
-              autoPlayedMoves: autoPlayed,
-              nextPrompt: _currentPrompt,
-              sessionComplete: false,
-            );
-          }
-        }
-
-        // User position was not due: auto-play learned user continuation
-        if (opponentChild.children.isNotEmpty) {
-          final userChild = opponentChild.children.first;
-          final userMove = userChild.incomingMove!;
-          autoPlayed.add(
-            AutoPlayedMove(
-              move: userMove,
-              fenBefore: opponentChild.fen,
-              fenAfter: userChild.fen,
-              isUserMove: true,
-              comment: userChild.comment,
-            ),
-          );
-          activeNode = userChild;
-        } else {
-          activeNode = null;
-        }
-      }
-
-      // Reached the end of the current line; advance to the next due decision in queue
-      _advanceToNextDue();
-
-      return ReviewStepResult(
-        isCorrect: true,
-        movePlayed: expectedMatch,
-        expectedMoves: prompt.expectedMoves,
+      return _continueWithCorrectMove(
+        prompt: prompt,
+        expectedMatch: expectedMatch,
         updatedState: nextState,
         event: event,
-        autoPlayedMoves: autoPlayed,
-        nextPrompt: _currentPrompt,
-        sessionComplete: isComplete,
       );
     } else {
       // -----------------------------------------------------------------------
@@ -241,10 +169,140 @@ class ReviewSession {
         updatedState: nextState,
         event: event,
         autoPlayedMoves: const [],
-        nextPrompt: _currentPrompt, // keeps prompt until user continues
+        nextPrompt: _currentPrompt, // keeps prompt until user continues or retries
         sessionComplete: false,
       );
     }
+  }
+
+  /// Retry a move on the current prompt after an incorrect answer.
+  ///
+  /// If the retry is correct, advances along the repertoire line without
+  /// overwriting the initial lapse recorded in SRS.
+  ReviewStepResult retryMove({required String from, required String to, String? promotion}) {
+    final prompt = _currentPrompt;
+    if (prompt == null) {
+      throw StateError('Cannot retry move: review session has no active prompt');
+    }
+
+    final expectedMatch = prompt.expectedMoves.where((exp) {
+      final matchSquares =
+          exp.from.toLowerCase() == from.toLowerCase() && exp.to.toLowerCase() == to.toLowerCase();
+      if (!matchSquares) return false;
+      if (promotion != null && exp.promotion != null) {
+        return exp.promotion!.toLowerCase() == promotion.toLowerCase();
+      }
+      return true;
+    }).firstOrNull;
+
+    final currentState =
+        _reviewStates[prompt.decision.id] ?? ReviewState.initial(decisionId: prompt.decision.id);
+
+    if (expectedMatch != null) {
+      return _continueWithCorrectMove(
+        prompt: prompt,
+        expectedMatch: expectedMatch,
+        updatedState: currentState,
+        event: null,
+      );
+    } else {
+      final movePlayed = RepertoireMove(from: from, to: to, promotion: promotion);
+      return ReviewStepResult(
+        isCorrect: false,
+        movePlayed: movePlayed,
+        expectedMoves: prompt.expectedMoves,
+        updatedState: currentState,
+        event: null,
+        autoPlayedMoves: const [],
+        nextPrompt: _currentPrompt,
+        sessionComplete: false,
+      );
+    }
+  }
+
+  ReviewStepResult _continueWithCorrectMove({
+    required ReviewPrompt prompt,
+    required RepertoireMove expectedMatch,
+    required ReviewState updatedState,
+    required ReviewEvent? event,
+  }) {
+    final now = clock.now();
+    final autoPlayed = <AutoPlayedMove>[];
+    var activeNode = _findChildForMove(prompt.currentNode, expectedMatch);
+
+    while (activeNode != null) {
+      if (activeNode.children.isEmpty) {
+        activeNode = null;
+        break;
+      }
+
+      // Opponent turn: first child represents opponent continuation
+      final opponentChild = activeNode.children.first;
+      final opponentMove = opponentChild.incomingMove!;
+      autoPlayed.add(
+        AutoPlayedMove(
+          move: opponentMove,
+          fenBefore: activeNode.fen,
+          fenAfter: opponentChild.fen,
+          isUserMove: false,
+          comment: opponentChild.comment,
+        ),
+      );
+
+      // Now at opponentChild, which is user's turn
+      final nextDecision = _decisionForNode[opponentChild.id];
+      if (nextDecision != null) {
+        final decState = _reviewStates[nextDecision.id];
+        final isDue = decState == null || decState.isDueAt(now);
+        if (isDue) {
+          // Found next due decision along this branch!
+          _dueQueue.removeWhere((d) => d.id == nextDecision.id);
+          _currentPrompt = _buildPrompt(decision: nextDecision, node: opponentChild);
+          return ReviewStepResult(
+            isCorrect: true,
+            movePlayed: expectedMatch,
+            expectedMoves: prompt.expectedMoves,
+            updatedState: updatedState,
+            event: event,
+            autoPlayedMoves: autoPlayed,
+            nextPrompt: _currentPrompt,
+            sessionComplete: false,
+          );
+        }
+      }
+
+      // User position was not due: auto-play learned user continuation
+      if (opponentChild.children.isNotEmpty) {
+        final userChild = opponentChild.children.first;
+        final userMove = userChild.incomingMove!;
+        autoPlayed.add(
+          AutoPlayedMove(
+            move: userMove,
+            fenBefore: opponentChild.fen,
+            fenAfter: userChild.fen,
+            isUserMove: true,
+            comment: userChild.comment,
+          ),
+        );
+        activeNode = userChild;
+      } else {
+        activeNode = null;
+      }
+    }
+
+    // Reached the end of the current line; advance to the next due decision in queue
+    _advanceToNextDue();
+
+    return ReviewStepResult(
+      isCorrect: true,
+      movePlayed: expectedMatch,
+      expectedMoves: prompt.expectedMoves,
+      updatedState: updatedState,
+      event: event,
+      autoPlayedMoves: autoPlayed,
+      nextPrompt: _currentPrompt,
+      sessionComplete: isComplete,
+    );
   }
 
   /// Advance to the next due item after acknowledging an incorrect answer.

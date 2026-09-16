@@ -13,11 +13,7 @@ import 'package:dartchess/dartchess.dart';
 /// Contains enough context (chapter title + move index) to let the user
 /// locate the offending move (QUALITY.md §3.1: Graceful Degradation).
 class ImportError {
-  const ImportError({
-    required this.chapterTitle,
-    required this.moveIndex,
-    required this.message,
-  });
+  const ImportError({required this.chapterTitle, required this.moveIndex, required this.message});
 
   /// Chapter (game) in which the error occurred.
   final String chapterTitle;
@@ -117,12 +113,7 @@ ImportResult importPgn(
 
   if (games.isEmpty) {
     final study = Study.create(title: studyTitle);
-    return ImportResult(
-      study: study,
-      chapters: const [],
-      decisions: const [],
-      errors: const [],
-    );
+    return ImportResult(study: study, chapters: const [], decisions: const [], errors: const []);
   }
 
   final study = Study.create(title: studyTitle);
@@ -144,23 +135,19 @@ ImportResult importPgn(
       startPosition = PgnGame.startingPosition(headers);
       startingFen = startPosition.fen;
     } catch (e) {
-      errors.add(ImportError(
-        chapterTitle: chapterTitle,
-        moveIndex: -1,
-        message: 'Invalid starting position: $e',
-      ));
+      errors.add(
+        ImportError(
+          chapterTitle: chapterTitle,
+          moveIndex: -1,
+          message: 'Invalid starting position: $e',
+        ),
+      );
       continue; // skip this chapter
     }
 
     // Build the RepertoireNode tree, collecting any per-move errors.
     final chapterErrors = <ImportError>[];
-    final root = _buildRoot(
-      game.moves,
-      startPosition,
-      startingFen,
-      chapterTitle,
-      chapterErrors,
-    );
+    final root = _buildRoot(game.moves, startPosition, startingFen, chapterTitle, chapterErrors);
 
     errors.addAll(chapterErrors);
 
@@ -175,23 +162,11 @@ ImportResult importPgn(
 
     // Derive decisions for this chapter.
     if (root != null) {
-      _deriveDecisions(
-        root,
-        study.id,
-        chapter.id,
-        startPosition.turn,
-        repertoireSide,
-        decisions,
-      );
+      _deriveDecisions(root, study.id, chapter.id, startPosition.turn, repertoireSide, decisions);
     }
   }
 
-  return ImportResult(
-    study: study,
-    chapters: chapters,
-    decisions: decisions,
-    errors: errors,
-  );
+  return ImportResult(study: study, chapters: chapters, decisions: decisions, errors: errors);
 }
 
 // ---------------------------------------------------------------------------
@@ -202,8 +177,7 @@ String _chapterTitle(PgnHeaders headers, int index) {
   // Prefer a meaningful player matchup, but only when both names are real.
   final white = headers['White'];
   final black = headers['Black'];
-  final playersReal =
-      white != null && black != null && white != '?' && black != '?';
+  final playersReal = white != null && black != null && white != '?' && black != '?';
   if (playersReal) return '$white vs $black';
 
   // Fall back to Event or Site.
@@ -223,10 +197,7 @@ RepertoireNode? _buildRoot(
   String chapterTitle,
   List<ImportError> errors,
 ) {
-  final root = RepertoireNode.root(
-    fen: startingFen,
-    fenKey: fenKey(startingFen),
-  );
+  final root = RepertoireNode.root(fen: startingFen, fenKey: fenKey(startingFen));
 
   // If there are no moves, return the empty root (a chapter can be a position study).
   if (pgnRoot.children.isEmpty) return root;
@@ -255,20 +226,24 @@ RepertoireNode _buildChildren(
     try {
       parsed = position.parseSan(san);
     } catch (e) {
-      errors.add(ImportError(
-        chapterTitle: chapterTitle,
-        moveIndex: moveIndex,
-        message: 'Could not parse move "$san": $e',
-      ));
+      errors.add(
+        ImportError(
+          chapterTitle: chapterTitle,
+          moveIndex: moveIndex,
+          message: 'Could not parse move "$san": $e',
+        ),
+      );
       continue;
     }
 
     if (parsed == null) {
-      errors.add(ImportError(
-        chapterTitle: chapterTitle,
-        moveIndex: moveIndex,
-        message: 'Illegal or unrecognized move "$san" at position ${position.fen}',
-      ));
+      errors.add(
+        ImportError(
+          chapterTitle: chapterTitle,
+          moveIndex: moveIndex,
+          message: 'Illegal or unrecognized move "$san" at position ${position.fen}',
+        ),
+      );
       continue;
     }
 
@@ -323,16 +298,17 @@ void _deriveDecisions(
   List<RepertoireDecision> out,
 ) {
   if (node.children.isNotEmpty) {
-    final isRepertoireSide =
-        repertoireSide == null || nodeSideToMove == repertoireSide;
+    final isRepertoireSide = repertoireSide == null || nodeSideToMove == repertoireSide;
 
     if (isRepertoireSide) {
-      out.add(RepertoireDecision.create(
-        studyId: studyId,
-        chapterId: chapterId,
-        nodeId: node.id,
-        expectedMoves: node.childMoves,
-      ));
+      out.add(
+        RepertoireDecision.create(
+          studyId: studyId,
+          chapterId: chapterId,
+          nodeId: node.id,
+          expectedMoves: node.childMoves,
+        ),
+      );
     }
 
     // Recurse into children, flipping the side to move.

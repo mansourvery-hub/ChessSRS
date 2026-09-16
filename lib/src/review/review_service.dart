@@ -89,9 +89,21 @@ class ReviewService {
 
     // Incremental persistence (Invariant §1.5)
     await repository.saveReviewState(result.updatedState);
-    await repository.saveReviewEvent(result.event);
+    if (result.event != null) {
+      await repository.saveReviewEvent(result.event!);
+    }
 
     return result;
+  }
+
+  /// Retries a move attempt on the current prompt after an incorrect answer.
+  ReviewStepResult retryMove({required String from, required String to, String? promotion}) {
+    final session = _activeSession;
+    if (session == null) {
+      throw StateError('No active review session');
+    }
+
+    return session.retryMove(from: from, to: to, promotion: promotion);
   }
 
   /// Advances after an incorrect answer has been acknowledged by the user.

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/import/pgn_exporter.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_service.dart';
@@ -161,6 +162,92 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     state = await AsyncValue.guard(() => _loadState(currentScope));
   }
 
+  /// Exports all chapters of [studyId] to standard PGN string for explore/analysis mode.
+  Future<String?> exportStudyPgn(String studyId) async {
+    final study = await _repository.getStudy(studyId);
+    if (study == null) return null;
+    final chapters = await _repository.getChaptersByStudy(studyId);
+    return studyToPgn(study, chapters);
+  }
+
+  /// Handles move animation, opponent reply pacing, and transition to the next prompt.
+  Future<void> _handleCorrectAdvancement({
+    required ReviewScreenState currentState,
+    required ReviewStepResult result,
+    required Move userMove,
+    required bool isFirstAttempt,
+  }) async {
+    final currentPos = currentState.boardPosition;
+    final posAfterUser = currentPos != null && userMove is NormalMove
+        ? currentPos.play(userMove)
+        : null;
+
+    // 1. Immediately show user's move on the board
+    state = AsyncData(
+      currentState.copyWith(
+        boardPosition: posAfterUser ?? currentState.boardPosition,
+        lastMove: userMove,
+        feedback: ReviewFeedback.none,
+        clearExpectedMove: true,
+        isLapseAcknowledged: true,
+      ),
+    );
+
+    // 2. If opponent has an auto-reply, pause briefly then show it
+    final opponentMoves = result.autoPlayedMoves.where((m) => !m.isUserMove).toList();
+    if (opponentMoves.isNotEmpty) {
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      final oppMove = opponentMoves.first;
+      final oppNormalMove = NormalMove(
+        from: Square.fromName(oppMove.move.from),
+        to: Square.fromName(oppMove.move.to),
+        promotion: oppMove.move.promotion != null ? Role.fromChar(oppMove.move.promotion!) : null,
+      );
+      final oppPos = _parseFen(oppMove.fenAfter);
+
+      state = AsyncData(state.value!.copyWith(boardPosition: oppPos, lastMove: oppNormalMove));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+
+    // 3. Advance to next prompt
+    final session = _service.activeSession!;
+    final nextPrompt = session.currentPrompt;
+
+    Position? nextPosition;
+    Side nextOrientation = currentState.boardOrientation;
+    if (nextPrompt != null) {
+      nextPosition = _parseFen(nextPrompt.fen);
+      nextOrientation = nextPrompt.sideToMove;
+    }
+
+    final newTotalDue = isFirstAttempt && currentState.totalDueCount > 0
+        ? currentState.totalDueCount - 1
+        : currentState.totalDueCount;
+
+    final studyCounts = Map<String, int>.from(currentState.studyDueCounts);
+    final currentStudyId = currentState.currentPrompt!.studyId;
+    if (isFirstAttempt &&
+        studyCounts.containsKey(currentStudyId) &&
+        studyCounts[currentStudyId]! > 0) {
+      studyCounts[currentStudyId] = studyCounts[currentStudyId]! - 1;
+    }
+
+    state = AsyncData(
+      state.value!.copyWith(
+        totalDueCount: newTotalDue,
+        studyDueCounts: studyCounts,
+        session: session,
+        currentPrompt: nextPrompt,
+        clearPrompt: nextPrompt == null,
+        boardPosition: nextPosition,
+        boardOrientation: nextOrientation,
+        feedback: ReviewFeedback.none,
+        clearExpectedMove: true,
+        isLapseAcknowledged: true,
+      ),
+    );
+  }
+
   /// Submits a move played by the user.
   Future<ReviewStepResult?> onUserMove(Move move) async {
     final currentState = state.asData?.value;
@@ -171,44 +258,42 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final to = move.to.name;
     final promotion = move.promotion?.letter;
 
+    final isRetrying = currentState.feedback == ReviewFeedback.incorrect;
+
+    if (isRetrying) {
+      // Reguess attempt after previous lapse
+      final result = _service.retryMove(from: from, to: to, promotion: promotion);
+      if (result.isCorrect) {
+        await _handleCorrectAdvancement(
+          currentState: currentState,
+          result: result,
+          userMove: move,
+          isFirstAttempt: false,
+        );
+      } else {
+        state = AsyncData(
+          currentState.copyWith(
+            feedback: ReviewFeedback.incorrect,
+            expectedMove: result.expectedMoves.firstOrNull,
+            isLapseAcknowledged: false,
+          ),
+        );
+      }
+      return result;
+    }
+
+    // Initial move attempt on this prompt
     final result = await _service.submitMove(from: from, to: to, promotion: promotion);
 
     if (result.isCorrect) {
-      final session = _service.activeSession!;
-      final nextPrompt = session.currentPrompt;
-
-      Position? nextPosition;
-      Side nextOrientation = currentState.boardOrientation;
-      if (nextPrompt != null) {
-        nextPosition = _parseFen(nextPrompt.fen);
-        nextOrientation = nextPrompt.sideToMove;
-      }
-
-      final newTotalDue = (currentState.totalDueCount > 0) ? currentState.totalDueCount - 1 : 0;
-
-      final studyCounts = Map<String, int>.from(currentState.studyDueCounts);
-      final currentStudyId = currentState.currentPrompt!.studyId;
-      if (studyCounts.containsKey(currentStudyId) && studyCounts[currentStudyId]! > 0) {
-        studyCounts[currentStudyId] = studyCounts[currentStudyId]! - 1;
-      }
-
-      state = AsyncData(
-        currentState.copyWith(
-          totalDueCount: newTotalDue,
-          studyDueCounts: studyCounts,
-          session: session,
-          currentPrompt: nextPrompt,
-          clearPrompt: nextPrompt == null,
-          boardPosition: nextPosition,
-          boardOrientation: nextOrientation,
-          lastMove: move,
-          feedback: ReviewFeedback.correct,
-          clearExpectedMove: true,
-          isLapseAcknowledged: true,
-        ),
+      await _handleCorrectAdvancement(
+        currentState: currentState,
+        result: result,
+        userMove: move,
+        isFirstAttempt: true,
       );
     } else {
-      // Lapse: show expected move and wait for user acknowledgment
+      // Lapse: show expected move banner, allow user to reguess on board
       state = AsyncData(
         currentState.copyWith(
           feedback: ReviewFeedback.incorrect,
