@@ -70,16 +70,6 @@ class _Body extends ConsumerWidget {
             hasLeading: true,
             children: [
               ListTile(
-                leading: const Icon(Icons.school_outlined),
-                trailing: Theme.of(context).platform == TargetPlatform.iOS
-                    ? const CupertinoListTileChevron()
-                    : null,
-                title: const Text('Repertoire Review'),
-                onTap: () {
-                  ref.read(currentBottomTabProvider.notifier).state = BottomTab.review;
-                },
-              ),
-              ListTile(
                 leading: const Icon(Icons.upload_file_outlined),
                 trailing: Theme.of(context).platform == TargetPlatform.iOS
                     ? const CupertinoListTileChevron()

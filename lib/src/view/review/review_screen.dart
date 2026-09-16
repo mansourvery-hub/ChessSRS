@@ -4,6 +4,7 @@
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/game/game_board_params.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
@@ -44,46 +45,15 @@ class ReviewScreen extends ConsumerWidget {
           reviewStateAsync.maybeWhen(
             data: (state) {
               if (state.isPracticeMode) {
-                return IconButton(
-                  icon: const Icon(Symbols.close_rounded),
-                  tooltip: 'Exit Rehearsal',
+                return TextButton.icon(
+                  icon: const Icon(Symbols.close_rounded, size: 18),
+                  label: const Text('Exit Practice'),
                   onPressed: () => ref.read(reviewControllerProvider.notifier).exitPracticeMode(),
                 );
               }
               return const SizedBox.shrink();
             },
             orElse: () => const SizedBox.shrink(),
-          ),
-          reviewStateAsync.maybeWhen(
-            data: (state) {
-              if (state.hasStudies) {
-                return IconButton(
-                  icon: const Icon(Symbols.explore_rounded),
-                  tooltip: 'Explore moves',
-                  onPressed: () => openStudyExplorer(context, ref),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-            orElse: () => const SizedBox.shrink(),
-          ),
-          reviewStateAsync.maybeWhen(
-            data: (state) {
-              if (state.hasDuePositions && state.isLapseAcknowledged) {
-                return IconButton(
-                  icon: const Icon(Symbols.skip_next_rounded),
-                  tooltip: 'Skip position',
-                  onPressed: () => ref.read(reviewControllerProvider.notifier).skip(),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-            orElse: () => const SizedBox.shrink(),
-          ),
-          IconButton(
-            icon: const Icon(Symbols.upload_file_rounded),
-            tooltip: 'Import PGN',
-            onPressed: () => RepertoireImportDialog.show(context),
           ),
         ],
       ),
@@ -165,7 +135,7 @@ class _AppBarTitle extends StatelessWidget {
               borderRadius: BorderRadius.circular(8.0),
             ),
             child: Text(
-              'Cram',
+              'Practice',
               style: TextStyle(
                 fontSize: 11.0,
                 fontWeight: FontWeight.bold,
@@ -262,25 +232,15 @@ class _AllCaughtUpView extends ConsumerWidget {
               runSpacing: 12.0,
               alignment: WrapAlignment.center,
               children: [
-                FilledButton.tonalIcon(
-                  icon: const Icon(Symbols.fitness_center_rounded),
-                  label: const Text('Rehearse Moves (Cram)'),
-                  onPressed: () => ref.read(reviewControllerProvider.notifier).startPracticeMode(),
-                ),
                 FilledButton.icon(
-                  icon: const Icon(Symbols.explore_rounded),
-                  label: const Text('Explore Study Moves'),
-                  onPressed: () => openStudyExplorer(context, ref),
+                  icon: const Icon(Symbols.fitness_center_rounded),
+                  label: const Text('Free Practice'),
+                  onPressed: () => ref.read(reviewControllerProvider.notifier).startPracticeMode(),
                 ),
                 OutlinedButton.icon(
                   icon: const Icon(Symbols.menu_book_rounded),
-                  label: const Text('Change Study'),
+                  label: const Text('Repertoires'),
                   onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-                FilledButton.tonalIcon(
-                  icon: const Icon(Symbols.upload_file_rounded),
-                  label: const Text('Import Another PGN'),
-                  onPressed: () => RepertoireImportDialog.show(context),
                 ),
               ],
             ),
@@ -361,7 +321,7 @@ class _TopReviewInfo extends StatelessWidget {
   }
 }
 
-class _BottomReviewFeedback extends StatelessWidget {
+class _BottomReviewFeedback extends ConsumerWidget {
   const _BottomReviewFeedback({
     required this.state,
     required this.onContinue,
@@ -373,9 +333,10 @@ class _BottomReviewFeedback extends StatelessWidget {
   final VoidCallback onSkip;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showComments = ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments));
     final isLapse = state.feedback == ReviewFeedback.incorrect;
-    final comment = state.revealedComment;
+    final comment = showComments ? state.revealedComment : null;
 
     if (isLapse) {
       return Container(

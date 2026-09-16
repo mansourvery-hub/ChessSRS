@@ -111,6 +111,17 @@ class SqliteStudyRepository implements StudyRepository {
   }
 
   @override
+  Future<void> updateStudyTitle(String studyId, String newTitle) async {
+    final now = DateTime.now().toIso8601String();
+    await _db.update(
+      kTableSrsStudy,
+      {'title': newTitle, 'updatedAt': now},
+      where: 'id = ?',
+      whereArgs: [studyId],
+    );
+  }
+
+  @override
   Future<void> deleteStudy(String id) async {
     await _db.transaction((txn) async {
       // Find all decisions belonging to this study

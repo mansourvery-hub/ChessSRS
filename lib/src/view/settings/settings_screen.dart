@@ -4,6 +4,7 @@ import 'package:chess_srs/src/db/database.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/preloaded_data.dart';
 import 'package:chess_srs/src/model/settings/general_preferences.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/network/connectivity.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n.dart';
@@ -116,6 +117,13 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () {
                   Navigator.of(context).push(BoardSettingsScreen.buildRoute());
                 },
+              ),
+              SwitchListTile(
+                secondary: const Icon(Symbols.comment_rounded),
+                title: const Text('Show move notes & comments'),
+                subtitle: const Text('Display study explanations after guessing moves'),
+                value: ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments)),
+                onChanged: (_) => ref.read(studyPreferencesProvider.notifier).togglePgnComments(),
               ),
               ListTile(
                 leading: const Icon(Icons.memory_outlined),

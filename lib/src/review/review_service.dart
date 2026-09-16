@@ -56,7 +56,7 @@ class ReviewService {
     final decisions = scope.studyId != null
         ? await repository.getDecisionsByStudy(scope.studyId!)
         : (scope.openingFamily != null
-              ? await _getOpeningDecisions(allChapters, scope.openingFamily!)
+              ? await _getOpeningDecisions(allChapters, scope.openingFamily!, studies)
               : await _getActiveDecisions(studies));
 
     final reviewStatesList = await repository.getAllReviewStates();
@@ -134,7 +134,7 @@ class ReviewService {
     final decisions = scope.studyId != null
         ? await repository.getDecisionsByStudy(scope.studyId!)
         : (scope.openingFamily != null
-              ? await _getOpeningDecisions(allChapters, scope.openingFamily!)
+              ? await _getOpeningDecisions(allChapters, scope.openingFamily!, studies)
               : await _getActiveDecisions(studies));
 
     final reviewStatesList = await repository.getAllReviewStates();
@@ -167,9 +167,11 @@ class ReviewService {
   Future<List<RepertoireDecision>> _getOpeningDecisions(
     List<Chapter> allChapters,
     String openingFamily,
+    List<Study> studies,
   ) async {
+    final activeStudyIds = studies.where((s) => s.isActive).map((s) => s.id).toSet();
     final matchingChapterIds = allChapters
-        .where((c) => c.opening == openingFamily)
+        .where((c) => c.opening == openingFamily && activeStudyIds.contains(c.studyId))
         .map((c) => c.id)
         .toSet();
     final allDecisions = await repository.getAllDecisions();

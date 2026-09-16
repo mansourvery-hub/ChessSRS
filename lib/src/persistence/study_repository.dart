@@ -25,6 +25,7 @@ abstract class StudyRepository {
   Future<List<Study>> getAllStudies();
   Future<List<Study>> getActiveStudies();
   Future<void> updateStudyActive(String studyId, bool isActive);
+  Future<void> updateStudyTitle(String studyId, String newTitle);
   Future<void> deleteStudy(String id);
 
   // Chapters

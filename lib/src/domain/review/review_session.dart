@@ -90,6 +90,9 @@ class ReviewSession {
   bool get isComplete => _currentPrompt == null && _dueQueue.isEmpty;
   Map<String, ReviewState> get reviewStates => Map.unmodifiable(_reviewStates);
 
+  /// Returns the chapter with [chapterId] if present in this session.
+  Chapter? getChapter(String chapterId) => _chapters[chapterId];
+
   // ---------------------------------------------------------------------------
   // Session Actions
   // ---------------------------------------------------------------------------

@@ -220,6 +220,24 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     await reload();
   }
 
+  /// Renames a study to [newTitle].
+  Future<void> renameStudy(String studyId, String newTitle) async {
+    final trimmed = newTitle.trim();
+    if (trimmed.isEmpty) return;
+    await _repository.updateStudyTitle(studyId, trimmed);
+    await reload();
+  }
+
+  /// Deletes a study and all associated chapters, decisions, and recall history.
+  Future<void> deleteStudy(String studyId) async {
+    await _repository.deleteStudy(studyId);
+    if (state.asData?.value.scope.studyId == studyId) {
+      await changeScope(const ReviewScope.all());
+    } else {
+      await reload();
+    }
+  }
+
   /// Exports all chapters of [studyId] to standard PGN string for explore/analysis mode.
   Future<String?> exportStudyPgn(String studyId) async {
     final study = await _repository.getStudy(studyId);
@@ -296,10 +314,21 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       studyCounts[currentStudyId] = studyCounts[currentStudyId]! - 1;
     }
 
+    final openingCounts = Map<String, int>.from(currentState.openingDueCounts);
+    final currentChapter = session.getChapter(currentState.currentPrompt!.chapterId);
+    final currentOpening = currentChapter?.opening;
+    if (isFirstAttempt &&
+        currentOpening != null &&
+        openingCounts.containsKey(currentOpening) &&
+        openingCounts[currentOpening]! > 0) {
+      openingCounts[currentOpening] = openingCounts[currentOpening]! - 1;
+    }
+
     state = AsyncData(
       state.value!.copyWith(
         totalDueCount: newTotalDue,
         studyDueCounts: studyCounts,
+        openingDueCounts: openingCounts,
         session: session,
         currentPrompt: nextPrompt,
         clearPrompt: nextPrompt == null,
@@ -308,7 +337,6 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
-        clearRevealedComment: true,
       ),
     );
   }

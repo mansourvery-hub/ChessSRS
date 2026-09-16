@@ -11,6 +11,7 @@ import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../test_helpers.dart';
@@ -185,7 +186,7 @@ void main() {
       expect(find.text('All Caught Up!'), findsOneWidget);
     });
 
-    testWidgets('tapping explore moves button opens AnalysisScreen with study PGN', (tester) async {
+    testWidgets('study options sheet opens AnalysisScreen via Analyze Study', (tester) async {
       final importResult = importPgn(
         '1. e4 e5 2. Nf3 Nc6 *',
         studyTitle: 'King Pawn Repertoire',
@@ -210,11 +211,16 @@ void main() {
       await tester.pumpWidget(app);
       await pumpAsync(tester);
 
-      // Find the explore action in the AppBar
-      final exploreButton = find.byTooltip('Explore moves');
-      expect(exploreButton, findsOneWidget);
+      // Open drawer
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
 
-      await tester.tap(exploreButton);
+      // Open study options sheet
+      await tester.tap(find.byTooltip('Study options'));
+      await pumpAsync(tester);
+
+      // Tap Analyze Study
+      await tester.tap(find.text('Analyze Study'));
       await pumpAsync(tester, 200);
       await tester.pumpAndSettle();
 
@@ -338,16 +344,16 @@ void main() {
       // Initially 0 items due -> shows All Caught Up view
       expect(find.text('All Caught Up!'), findsOneWidget);
 
-      // Tap 'Rehearse Moves (Cram)'
-      await tester.tap(find.text('Rehearse Moves (Cram)'));
+      // Tap 'Free Practice'
+      await tester.tap(find.text('Free Practice'));
       await pumpAsync(tester);
 
-      // Now board is active in cram mode with Cram badge in AppBar!
+      // Now board is active in practice mode with Practice badge in AppBar!
       expect(find.byType(Chessboard), findsOneWidget);
-      expect(find.text('Cram'), findsOneWidget);
+      expect(find.text('Practice'), findsOneWidget);
 
-      // Exit rehearsal mode via AppBar button
-      await tester.tap(find.byTooltip('Exit Rehearsal'));
+      // Exit practice mode via AppBar button
+      await tester.tap(find.text('Exit Practice'));
       await pumpAsync(tester);
 
       // Returned to All Caught Up view
@@ -401,6 +407,66 @@ void main() {
 
       // Verify AppBar now shows 'Sicilian Defense' as the active scope
       expect(find.text('Sicilian Defense'), findsOneWidget);
+    });
+
+    testWidgets('study options sheet renames and deletes study from drawer', (tester) async {
+      final importResult = importPgn(
+        '1. e4 e5 *',
+        studyTitle: 'Old Title',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      // Open study options sheet
+      await tester.tap(find.byTooltip('Study options'));
+      await pumpAsync(tester);
+
+      // Tap Rename Study
+      await tester.tap(find.text('Rename Study'));
+      await pumpAsync(tester);
+
+      // Enter new title
+      await tester.enterText(find.byType(TextField), 'Renamed Repertoire');
+      await tester.tap(find.text('Rename'));
+      await pumpAsync(tester);
+
+      // Verify study title updated in drawer
+      expect(find.text('Renamed Repertoire'), findsOneWidget);
+
+      // Open study options sheet again to delete
+      await tester.tap(find.byTooltip('Study options'));
+      await pumpAsync(tester);
+
+      await tester.tap(find.text('Delete Study'));
+      await pumpAsync(tester);
+
+      // Tap Delete in confirmation dialog
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await pumpAsync(tester);
+
+      // Study is deleted -> empty state
+      expect(find.text('Welcome to ChessSRS'), findsOneWidget);
     });
   });
 }

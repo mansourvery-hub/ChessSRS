@@ -3,9 +3,11 @@
 
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
+import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -124,24 +126,10 @@ class ReviewScopeDrawer extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
-                          const SizedBox(width: 2.0),
                           IconButton(
-                            icon: const Icon(Symbols.fitness_center_rounded, size: 20),
-                            tooltip: 'Rehearse (Cram)',
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              ref
-                                  .read(reviewControllerProvider.notifier)
-                                  .startPracticeMode(scope: ReviewScope.study(study.id));
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Symbols.explore_rounded, size: 20),
-                            tooltip: 'Explore moves',
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              openStudyExplorer(context, ref, studyId: study.id);
-                            },
+                            icon: const Icon(Symbols.more_vert_rounded),
+                            tooltip: 'Study options',
+                            onPressed: () => _showStudyActionsSheet(context, ref, study),
                           ),
                         ],
                       ),
@@ -169,6 +157,120 @@ class ReviewScopeDrawer extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showStudyActionsSheet(BuildContext context, WidgetRef ref, Study study) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                study.title,
+                style: Styles.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Symbols.explore_rounded),
+              title: const Text('Analyze Study'),
+              subtitle: const Text('Browse moves, variations, and engine evaluation'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
+                openStudyExplorer(context, ref, studyId: study.id);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Symbols.fitness_center_rounded),
+              title: const Text('Free Practice'),
+              subtitle: const Text('Drill lines on the board without altering SRS schedule'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
+                ref
+                    .read(reviewControllerProvider.notifier)
+                    .startPracticeMode(scope: ReviewScope.study(study.id));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Symbols.edit_rounded),
+              title: const Text('Rename Study'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showRenameStudyDialog(context, ref, study);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Symbols.delete_rounded, color: LichessColors.red),
+              title: const Text('Delete Study', style: TextStyle(color: LichessColors.red)),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _showDeleteStudyDialog(context, ref, study);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRenameStudyDialog(BuildContext context, WidgetRef ref, Study study) {
+    final textController = TextEditingController(text: study.title);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename Study'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Study title', border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () {
+              final newTitle = textController.text.trim();
+              if (newTitle.isNotEmpty) {
+                ref.read(reviewControllerProvider.notifier).renameStudy(study.id, newTitle);
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteStudyDialog(BuildContext context, WidgetRef ref, Study study) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Study?'),
+        content: Text(
+          'Are you sure you want to delete "${study.title}" and all its recall history? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: LichessColors.red),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pop();
+              ref.read(reviewControllerProvider.notifier).deleteStudy(study.id);
+              showSnackBar(context, 'Deleted "${study.title}"');
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
