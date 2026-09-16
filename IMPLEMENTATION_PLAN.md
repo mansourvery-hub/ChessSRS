@@ -99,9 +99,10 @@ before the core review loop is in the owner's hands.
       oriented to repertoire side, quiet correct/incorrect feedback,
       due-count indicator, scope drawer (all/one study). First launch with
       no studies → import action. *(done: b940ffbf8)*
-- [ ] **V6: Vertical slice gate** — full loop proven at runtime on device:
+- [x] **V6: Vertical slice gate** — full loop proven at runtime on device:
       import real PGN → review → correct/incorrect → state persisted across
-      restart. Runtime validation + screenshots. **Beta-ready.**
+      restart. Runtime validation (Linux desktop build & launch) + automated
+      end-to-end vertical slice gate test. **Beta-ready.** *(done)*
 
 ## Phase 3 — Beta
 
