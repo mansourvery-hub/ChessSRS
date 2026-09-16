@@ -108,10 +108,10 @@ before the core review loop is in the owner's hands.
 
 - [x] Deliver initial vertical slice build to owner for daily use. *(done: 2026-09-16)*
 - [x] Clustered beta feedback audit 1: move pacing, unblocking reguess on error, quiet positive feedback, study explore mode, Home tab removal. *(done: b313f61ce & 29c3db19e)*
-- [ ] **B1: Immediate Import Transition & Move Comment Spoiler Prevention**
+- [x] **B1: Immediate Import Transition & Move Comment Spoiler Prevention**
       1. Immediate scope transition: upon successful PGN import, automatically switch active `ReviewScope` to the newly imported study.
       2. Move comments strictly hidden during active recall prompt to prevent move spoilers.
-      3. Move comments revealed post-guess (on success or lapse) with multiline wrapped text.
+      3. Move comments revealed post-guess (on success or lapse) with multiline wrapped text. *(done: 763a50181)*
 - [ ] **B2: Active Review Pool Toggle (Deck Muting / Study Suspension)**
       1. Persistence update: `isActive` boolean (default `true`) on `Study` / `srs_study`.
       2. `ReviewScope.all()` and total due count query only active studies.
