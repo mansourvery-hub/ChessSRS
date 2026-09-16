@@ -29,6 +29,7 @@ class SqliteStudyRepository implements StudyRepository {
         'title': result.study.title,
         'createdAt': result.study.createdAt?.toIso8601String() ?? now,
         'updatedAt': result.study.updatedAt?.toIso8601String() ?? now,
+        'isActive': result.study.isActive ? 1 : 0,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       final chapterBatch = txn.batch();
@@ -74,6 +75,7 @@ class SqliteStudyRepository implements StudyRepository {
       'title': study.title,
       'createdAt': study.createdAt?.toIso8601String() ?? now,
       'updatedAt': study.updatedAt?.toIso8601String() ?? now,
+      'isActive': study.isActive ? 1 : 0,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -88,6 +90,23 @@ class SqliteStudyRepository implements StudyRepository {
   Future<List<Study>> getAllStudies() async {
     final rows = await _db.query(kTableSrsStudy, orderBy: 'createdAt ASC');
     return rows.map(_studyFromRow).toList(growable: false);
+  }
+
+  @override
+  Future<List<Study>> getActiveStudies() async {
+    final rows = await _db.query(kTableSrsStudy, where: 'isActive = 1', orderBy: 'createdAt ASC');
+    return rows.map(_studyFromRow).toList(growable: false);
+  }
+
+  @override
+  Future<void> updateStudyActive(String studyId, bool isActive) async {
+    final now = DateTime.now().toIso8601String();
+    await _db.update(
+      kTableSrsStudy,
+      {'isActive': isActive ? 1 : 0, 'updatedAt': now},
+      where: 'id = ?',
+      whereArgs: [studyId],
+    );
   }
 
   @override
@@ -394,11 +413,14 @@ class SqliteStudyRepository implements StudyRepository {
   // ---------------------------------------------------------------------------
 
   static Study _studyFromRow(Map<String, Object?> row) {
+    final rawActive = row['isActive'];
+    final isActive = rawActive == null || rawActive != 0;
     return Study(
       id: row['id']! as String,
       title: row['title']! as String,
       createdAt: DateTime.parse(row['createdAt']! as String),
       updatedAt: DateTime.parse(row['updatedAt']! as String),
+      isActive: isActive,
     );
   }
 

@@ -167,6 +167,12 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     state = await AsyncValue.guard(() => _loadState(currentScope));
   }
 
+  /// Toggles whether a study is included in the daily review pool (PRODUCT.md Journey 5).
+  Future<void> toggleStudyActive(String studyId, bool isActive) async {
+    await _repository.updateStudyActive(studyId, isActive);
+    await reload();
+  }
+
   /// Exports all chapters of [studyId] to standard PGN string for explore/analysis mode.
   Future<String?> exportStudyPgn(String studyId) async {
     final study = await _repository.getStudy(studyId);

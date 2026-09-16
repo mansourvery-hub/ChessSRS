@@ -13,12 +13,13 @@ class Study {
     required this.title,
     this.createdAt,
     this.updatedAt,
+    this.isActive = true,
   });
 
   /// Creates a new [Study] with a freshly-generated UUID.
-  factory Study.create({required String title, DateTime? createdAt}) {
+  factory Study.create({required String title, DateTime? createdAt, bool isActive = true}) {
     final now = createdAt ?? DateTime.now();
-    return Study(id: newId(), title: title, createdAt: now, updatedAt: now);
+    return Study(id: newId(), title: title, createdAt: now, updatedAt: now, isActive: isActive);
   }
 
   /// The unique stable identifier for this study.
@@ -30,12 +31,16 @@ class Study {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  Study copyWith({String? title, DateTime? updatedAt}) {
+  /// Whether this study is included in the global daily review pool (PRODUCT.md Journey 5).
+  final bool isActive;
+
+  Study copyWith({String? title, DateTime? updatedAt, bool? isActive}) {
     return Study(
       id: id,
       title: title ?? this.title,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -46,11 +51,12 @@ class Study {
           other.id == id &&
           other.title == title &&
           other.createdAt == createdAt &&
-          other.updatedAt == updatedAt;
+          other.updatedAt == updatedAt &&
+          other.isActive == isActive;
 
   @override
-  int get hashCode => Object.hash(id, title, createdAt, updatedAt);
+  int get hashCode => Object.hash(id, title, createdAt, updatedAt, isActive);
 
   @override
-  String toString() => 'Study(id: $id, title: $title)';
+  String toString() => 'Study(id: $id, title: $title, active: $isActive)';
 }

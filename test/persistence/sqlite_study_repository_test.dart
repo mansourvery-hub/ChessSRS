@@ -394,5 +394,46 @@ void main() {
         await db.close();
       }
     });
+
+    test('study isActive toggle and persistence', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+
+      try {
+        const study1 = Study(id: 's1', title: 'Active Study', isActive: true);
+        const study2 = Study(id: 's2', title: 'Inactive Study', isActive: false);
+
+        await repo.saveStudy(study1);
+        await repo.saveStudy(study2);
+
+        expect((await repo.getAllStudies()).length, 2);
+        final active = await repo.getActiveStudies();
+        expect(active.length, 1);
+        expect(active.first.id, 's1');
+
+        // Toggle s1 to inactive and s2 to active
+        await repo.updateStudyActive('s1', false);
+        await repo.updateStudyActive('s2', true);
+
+        final updatedActive = await repo.getActiveStudies();
+        expect(updatedActive.length, 1);
+        expect(updatedActive.first.id, 's2');
+
+        // Restart durability: reopen database from disk
+        await db.close();
+        final reopenedDb = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final reopenedRepo = SqliteStudyRepository(reopenedDb);
+        try {
+          final loadedS1 = await reopenedRepo.getStudy('s1');
+          final loadedS2 = await reopenedRepo.getStudy('s2');
+          expect(loadedS1!.isActive, isFalse);
+          expect(loadedS2!.isActive, isTrue);
+        } finally {
+          await reopenedDb.close();
+        }
+      } finally {
+        if (db.isOpen) await db.close();
+      }
+    });
   });
 }

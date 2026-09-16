@@ -215,5 +215,33 @@ void main() {
       expect(skippedPrompt, isNotNull);
       expect(skippedPrompt!.decision.id, isNot(firstPrompt!.decision.id));
     });
+
+    test('toggleStudyActive updates study status and recalculates all-scope queue', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      await controller.importPgnText(
+        pgnText: '1. e4 e5 *',
+        title: 'Open',
+        repertoireSide: Side.white,
+      );
+      final res2 = await controller.importPgnText(
+        pgnText: '1. d4 d5 *',
+        title: 'Closed',
+        repertoireSide: Side.white,
+      );
+
+      await controller.changeScope(const ReviewScope.all());
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.totalDueCount, 2);
+
+      // Suspend the 'Closed' study from daily review pool
+      await controller.toggleStudyActive(res2.study.id, false);
+
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.totalDueCount, 1);
+      final updatedStudies = state.studies;
+      expect(updatedStudies.firstWhere((s) => s.id == res2.study.id).isActive, isFalse);
+    });
   });
 }

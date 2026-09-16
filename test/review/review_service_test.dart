@@ -104,5 +104,52 @@ void main() {
         await db.close();
       }
     });
+
+    test('ReviewScope.all excludes inactive studies from dueCount and session', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+      final service = ReviewService(repository: repo, clock: clock);
+
+      try {
+        const activeStudy = Study(id: 'active_s', title: 'Active', isActive: true);
+        const inactiveStudy = Study(id: 'inactive_s', title: 'Inactive', isActive: false);
+
+        await repo.saveStudy(activeStudy);
+        await repo.saveStudy(inactiveStudy);
+
+        final d1 = RepertoireDecision.create(
+          studyId: 'active_s',
+          chapterId: 'c1',
+          nodeId: 'n1',
+          expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+        );
+        final d2 = RepertoireDecision.create(
+          studyId: 'inactive_s',
+          chapterId: 'c2',
+          nodeId: 'n2',
+          expectedMoves: const [RepertoireMove(from: 'd2', to: 'd4', san: 'd4')],
+        );
+
+        await repo.saveDecision(d1);
+        await repo.saveDecision(d2);
+
+        // Due count for all should only count the active study decision
+        final allDueCount = await service.getDueCount(scope: const ReviewScope.all());
+        expect(allDueCount, 1);
+
+        // Explicit study scope still returns the inactive study due count
+        final inactiveDueCount = await service.getDueCount(
+          scope: const ReviewScope.study('inactive_s'),
+        );
+        expect(inactiveDueCount, 1);
+
+        // Session for all should only load the active study decision
+        final session = await service.startSession(scope: const ReviewScope.all());
+        expect(session.remainingDueCount, 1);
+        expect(session.currentPrompt?.studyId, 'active_s');
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

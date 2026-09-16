@@ -65,8 +65,33 @@ class ReviewScopeDrawer extends ConsumerWidget {
                   if (reviewState.studies.isNotEmpty) const Divider(),
                   for (final study in reviewState.studies)
                     ListTile(
-                      leading: const Icon(Symbols.chess_rounded),
-                      title: Text(study.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      leading: IconButton(
+                        icon: Icon(
+                          study.isActive
+                              ? Symbols.check_circle_rounded
+                              : Symbols.pause_circle_outline_rounded,
+                          color: study.isActive
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).disabledColor,
+                          size: 22,
+                        ),
+                        tooltip: study.isActive
+                            ? 'Active in review pool (tap to suspend)'
+                            : 'Suspended from review pool (tap to activate)',
+                        onPressed: () {
+                          ref
+                              .read(reviewControllerProvider.notifier)
+                              .toggleStudyActive(study.id, !study.isActive);
+                        },
+                      ),
+                      title: Text(
+                        study.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: study.isActive
+                            ? null
+                            : TextStyle(color: Theme.of(context).disabledColor),
+                      ),
                       selected: reviewState.scope.studyId == study.id,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,

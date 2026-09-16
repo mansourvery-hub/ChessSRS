@@ -15,7 +15,8 @@ void createSrsTables(Batch batch) {
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       createdAt TEXT NOT NULL,
-      updatedAt TEXT NOT NULL
+      updatedAt TEXT NOT NULL,
+      isActive INTEGER NOT NULL DEFAULT 1
     );
   ''');
 

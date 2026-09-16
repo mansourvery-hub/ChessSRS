@@ -23,6 +23,8 @@ abstract class StudyRepository {
   Future<void> saveStudy(Study study);
   Future<Study?> getStudy(String id);
   Future<List<Study>> getAllStudies();
+  Future<List<Study>> getActiveStudies();
+  Future<void> updateStudyActive(String studyId, bool isActive);
   Future<void> deleteStudy(String id);
 
   // Chapters

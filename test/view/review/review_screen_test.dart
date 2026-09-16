@@ -260,5 +260,48 @@ void main() {
         expect(find.text('Best by test'), findsOneWidget);
       },
     );
+
+    testWidgets('study active toggle suspends and activates study from review pool in drawer', (
+      tester,
+    ) async {
+      final importResult = importPgn(
+        '1. e4 e5 *',
+        studyTitle: 'Active Study',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      // Find toggle icon in drawer
+      final toggleButton = find.byTooltip('Active in review pool (tap to suspend)');
+      expect(toggleButton, findsOneWidget);
+
+      // Tap toggle to suspend study
+      await tester.tap(toggleButton);
+      await pumpAsync(tester);
+
+      // Verify study toggle icon updated to suspended state
+      expect(find.byTooltip('Suspended from review pool (tap to activate)'), findsOneWidget);
+    });
   });
 }

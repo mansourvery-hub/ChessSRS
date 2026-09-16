@@ -52,7 +52,7 @@ class ReviewService {
 
     final decisions = scope.studyId != null
         ? await repository.getDecisionsByStudy(scope.studyId!)
-        : await repository.getAllDecisions();
+        : await _getActiveDecisions(studies);
 
     final reviewStatesList = await repository.getAllReviewStates();
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
@@ -118,9 +118,10 @@ class ReviewService {
 
   /// Returns the number of due decisions for the given [scope] at current clock time.
   Future<int> getDueCount({ReviewScope scope = const ReviewScope.all()}) async {
+    final studies = await repository.getAllStudies();
     final decisions = scope.studyId != null
         ? await repository.getDecisionsByStudy(scope.studyId!)
-        : await repository.getAllDecisions();
+        : await _getActiveDecisions(studies);
 
     final reviewStatesList = await repository.getAllReviewStates();
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
@@ -137,5 +138,11 @@ class ReviewService {
       }
     }
     return count;
+  }
+
+  Future<List<RepertoireDecision>> _getActiveDecisions(List<Study> studies) async {
+    final activeStudyIds = studies.where((s) => s.isActive).map((s) => s.id).toSet();
+    final allDecisions = await repository.getAllDecisions();
+    return allDecisions.where((d) => activeStudyIds.contains(d.studyId)).toList();
   }
 }
