@@ -435,5 +435,28 @@ void main() {
         if (db.isOpen) await db.close();
       }
     });
+
+    test('getChapterOpenings retrieves map of chapter IDs to opening families', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+
+      try {
+        const study = Study(id: 's1', title: 'Openings Study');
+        await repo.saveStudy(study);
+
+        final ch1 = Chapter.create(studyId: 's1', sourceOrder: 0, opening: 'Ruy Lopez');
+        final ch2 = Chapter.create(studyId: 's1', sourceOrder: 1, opening: 'Sicilian Defense');
+        final ch3 = Chapter.create(studyId: 's1', sourceOrder: 2, opening: null);
+
+        await repo.saveChapters([ch1, ch2, ch3]);
+
+        final openings = await repo.getChapterOpenings();
+        expect(openings[ch1.id], 'Ruy Lopez');
+        expect(openings[ch2.id], 'Sicilian Defense');
+        expect(openings[ch3.id], isNull);
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

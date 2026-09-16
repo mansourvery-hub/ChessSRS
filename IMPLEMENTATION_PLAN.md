@@ -125,6 +125,11 @@ before the core review loop is in the owner's hands.
       1. Automatic opening name & ECO tag derivation from PGN headers or position FEN.
       2. `ReviewScope.opening(String name)` virtual scope aggregating decisions across studies.
       3. Opening Hub section in `ReviewScopeDrawer`. *(done: eebb20632)*
+- [x] **B5: Smooth Study Management & Native Study Analysis (Option A)**
+      1. Eliminate full-screen refresh and UI wipeout on study suspension and rename via optimistic in-memory updates.
+      2. Batched due-count computation (`getDueSummary` and `getChapterOpenings`) preventing recursive JSON tree parsing loops during count queries.
+      3. Native study analysis: single-chapter studies route directly to `AnalysisScreen`, multi-chapter studies open `StudyChaptersScreen`.
+      4. `AnalysisScreen` displays study name and chapter name from PGN headers. *(done: 2026-09-17)*
 
 ## Phase 4 — Listudy integration (isolated modules)
 

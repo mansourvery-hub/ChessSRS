@@ -5,6 +5,15 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock_plus_platform_interface/wakelock_plus_platform_interface.dart';
+
+class FakeWakelockPlusPlatform extends WakelockPlusPlatformInterface {
+  @override
+  Future<void> toggle({required bool enable}) async {}
+
+  @override
+  Future<bool> get enabled async => true;
+}
 
 /// The binding instance used in tests.
 TestLichessBinding get testBinding => TestLichessBinding.instance;
@@ -45,6 +54,7 @@ class TestLichessBinding extends LichessBinding {
   void initInstance() {
     super.initInstance();
     _instance = this;
+    WakelockPlusPlatformInterface.instance = FakeWakelockPlusPlatform();
   }
 
   /// Set the initial values for shared preferences.

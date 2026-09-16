@@ -14,11 +14,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../../binding.dart';
 import '../../test_helpers.dart';
 import '../../test_provider_scope.dart';
 
 void main() {
   setUpAll(() {
+    TestLichessBinding.ensureInitialized();
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
@@ -221,6 +223,67 @@ void main() {
 
       // Tap Analyze Study
       await tester.tap(find.text('Analyze Study'));
+      await pumpAsync(tester, 200);
+      await tester.pumpAndSettle();
+
+      // AnalysisScreen is now opened
+      expect(find.byType(AnalysisScreen), findsOneWidget);
+    });
+
+    testWidgets('multi-chapter study opens StudyChaptersScreen and navigates to AnalysisScreen', (
+      tester,
+    ) async {
+      const multiChapterPgn = '''
+[Event "Chapter 1: Open Games"]
+1. e4 e5 *
+
+[Event "Chapter 2: French Defense"]
+1. e4 e6 *
+''';
+      final importResult = importPgn(
+        multiChapterPgn,
+        studyTitle: 'Multi Chapter Repertoire',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      // Open study options sheet
+      await tester.tap(find.byTooltip('Study options'));
+      await pumpAsync(tester);
+
+      // Tap Analyze Study
+      await tester.tap(find.text('Analyze Study'));
+      await pumpAsync(tester, 200);
+      await tester.pumpAndSettle();
+
+      // StudyChaptersScreen is now opened
+      expect(find.byType(StudyChaptersScreen), findsOneWidget);
+      expect(find.text('Chapter 1: Open Games'), findsOneWidget);
+      expect(find.text('Chapter 2: French Defense'), findsOneWidget);
+
+      // Tap on Chapter 1
+      await tester.tap(find.text('Chapter 1: Open Games'));
       await pumpAsync(tester, 200);
       await tester.pumpAndSettle();
 

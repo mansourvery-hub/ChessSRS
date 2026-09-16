@@ -124,26 +124,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     ReviewMode mode = ReviewMode.srs,
   ]) async {
     final studies = await _repository.getAllStudies();
-    final studyDueCounts = <String, int>{};
-    final openingFamilies = <String>{};
-
-    for (final study in studies) {
-      final count = await _service.getDueCount(scope: ReviewScope.study(study.id));
-      studyDueCounts[study.id] = count;
-      final chapters = await _repository.getChaptersByStudy(study.id);
-      for (final c in chapters) {
-        if (c.opening != null && c.opening!.trim().isNotEmpty) {
-          openingFamilies.add(c.opening!.trim());
-        }
-      }
-    }
-
-    final openingDueCounts = <String, int>{};
-    for (final opening in openingFamilies) {
-      openingDueCounts[opening] = await _service.getDueCount(scope: ReviewScope.opening(opening));
-    }
-
-    final totalDueCount = await _service.getDueCount(scope: scope);
+    final summary = await _service.getDueSummary(studies: studies, scope: scope);
 
     if (studies.isEmpty) {
       return ReviewScreenState(
@@ -151,8 +132,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         scope: scope,
         mode: mode,
         totalDueCount: 0,
-        studyDueCounts: studyDueCounts,
-        openingDueCounts: openingDueCounts,
+        studyDueCounts: summary.studyDueCounts,
+        openingDueCounts: summary.openingDueCounts,
       );
     }
 
@@ -172,9 +153,9 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       studies: studies,
       scope: scope,
       mode: mode,
-      totalDueCount: totalDueCount,
-      studyDueCounts: studyDueCounts,
-      openingDueCounts: openingDueCounts,
+      totalDueCount: summary.totalDueCount,
+      studyDueCounts: summary.studyDueCounts,
+      openingDueCounts: summary.openingDueCounts,
       session: session,
       currentPrompt: prompt,
       boardPosition: position,
@@ -187,37 +168,86 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Changes the active review scope (all studies or a specific study).
   Future<void> changeScope(ReviewScope scope) async {
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() => _loadState(scope));
   }
 
   /// Reloads the session and due counts for the current scope.
   Future<void> reload() async {
-    final currentState = state.asData?.value;
+    final currentState = state.value;
     final currentScope = currentState?.scope ?? const ReviewScope.all();
     final currentMode = currentState?.mode ?? ReviewMode.srs;
-    state = const AsyncLoading();
     state = await AsyncValue.guard(() => _loadState(currentScope, currentMode));
   }
 
   /// Starts non-destructive pre-match rehearsal / cram mode (PRODUCT.md Journey 4).
   Future<void> startPracticeMode({ReviewScope? scope}) async {
-    final targetScope = scope ?? state.asData?.value.scope ?? const ReviewScope.all();
-    state = const AsyncLoading();
+    final targetScope = scope ?? state.value?.scope ?? const ReviewScope.all();
     state = await AsyncValue.guard(() => _loadState(targetScope, ReviewMode.practice));
   }
 
   /// Exits practice mode and returns to standard SRS review.
   Future<void> exitPracticeMode() async {
-    final currentScope = state.asData?.value.scope ?? const ReviewScope.all();
-    state = const AsyncLoading();
+    final currentScope = state.value?.scope ?? const ReviewScope.all();
     state = await AsyncValue.guard(() => _loadState(currentScope, ReviewMode.srs));
   }
 
   /// Toggles whether a study is included in the daily review pool (PRODUCT.md Journey 5).
   Future<void> toggleStudyActive(String studyId, bool isActive) async {
+    final currentState = state.value;
+    if (currentState == null) return;
+
+    // 1. Optimistic UI update: flip isActive immediately so user sees instant feedback
+    final updatedStudies = currentState.studies
+        .map((s) => s.id == studyId ? s.copyWith(isActive: isActive) : s)
+        .toList();
+    state = AsyncData(currentState.copyWith(studies: updatedStudies));
+
+    // 2. Persist to DB
     await _repository.updateStudyActive(studyId, isActive);
-    await reload();
+
+    // 3. Recompute due counts using the fast summary (without setting AsyncLoading)
+    final summary = await _service.getDueSummary(
+      studies: updatedStudies,
+      scope: currentState.scope,
+    );
+
+    // 4. Smoothly refresh session if affected (e.g. current prompt belonged to deactivated study)
+    ReviewSession? newSession = currentState.session;
+    ReviewPrompt? newPrompt = currentState.currentPrompt;
+    Position? newPosition = currentState.boardPosition;
+    Side newOrientation = currentState.boardOrientation;
+
+    final currentPromptStudyId = currentState.currentPrompt?.studyId;
+    final isCurrentScopeAll =
+        currentState.scope.studyId == null && currentState.scope.openingFamily == null;
+    final needsSessionRefresh =
+        (isCurrentScopeAll && !isActive && currentPromptStudyId == studyId) ||
+        (currentState.isComplete && isActive);
+
+    if (needsSessionRefresh) {
+      newSession = await _service.startSession(scope: currentState.scope, mode: currentState.mode);
+      newPrompt = newSession.currentPrompt;
+      if (newPrompt != null) {
+        newPosition = _parseFen(newPrompt.fen);
+        newOrientation = newPrompt.sideToMove;
+      } else {
+        newPosition = null;
+      }
+    }
+
+    state = AsyncData(
+      currentState.copyWith(
+        studies: updatedStudies,
+        totalDueCount: summary.totalDueCount,
+        studyDueCounts: summary.studyDueCounts,
+        openingDueCounts: summary.openingDueCounts,
+        session: newSession,
+        currentPrompt: newPrompt,
+        clearPrompt: newPrompt == null,
+        boardPosition: newPosition,
+        boardOrientation: newOrientation,
+      ),
+    );
   }
 
   /// Renames a study to [newTitle].
@@ -225,16 +255,47 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final trimmed = newTitle.trim();
     if (trimmed.isEmpty) return;
     await _repository.updateStudyTitle(studyId, trimmed);
-    await reload();
+    final currentState = state.value;
+    if (currentState != null) {
+      final updatedStudies = currentState.studies
+          .map((s) => s.id == studyId ? s.copyWith(title: trimmed) : s)
+          .toList();
+      state = AsyncData(currentState.copyWith(studies: updatedStudies));
+    }
   }
 
   /// Deletes a study and all associated chapters, decisions, and recall history.
   Future<void> deleteStudy(String studyId) async {
     await _repository.deleteStudy(studyId);
-    if (state.asData?.value.scope.studyId == studyId) {
+    if (state.value?.scope.studyId == studyId) {
       await changeScope(const ReviewScope.all());
     } else {
-      await reload();
+      final currentState = state.value;
+      if (currentState != null) {
+        final updatedStudies = currentState.studies.where((s) => s.id != studyId).toList();
+        final summary = await _service.getDueSummary(
+          studies: updatedStudies,
+          scope: currentState.scope,
+        );
+        final newSession = await _service.startSession(
+          scope: currentState.scope,
+          mode: currentState.mode,
+        );
+        final prompt = newSession.currentPrompt;
+        state = AsyncData(
+          currentState.copyWith(
+            studies: updatedStudies,
+            totalDueCount: summary.totalDueCount,
+            studyDueCounts: summary.studyDueCounts,
+            openingDueCounts: summary.openingDueCounts,
+            session: newSession,
+            currentPrompt: prompt,
+            clearPrompt: prompt == null,
+            boardPosition: prompt != null ? _parseFen(prompt.fen) : null,
+            boardOrientation: prompt?.sideToMove ?? Side.white,
+          ),
+        );
+      }
     }
   }
 

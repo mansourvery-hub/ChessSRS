@@ -75,14 +75,29 @@ class _AnalysisScreenState extends ConsumerState<_AnalysisScreen> {
 
     switch (asyncState) {
       case AsyncData(:final value):
-        final appBarTitle = value.archivedGame != null
-            ? ExportedGameTitle(
-                meta: value.archivedGame!.meta,
-                lastMoveAt: value.archivedGame!.data.lastMoveAt,
-                isImport: value.archivedGame!.source.isImport,
-                importDate: value.archivedGame!.data.importDate,
-              )
-            : VariantAppBarTitle(variant: value.variant, title: context.l10n.analysis);
+        final studyName = value.pgnHeaders['Study'];
+        final chapterName = value.pgnHeaders['Chapter'] ?? value.pgnHeaders['Event'];
+        final displayTitle = studyName != null
+            ? (chapterName != null && chapterName != studyName && chapterName != '?'
+                  ? '$studyName • $chapterName'
+                  : studyName)
+            : (chapterName != null &&
+                      chapterName != '?' &&
+                      chapterName != 'Standard' &&
+                      chapterName != 'Repertoire Study'
+                  ? chapterName
+                  : null);
+
+        final appBarTitle = displayTitle != null
+            ? VariantAppBarTitle(variant: value.variant, title: displayTitle)
+            : (value.archivedGame != null
+                  ? ExportedGameTitle(
+                      meta: value.archivedGame!.meta,
+                      lastMoveAt: value.archivedGame!.data.lastMoveAt,
+                      isImport: value.archivedGame!.source.isImport,
+                      importDate: value.archivedGame!.data.importDate,
+                    )
+                  : VariantAppBarTitle(variant: value.variant, title: context.l10n.analysis));
 
         return WakelockWidget(
           child: Scaffold(

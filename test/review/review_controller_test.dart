@@ -244,6 +244,35 @@ void main() {
       expect(updatedStudies.firstWhere((s) => s.id == res2.study.id).isActive, isFalse);
     });
 
+    test(
+      'renameStudy updates title in-place without setting loading or resetting session',
+      () async {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        final res = await controller.importPgnText(
+          pgnText: '1. e4 e5 *',
+          title: 'Original Title',
+          repertoireSide: Side.white,
+        );
+
+        final stateBefore = container.read(reviewControllerProvider).requireValue;
+        expect(stateBefore.studies.first.title, 'Original Title');
+        final promptBefore = stateBefore.currentPrompt;
+
+        // Rename study
+        await controller.renameStudy(res.study.id, 'Renamed Title');
+
+        final asyncState = container.read(reviewControllerProvider);
+        expect(asyncState.isLoading, isFalse);
+        expect(asyncState.hasValue, isTrue);
+        final stateAfter = asyncState.requireValue;
+        expect(stateAfter.studies.first.title, 'Renamed Title');
+        // Prompt and session remain stable
+        expect(stateAfter.currentPrompt?.decision.id, promptBefore?.decision.id);
+      },
+    );
+
     test('startPracticeMode trains study without updating SRS review states', () async {
       final container = createContainer();
       final controller = container.read(reviewControllerProvider.notifier);

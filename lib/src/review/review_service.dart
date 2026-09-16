@@ -27,6 +27,18 @@ final reviewServiceProvider = Provider<ReviewService>((ref) {
 
 /// Application service orchestrating review sessions, local persistence,
 /// and SRS updates.
+class DueCountsSummary {
+  const DueCountsSummary({
+    required this.totalDueCount,
+    required this.studyDueCounts,
+    required this.openingDueCounts,
+  });
+
+  final int totalDueCount;
+  final Map<String, int> studyDueCounts;
+  final Map<String, int> openingDueCounts;
+}
+
 class ReviewService {
   ReviewService({
     required this.repository,
@@ -125,37 +137,70 @@ class ReviewService {
   /// Returns the number of due decisions for the given [scope] at current clock time.
   Future<int> getDueCount({ReviewScope scope = const ReviewScope.all()}) async {
     final studies = await repository.getAllStudies();
-    final allChapters = <Chapter>[];
-    for (final study in studies) {
-      allChapters.addAll(await repository.getChaptersByStudy(study.id));
-    }
-    final chapterOpeningMap = {for (final c in allChapters) c.id: c.opening};
+    final summary = await getDueSummary(studies: studies, scope: scope);
+    return summary.totalDueCount;
+  }
 
-    final decisions = scope.studyId != null
-        ? await repository.getDecisionsByStudy(scope.studyId!)
-        : (scope.openingFamily != null
-              ? await _getOpeningDecisions(allChapters, scope.openingFamily!, studies)
-              : await _getActiveDecisions(studies));
-
+  /// Returns a batched summary of due counts for all studies, opening hubs, and the given [scope].
+  ///
+  /// Computes all counts in a single in-memory pass over decisions without reloading
+  /// recursive chapter trees or performing N+1 database queries.
+  Future<DueCountsSummary> getDueSummary({
+    required List<Study> studies,
+    ReviewScope scope = const ReviewScope.all(),
+  }) async {
+    final activeStudyIds = studies.where((s) => s.isActive).map((s) => s.id).toSet();
+    final chapterOpenings = await repository.getChapterOpenings();
+    final allDecisions = await repository.getAllDecisions();
     final reviewStatesList = await repository.getAllReviewStates();
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
-
     final now = clock.now();
-    var count = 0;
-    for (final d in decisions) {
-      if (!scope.matches(
-        studyId: d.studyId,
-        chapterId: d.chapterId,
-        openingFamily: chapterOpeningMap[d.chapterId],
-      )) {
-        continue;
-      }
-      final state = reviewStates[d.id];
-      if (state == null || state.isDueAt(now)) {
-        count++;
+
+    final studyDueCounts = <String, int>{for (final s in studies) s.id: 0};
+    final openingFamilies = <String>{};
+    for (final op in chapterOpenings.values) {
+      if (op != null && op.trim().isNotEmpty) {
+        openingFamilies.add(op.trim());
       }
     }
-    return count;
+    final openingDueCounts = <String, int>{for (final op in openingFamilies) op: 0};
+
+    var totalDueCount = 0;
+
+    for (final d in allDecisions) {
+      final state = reviewStates[d.id];
+      final isDue = state == null || state.isDueAt(now);
+      if (!isDue) continue;
+
+      if (studyDueCounts.containsKey(d.studyId)) {
+        studyDueCounts[d.studyId] = (studyDueCounts[d.studyId] ?? 0) + 1;
+      }
+
+      final opening = chapterOpenings[d.chapterId]?.trim();
+      final isActiveStudy = activeStudyIds.contains(d.studyId);
+
+      if (isActiveStudy && opening != null && opening.isNotEmpty) {
+        if (openingDueCounts.containsKey(opening)) {
+          openingDueCounts[opening] = (openingDueCounts[opening] ?? 0) + 1;
+        }
+      }
+
+      if (scope.matches(studyId: d.studyId, chapterId: d.chapterId, openingFamily: opening)) {
+        if (scope.studyId != null) {
+          totalDueCount++;
+        } else if (scope.openingFamily != null) {
+          if (isActiveStudy) totalDueCount++;
+        } else {
+          if (isActiveStudy) totalDueCount++;
+        }
+      }
+    }
+
+    return DueCountsSummary(
+      totalDueCount: totalDueCount,
+      studyDueCounts: studyDueCounts,
+      openingDueCounts: openingDueCounts,
+    );
   }
 
   Future<List<RepertoireDecision>> _getActiveDecisions(List<Study> studies) async {

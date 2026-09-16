@@ -8,7 +8,6 @@ import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
-import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_scope_drawer.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -19,6 +18,8 @@ import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
+
+export 'package:chess_srs/src/view/review/study_chapters_screen.dart';
 
 /// Board-dominant Review screen for active spaced-repetition training.
 class ReviewScreen extends ConsumerWidget {
@@ -59,6 +60,7 @@ class ReviewScreen extends ConsumerWidget {
       ),
       drawer: const ReviewScopeDrawer(),
       body: reviewStateAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(
           child: Padding(
@@ -424,25 +426,4 @@ class _BottomReviewFeedback extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Opens the study in analysis/explore mode using [ImportPgnScreen.handlePgnText].
-Future<void> openStudyExplorer(BuildContext context, WidgetRef ref, {String? studyId}) async {
-  final reviewState = ref.read(reviewControllerProvider).asData?.value;
-  if (reviewState == null) return;
-
-  final targetId = studyId ?? reviewState.scope.studyId ?? reviewState.studies.firstOrNull?.id;
-  if (targetId == null) {
-    showSnackBar(context, 'No studies available to explore', type: SnackBarType.info);
-    return;
-  }
-
-  final pgn = await ref.read(reviewControllerProvider.notifier).exportStudyPgn(targetId);
-  if (!context.mounted) return;
-  if (pgn == null || pgn.trim().isEmpty) {
-    showSnackBar(context, 'Study has no moves to explore', type: SnackBarType.info);
-    return;
-  }
-
-  ImportPgnScreen.handlePgnText(context, pgn);
 }

@@ -20,7 +20,7 @@ class ReviewScopeDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reviewStateAsync = ref.watch(reviewControllerProvider);
-    final reviewState = reviewStateAsync.asData?.value;
+    final reviewState = reviewStateAsync.value;
 
     if (reviewState == null) {
       return const Drawer(child: Center(child: CircularProgressIndicator()));

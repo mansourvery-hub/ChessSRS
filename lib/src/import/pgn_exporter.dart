@@ -21,6 +21,12 @@ String chapterToPgn(Chapter chapter, {String? studyTitle}) {
   buffer.writeln('[White "Repertoire"]');
   buffer.writeln('[Black "Opponent"]');
   buffer.writeln('[Result "*"]');
+  if (studyTitle != null && studyTitle.trim().isNotEmpty) {
+    buffer.writeln('[Study "${studyTitle.trim()}"]');
+  }
+  if (chapter.title != null && chapter.title!.trim().isNotEmpty) {
+    buffer.writeln('[Chapter "${chapter.title!.trim()}"]');
+  }
 
   if (chapter.startingFen != null && chapter.startingFen!.isNotEmpty) {
     buffer.writeln('[SetUp "1"]');

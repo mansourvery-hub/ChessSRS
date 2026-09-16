@@ -33,6 +33,7 @@ abstract class StudyRepository {
   Future<void> saveChapters(List<Chapter> chapters);
   Future<Chapter?> getChapter(String id);
   Future<List<Chapter>> getChaptersByStudy(String studyId);
+  Future<Map<String, String?>> getChapterOpenings();
   Future<void> deleteChapter(String id);
 
   // Position Trees
