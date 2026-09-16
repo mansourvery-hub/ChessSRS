@@ -112,11 +112,11 @@ before the core review loop is in the owner's hands.
       1. Immediate scope transition: upon successful PGN import, automatically switch active `ReviewScope` to the newly imported study.
       2. Move comments strictly hidden during active recall prompt to prevent move spoilers.
       3. Move comments revealed post-guess (on success or lapse) with multiline wrapped text. *(done: 763a50181)*
-- [ ] **B2: Active Review Pool Toggle (Deck Muting / Study Suspension)**
+- [x] **B2: Active Review Pool Toggle (Deck Muting / Study Suspension)**
       1. Persistence update: `isActive` boolean (default `true`) on `Study` / `srs_study`.
       2. `ReviewScope.all()` and total due count query only active studies.
       3. Quick toggle switch next to each study in `ReviewScopeDrawer`.
-      4. Inactive studies remain fully accessible for individual study review, explore mode, and cram mode.
+      4. Inactive studies remain fully accessible for individual study review, explore mode, and cram mode. *(done: 4ee5a030f)*
 - [ ] **B3: Pre-Match Rehearsal / Cram Mode (Custom Review)**
       1. `ReviewMode` parameter on session (`srs` vs `practice`).
       2. In `practice` mode, tests moves on the board without updating `ReviewState` or logging `ReviewEvent` (zero SRS writes/interval corruption).
