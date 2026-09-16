@@ -74,7 +74,7 @@ before the core review loop is in the owner's hands.
       9. `[x]` C8  — Social cleanup: More tab entries, Home friends carousel, and message service poller *(done)*
       10. `[K]` C17 — WebSocket *(KEPT by owner decision for study sync & cloud eval)*
       11. `[K]` C18 — HTTP network & core repositories *(KEPT for auth, study import, explorer, tablebase)*
-      12. `[x]` Tab reduction → Clean 2-tab shell: Home + More/Settings *(done; future: + Review tab)*
+      12. `[x]` Tab reduction → Clean 2-tab shell: Review (primary) + More/Settings *(done)*
       Grey/undecided (untouched): C1, C2, C12, C13, C15.
       Kept by owner decision: C3, C14, C16, C17, C18.
 - [x] **F-end: Foundation stable** — a clean, coherent, Lichess-derived

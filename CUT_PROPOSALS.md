@@ -82,7 +82,7 @@ Step 8  [x]  C5  — Server game lifecycle + correspondence       DONE
 Step 9  [x]  C8  — Social navigation & Home carousel & Message poller DONE
 Step 10 [K]  C17 — WebSocket (KEPT by owner decision for study sync / cloud eval)
 Step 11 [K]  C18 — HTTP network & core repositories (KEPT for auth / study / explorer)
-Step 12 [x]  Tab reduction: clean 2-tab shell (Home + More; future: + Review tab) DONE
+Step 12 [x]  Tab reduction: clean 2-tab shell (Review + More) — Home tab removed DONE
 ```
 
 Steps beyond 12 (C12 offline computer, C13 engine) are blocked on owner
@@ -296,3 +296,4 @@ or HTTP consumers outside auth and study-import paths.
 | 7 / C4 | Online play: lobby / seek / challenges | `c2094c070` | 2026-09-15 | 1235 → 1182 passing, analyze 0, linux build ok |
 | 8 / C5 | Server game lifecycle + correspondence | _(this commit)_ | 2026-09-15 | 1182 → 1084 passing, analyze 0, linux build ok |
 | 9 / C8 | Social navigation entries from More tab | `790bb99c2` | 2026-09-15 | 1182 passing, analyze 0, linux build ok |
+| 12 / Home | Home tab + home widgets/prefs (clean 2-tab shell: Review + More) | _(this commit)_ | 2026-09-16 | 1188 → 1162 passing, analyze 0, linux build ok |

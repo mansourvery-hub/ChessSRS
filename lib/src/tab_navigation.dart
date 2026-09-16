@@ -6,15 +6,12 @@ import 'package:material_ui/material_ui.dart';
 
 enum BottomTab {
   review,
-  home,
   more;
 
   String label(AppLocalizations strings) {
     switch (this) {
       case BottomTab.review:
         return 'Review';
-      case BottomTab.home:
-        return strings.mobileHomeTab;
       case BottomTab.more:
         return strings.more;
     }
@@ -24,8 +21,6 @@ enum BottomTab {
     switch (this) {
       case BottomTab.review:
         return Symbols.school_rounded;
-      case BottomTab.home:
-        return Symbols.home_rounded;
       case BottomTab.more:
         return Symbols.menu_rounded;
     }
@@ -39,8 +34,6 @@ final currentNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>((ref) {
   switch (currentTab) {
     case BottomTab.review:
       return reviewNavigatorKey;
-    case BottomTab.home:
-      return homeNavigatorKey;
     case BottomTab.more:
       return moreNavigatorKey;
   }
@@ -51,19 +44,15 @@ final currentRootScrollControllerProvider = Provider<ScrollController>((ref) {
   switch (currentTab) {
     case BottomTab.review:
       return reviewScrollController;
-    case BottomTab.home:
-      return homeScrollController;
     case BottomTab.more:
       return moreScrollController;
   }
 });
 
 final reviewNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'review');
-final homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final moreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'more');
 
 final reviewScrollController = ScrollController(debugLabel: 'ReviewScroll');
-final homeScrollController = ScrollController(debugLabel: 'HomeScroll');
 final moreScrollController = ScrollController(debugLabel: 'MoreScroll');
 
 /// A [NavigatorObserver] that keeps track of the routes currently on the
@@ -126,7 +115,6 @@ class BottomTabInteraction extends ChangeNotifier {
 }
 
 final reviewTabInteraction = BottomTabInteraction();
-final homeTabInteraction = BottomTabInteraction();
 final moreTabInteraction = BottomTabInteraction();
 
 class MainTabScaffoldProperties extends InheritedWidget {

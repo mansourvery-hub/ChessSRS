@@ -9,14 +9,12 @@ import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
-import 'package:chess_srs/src/view/home/home_tab_screen.dart';
 import 'package:chess_srs/src/view/settings/account_preferences_screen.dart';
 import 'package:chess_srs/src/view/settings/app_log_settings_screen.dart';
 import 'package:chess_srs/src/view/settings/board_settings_screen.dart';
 import 'package:chess_srs/src/view/settings/engine_settings_screen.dart';
 import 'package:chess_srs/src/view/settings/http_log_screen.dart';
 import 'package:chess_srs/src/view/settings/sound_settings_screen.dart';
-import 'package:chess_srs/src/view/settings/theme_settings_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -106,17 +104,7 @@ class SettingsScreen extends ConsumerWidget {
                     ? const CupertinoListTileChevron()
                     : null,
                 onTap: () {
-                  Navigator.of(context).push(ThemeSettingsScreen.buildRoute());
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.app_registration),
-                title: Text(context.l10n.mobileSettingsHomeWidgets),
-                trailing: Theme.of(context).platform == TargetPlatform.iOS
-                    ? const CupertinoListTileChevron()
-                    : null,
-                onTap: () {
-                  Navigator.of(context).push(HomeTabScreen.buildRoute(editModeEnabled: true));
+                  Navigator.of(context).push(SoundSettingsScreen.buildRoute());
                 },
               ),
               ListTile(

@@ -1,0 +1,53 @@
+[Event "White Vs [Scandinavian]: Opening [exd5...Qa5]"]
+[Date "2024.04.20"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B01"]
+[Opening "Scandinavian Defense: Main Line"]
+[StudyName "White Vs [Scandinavian]"]
+[ChapterName "Opening [exd5...Qa5]"]
+[ChapterURL "https://lichess.org/study/cA775pN7/D4oIFQo9"]
+[Annotator "https://lichess.org/@/MansourMohamed"]
+[FEN "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
+[SetUp "1"]
+[UTCDate "2024.04.20"]
+[UTCTime "13:25:34"]
+
+1... d5 { Here in my early chess days, I used to play exd5 as it seems decent after Qxd5 Nc3 because we develop a knight and chase the black for free so it seems good for white. I also confirmed it with the engine after some games. But, once I started to create a white repertoire, I started by studying the French with all its complexity form the white side, and so I became tempted to maximize my French transposition in all sorts of openings in order to use my French knowledge and prep and take my opponents form an open position which they excel and have prep to close position which I was more comfortable with and had prep. But as opposed to some Sicilians where the French transpositions are almost perfect (with an early c3 d4 in many lines), here the French transpositions are extremely rare and what we are getting most likely is a tempo down for white Caro-Kann. Also, there are a lot of extremely complicated sidelines that require insane preparation from white just to equalize (for example the notoriously difficult e4 d5 e4 d4 side line, which is in my experience as complicated as a main lien Sicilian).
+For all these reason, It is becoming more and more apparent to me that I can't delay studying the main line Scandinavian with exd5 forever and that studying this main line will reap increasing benefits the more I study because it is fundamentally good for white. What I feared before was the sheer amount of liens to study as white because black on move 3 already has a lot of choices on where to put his queen and each square has its deep nuance and requires its own deep preparation. But in some sense, black has nowhere to go and white if he puts in the work and reviews/studies all the lines/side lines, is guaranteed to get a better position out of the opening according to the engine because the Scandinavian is around +0.5 already after e4 d5.
+Aiming for french transpositions is a fine strategy on its own, but only when the transition does not lose a lot of the advantage (measured in centipawns). Here we get the worst of both worlds, not only do we loose around 50 centipawns with e5, we are not even guaranteed a French position. Compare this to c3 in a Nf3 Nc6 Sicilian where even we do not get an advance french transposition, we might get the e5 Ng5 fried liver-esque attack and we are happy either way.
+According to the CCD, exd5 is the refuting/critical move here, but e5 and d3 are a bit worse and should draw. We mentioned e5, and I'm heavily familiar with it, but d3 leads to a queenless middle game and could be an interesting/targeted weapon to dodge the preparation of a well-prepared opponent. } 2. exd5 Qxd5 3. Nc3 { This is the starting position of the Scandinavian and black here has at least 6 decent queen retreating moves.
+Of course in order to punish black, white needs to know, in great detail, these 6 lines and probably even more lines.
+Black is banking on the fact that white can't possibly prepare all these lines and wants to get white in an unfamiliar territory as fast as possible.
+Qa5 is by far the best theoretical move for black but all the other possibilities are also decent.
+Black needs to move his queen somewhere to avoid Nxd5 capturing it, but also needs to avoid c6 because of Bb5 winning the black queen. } 3... Qa5 { This the absolute main line/tabia for both sides in the Scandinavian.
+White here has 3 top moves : Nf3, d4 and Bc4 and it very hard to a priori choose one over the other.
+Online, b4 seems like a very interesting/practical move for white to study with the most win rate (57% white win rate vs 48% for d4). b4 is evaluated 0.00 for engines.
+With b4 } (3... Qc6 4. Bb5 Bd7 5. Bxc6) (3... Nf6 4. Nxd5) 4. d4 *
+
+
+[Event "White Vs [Scandinavian]: Opening [exd5...Nf6]"]
+[Date "2024.10.17"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "B01"]
+[Opening "Scandinavian Defense: Main Line, Mieses Variation"]
+[StudyName "White Vs [Scandinavian]"]
+[ChapterName "Opening [exd5...Nf6]"]
+[ChapterURL "https://lichess.org/study/cA775pN7/8WQtq4eP"]
+[Annotator "https://lichess.org/@/MansourMohamed"]
+[FEN "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
+[SetUp "1"]
+[UTCDate "2024.10.17"]
+[UTCTime "19:29:52"]
+
+1... d5 2. exd5 Nf6 { Black is trying to be clever by avoiding all the main lines with Qxd5.
+Nf6 here is the second best move for black behind Qxd5 and according to engines it is 3 centipawn worse then Qxd5 (that practically nothing, to keep things into perspective that's 0.03 pawns).
+The practical problem with Nf6 for white is that is radically transforms the position for a typical Qxd5 Scandinavian position into something else completely different, in fact black is planning Nxd5 instead of Qxd5 no matter what white does here.
+White has 2 top moves here: Nf3 or d4. Both d4 and Nf3 invite black to transpose back to familiar territory/the main lines with Nf3 Qxd5. It turns out that black's best pet is to transpose back but in practice most humans take back with the f6 knight in this position after d4 or Nf3.
+Nc3 is the 9th best move here at s barely 0.00, this is quite shocking if compare it to the main line (Qxd5 Nc3). We can turn this into a rule :
+RULE : In the Scandinavian, rushing Nc3 is almost always bad unless it comes with tempo on the black queen.
+Most players online go Nc3 by pure habit/inertia assuming the c3 square is the right square for the c3 knight and that we need to rush that move but this is completely false and reveals 0 understanding of the reasons behind the moves.
+Note that d4 or Nf3 are not automatic moves because they require a bit of calculation: At the very least what happens after d4/Nf3 Bg4? } 3. d4 { Note that we can still transpose back into the main line say after Qxd5 Nc3 Qa5 but from this move order black almost nver does that and instead goes Nxd5 to get an independent position from all the main line Scandinavian theory. } 3... Qxd5 4. Nc3 Qa5 { This an extremely rare yet possible way to transpose back into a mainline position from a different move order, (here with Nf6 first instead of the usual Qxd5 Nc3 first). } *
+
+

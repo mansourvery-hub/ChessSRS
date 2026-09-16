@@ -2,11 +2,13 @@ import 'dart:convert';
 
 import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/app.dart';
+import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/tab_scaffold.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
@@ -76,12 +78,9 @@ void main() {
     // should have made a request to test the token
     expect(tokenTestRequests, 1);
 
-    // switch to Home tab to verify sign-in prompt is visible when logged out
-    await tester.tap(find.text('Home'));
-    await tester.pumpAndSettle(const Duration(milliseconds: 100));
-
     // authUser is not active anymore
-    expect(find.text('Sign in'), findsOneWidget);
+    final container = ProviderScope.containerOf(tester.element(find.byType(Application)));
+    expect(container.read(authControllerProvider), isNull);
   }, variant: kPlatformVariant);
 
   testWidgets('Bottom navigation', variant: kPlatformVariant, (tester) async {
@@ -92,7 +91,6 @@ void main() {
     expect(find.byType(MainTabScaffold), findsOneWidget);
 
     expect(find.text('Review'), findsWidgets);
-    expect(find.text('Home'), findsOneWidget);
     expect(find.text('More'), findsOneWidget);
   });
 
