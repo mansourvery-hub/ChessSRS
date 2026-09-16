@@ -93,14 +93,14 @@ class ReviewState {
 
   @override
   int get hashCode => Object.hash(
-        decisionId,
-        firstReviewedAt,
-        lastReviewedAt,
-        nextDueAt,
-        repetitionCount,
-        lapseCount,
-        stability,
-      );
+    decisionId,
+    firstReviewedAt,
+    lastReviewedAt,
+    nextDueAt,
+    repetitionCount,
+    lapseCount,
+    stability,
+  );
 
   @override
   String toString() =>
@@ -128,6 +128,18 @@ class ReviewEvent {
   final ReviewState newState;
 
   @override
-  String toString() =>
-      'ReviewEvent(decisionId: $decisionId, when: $when, result: $result)';
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReviewEvent &&
+          other.decisionId == decisionId &&
+          other.when == when &&
+          other.result == result &&
+          other.oldState == oldState &&
+          other.newState == newState;
+
+  @override
+  int get hashCode => Object.hash(decisionId, when, result, oldState, newState);
+
+  @override
+  String toString() => 'ReviewEvent(decisionId: $decisionId, when: $when, result: $result)';
 }

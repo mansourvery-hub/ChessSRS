@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:chess_srs/src/persistence/srs_schema.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart';
@@ -63,7 +64,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
   return dbFactory.openDatabase(
     path,
     options: OpenDatabaseOptions(
-      version: 5,
+      version: 6,
       onConfigure: (db) async {
         final version = await _getDatabaseVersion(db);
         _logger.info('SQLite version: $version');
@@ -93,6 +94,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
         _createGameTableV2(batch);
         _createHttpLogTableV4(batch);
         _createAppLogTableV5(batch);
+        createSrsTables(batch);
         await batch.commit();
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -108,6 +110,9 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
         }
         if (oldVersion < 5) {
           _createAppLogTableV5(batch);
+        }
+        if (oldVersion < 6) {
+          createSrsTables(batch);
         }
         await batch.commit();
       },
