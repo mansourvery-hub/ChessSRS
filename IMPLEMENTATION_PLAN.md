@@ -98,7 +98,7 @@ before the core review loop is in the owner's hands.
 - [x] **V5: Review scene UI** — board-dominant Review screen on chessground,
       oriented to repertoire side, quiet correct/incorrect feedback,
       due-count indicator, scope drawer (all/one study). First launch with
-      no studies → import action. *(done)*
+      no studies → import action. *(done: b940ffbf8)*
 - [ ] **V6: Vertical slice gate** — full loop proven at runtime on device:
       import real PGN → review → correct/incorrect → state persisted across
       restart. Runtime validation + screenshots. **Beta-ready.**
