@@ -3,18 +3,22 @@
 
 import 'package:chess_srs/src/db/database.dart';
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/persistence/sqlite_study_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for the application's [StudyRepository].
-final studyRepositoryProvider = FutureProvider<StudyRepository>((ref) async {
+final srsStudyRepositoryProvider = FutureProvider<StudyRepository>((ref) async {
   final db = await ref.watch(databaseProvider.future);
   return SqliteStudyRepository(db);
-}, name: 'StudyRepositoryProvider');
+}, name: 'SrsStudyRepositoryProvider');
 
 /// Abstract interface for local persistence of studies, chapters, trees,
 /// decisions, and spaced repetition review states.
 abstract class StudyRepository {
+  // Bulk import
+  Future<void> saveImportResult(ImportResult result);
+
   // Studies
   Future<void> saveStudy(Study study);
   Future<Study?> getStudy(String id);

@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/persistence/json_adapters.dart';
 import 'package:chess_srs/src/persistence/srs_schema.dart';
 import 'package:chess_srs/src/persistence/study_repository.dart';
@@ -18,6 +19,48 @@ class SqliteStudyRepository implements StudyRepository {
   const SqliteStudyRepository(this._db);
 
   final Database _db;
+
+  @override
+  Future<void> saveImportResult(ImportResult result) async {
+    await _db.transaction((txn) async {
+      final now = DateTime.now().toIso8601String();
+      await txn.insert(kTableSrsStudy, {
+        'id': result.study.id,
+        'title': result.study.title,
+        'createdAt': result.study.createdAt?.toIso8601String() ?? now,
+        'updatedAt': result.study.updatedAt?.toIso8601String() ?? now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+      final chapterBatch = txn.batch();
+      for (final chapter in result.chapters) {
+        final treeJson = chapter.root != null
+            ? jsonEncode(repertoireNodeToJson(chapter.root!))
+            : null;
+        chapterBatch.insert(kTableSrsChapter, {
+          'id': chapter.id,
+          'studyId': chapter.studyId,
+          'sourceOrder': chapter.sourceOrder,
+          'title': chapter.title,
+          'startingFen': chapter.startingFen,
+          'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
+          'treeJson': treeJson,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await chapterBatch.commit(noResult: true);
+
+      final decisionBatch = txn.batch();
+      for (final d in result.decisions) {
+        decisionBatch.insert(kTableSrsDecision, {
+          'id': d.id,
+          'studyId': d.studyId,
+          'chapterId': d.chapterId,
+          'nodeId': d.nodeId,
+          'expectedMoves': encodeExpectedMoves(d.expectedMoves),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await decisionBatch.commit(noResult: true);
+    });
+  }
 
   // ---------------------------------------------------------------------------
   // Studies

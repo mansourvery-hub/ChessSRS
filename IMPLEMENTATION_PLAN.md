@@ -94,11 +94,11 @@ before the core review loop is in the owner's hands.
       states; incremental writes. Tests: durability across restart. *(done: 2c44df649)*
 - [x] **V4: Review session engine** — due selection, move validation against
       repertoire, auto-traversal of non-due material, opponent auto-reply,
-      feedback state machine. Deterministic Clock tests. *(done: pending commit)*
-- [ ] **V5: Review scene UI** — board-dominant Review screen on chessground,
+      feedback state machine. Deterministic Clock tests. *(done: 1aeb1bbf2)*
+- [x] **V5: Review scene UI** — board-dominant Review screen on chessground,
       oriented to repertoire side, quiet correct/incorrect feedback,
       due-count indicator, scope drawer (all/one study). First launch with
-      no studies → import action.
+      no studies → import action. *(done)*
 - [ ] **V6: Vertical slice gate** — full loop proven at runtime on device:
       import real PGN → review → correct/incorrect → state persisted across
       restart. Runtime validation + screenshots. **Beta-ready.**

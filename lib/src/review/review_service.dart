@@ -13,7 +13,7 @@ final schedulerProvider = Provider<Scheduler>((ref) => const SimpleScheduler());
 
 /// Provider for [ReviewService].
 final reviewServiceProvider = Provider<ReviewService>((ref) {
-  final repoAsync = ref.watch(studyRepositoryProvider);
+  final repoAsync = ref.watch(srsStudyRepositoryProvider);
   final repo = repoAsync.asData?.value;
   final scheduler = ref.watch(schedulerProvider);
   final clock = ref.watch(clockProvider);

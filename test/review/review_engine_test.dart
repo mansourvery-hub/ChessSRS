@@ -56,7 +56,8 @@ void main() {
                         children: [
                           RepertoireNode(
                             id: 'node-bc4',
-                            fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3',
+                            fen:
+                                'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3',
                             fenKey: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq -',
                             incomingMove: RepertoireMove(from: 'f1', to: 'c4', san: 'Bc4'),
                           ),

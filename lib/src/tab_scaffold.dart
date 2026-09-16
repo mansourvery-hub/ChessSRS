@@ -5,6 +5,7 @@ import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/view/home/home_tab_screen.dart';
 import 'package:chess_srs/src/view/more/more_tab_screen.dart';
+import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:chess_srs/src/widgets/background.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/foundation.dart';
@@ -81,6 +82,8 @@ class MainTabScaffold extends ConsumerWidget {
         );
       } else {
         switch (tappedTab) {
+          case BottomTab.review:
+            reviewTabInteraction.notifyItemTapped();
           case BottomTab.home:
             homeTabInteraction.notifyItemTapped();
           case BottomTab.more:
@@ -96,11 +99,17 @@ class MainTabScaffold extends ConsumerWidget {
     switch (index) {
       case 0:
         return _MaterialTabView(
+          navigatorKey: reviewNavigatorKey,
+          tab: BottomTab.review,
+          builder: (context) => const ReviewScreen(),
+        );
+      case 1:
+        return _MaterialTabView(
           navigatorKey: homeNavigatorKey,
           tab: BottomTab.home,
           builder: (context) => const HomeTabScreen(),
         );
-      case 1:
+      case 2:
         return _MaterialTabView(
           navigatorKey: moreNavigatorKey,
           tab: BottomTab.more,

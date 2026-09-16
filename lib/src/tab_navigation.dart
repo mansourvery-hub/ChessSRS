@@ -5,11 +5,14 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum BottomTab {
+  review,
   home,
   more;
 
   String label(AppLocalizations strings) {
     switch (this) {
+      case BottomTab.review:
+        return 'Review';
       case BottomTab.home:
         return strings.mobileHomeTab;
       case BottomTab.more:
@@ -19,6 +22,8 @@ enum BottomTab {
 
   IconData get icon {
     switch (this) {
+      case BottomTab.review:
+        return Symbols.school_rounded;
       case BottomTab.home:
         return Symbols.home_rounded;
       case BottomTab.more:
@@ -27,11 +32,13 @@ enum BottomTab {
   }
 }
 
-final currentBottomTabProvider = StateProvider<BottomTab>((ref) => BottomTab.home);
+final currentBottomTabProvider = StateProvider<BottomTab>((ref) => BottomTab.review);
 
 final currentNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>((ref) {
   final currentTab = ref.watch(currentBottomTabProvider);
   switch (currentTab) {
+    case BottomTab.review:
+      return reviewNavigatorKey;
     case BottomTab.home:
       return homeNavigatorKey;
     case BottomTab.more:
@@ -42,6 +49,8 @@ final currentNavigatorKeyProvider = Provider<GlobalKey<NavigatorState>>((ref) {
 final currentRootScrollControllerProvider = Provider<ScrollController>((ref) {
   final currentTab = ref.watch(currentBottomTabProvider);
   switch (currentTab) {
+    case BottomTab.review:
+      return reviewScrollController;
     case BottomTab.home:
       return homeScrollController;
     case BottomTab.more:
@@ -49,9 +58,11 @@ final currentRootScrollControllerProvider = Provider<ScrollController>((ref) {
   }
 });
 
+final reviewNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'review');
 final homeNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'home');
 final moreNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'more');
 
+final reviewScrollController = ScrollController(debugLabel: 'ReviewScroll');
 final homeScrollController = ScrollController(debugLabel: 'HomeScroll');
 final moreScrollController = ScrollController(debugLabel: 'MoreScroll');
 
@@ -114,6 +125,7 @@ class BottomTabInteraction extends ChangeNotifier {
   }
 }
 
+final reviewTabInteraction = BottomTabInteraction();
 final homeTabInteraction = BottomTabInteraction();
 final moreTabInteraction = BottomTabInteraction();
 

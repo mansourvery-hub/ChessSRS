@@ -6,7 +6,7 @@ import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/tab_scaffold.dart';
-import 'package:chess_srs/src/view/home/home_tab_screen.dart';
+import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
@@ -25,7 +25,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.byType(HomeTabScreen), findsOneWidget);
+    expect(find.byType(ReviewScreen), findsOneWidget);
   }, variant: kPlatformVariant);
 
   testWidgets('App loads with system theme, which defaults to light', (tester) async {
@@ -68,13 +68,17 @@ void main() {
     await tester.pumpWidget(app);
 
     expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.byType(HomeTabScreen), findsOneWidget);
+    expect(find.byType(ReviewScreen), findsOneWidget);
 
     // wait for the startup requests and animations to complete
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
     // should have made a request to test the token
     expect(tokenTestRequests, 1);
+
+    // switch to Home tab to verify sign-in prompt is visible when logged out
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
     // authUser is not active anymore
     expect(find.text('Sign in'), findsOneWidget);
@@ -87,6 +91,7 @@ void main() {
 
     expect(find.byType(MainTabScaffold), findsOneWidget);
 
+    expect(find.text('Review'), findsWidgets);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('More'), findsOneWidget);
   });

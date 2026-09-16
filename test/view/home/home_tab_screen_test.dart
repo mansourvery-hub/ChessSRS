@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:chess_srs/src/app.dart';
 import 'package:chess_srs/src/model/auth/auth_repository.dart';
+import 'package:chess_srs/src/model/auth/auth_user.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
 import 'package:chess_srs/src/model/engine/weights_service.dart';
 import 'package:chess_srs/src/model/game/game_storage.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/styles/lichess_icons.dart';
+import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/view/account/profile_screen.dart';
 import 'package:chess_srs/src/view/auth/email_login_screen.dart';
 import 'package:chess_srs/src/view/game/game_list_tile.dart';
@@ -16,6 +18,7 @@ import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:chess_srs/src/widgets/server_outage_display.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override, ProviderOrFamily;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
@@ -31,10 +34,44 @@ import '../../network/server_down_client.dart';
 import '../../test_helpers.dart';
 import '../../test_provider_scope.dart';
 
+Future<Widget> _makeApp(
+  WidgetTester tester, {
+  Map<ProviderOrFamily, Override>? overrides,
+  AuthUser? authUser,
+  Map<String, Object>? defaultPreferences,
+  Size surfaceSize = kTestSurfaceSize,
+}) => makeTestProviderScope(
+  tester,
+  child: const Application(),
+  overrides: {
+    currentBottomTabProvider: currentBottomTabProvider.overrideWith((ref) => BottomTab.home),
+    ...?overrides,
+  },
+  authUser: authUser,
+  defaultPreferences: defaultPreferences,
+  surfaceSize: surfaceSize,
+);
+
+Future<Widget> _makeOfflineApp(
+  WidgetTester tester, {
+  Map<ProviderOrFamily, Override>? overrides,
+  AuthUser? authUser,
+  Map<String, Object>? defaultPreferences,
+}) => makeOfflineTestProviderScope(
+  tester,
+  child: const Application(),
+  overrides: {
+    currentBottomTabProvider: currentBottomTabProvider.overrideWith((ref) => BottomTab.home),
+    ...?overrides,
+  },
+  authUser: authUser,
+  defaultPreferences: defaultPreferences,
+);
+
 void main() {
   group('Home online', () {
     testWidgets('no authUser, no stored game: shows welcome screen ', (tester) async {
-      final app = await makeTestProviderScope(tester, child: const Application());
+      final app = await _makeApp(tester);
       await tester.pumpWidget(app);
       // wait for connectivity
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -55,9 +92,8 @@ void main() {
         }
         return mockResponse('', 200);
       });
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
@@ -82,9 +118,8 @@ void main() {
         }
         return mockResponse('', 200);
       });
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
             (ref) => FakeHttpClientFactory(() => mockClient),
@@ -121,9 +156,8 @@ void main() {
         }
         return mockResponse('', 200);
       });
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith(
@@ -146,7 +180,7 @@ void main() {
 
   group('Home offline', () {
     testWidgets('shows offline banner', (tester) async {
-      final app = await makeOfflineTestProviderScope(tester, child: const Application());
+      final app = await _makeOfflineApp(tester);
 
       await tester.pumpWidget(app);
       // wait for connectivity
@@ -157,7 +191,7 @@ void main() {
     });
 
     testWidgets('no authUser, no stored game: shows welcome screen ', (tester) async {
-      final app = await makeTestProviderScope(tester, child: const Application());
+      final app = await _makeApp(tester);
       await tester.pumpWidget(app);
       // wait for connectivity
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -167,7 +201,7 @@ void main() {
     });
 
     testWidgets('no authUser, with stored games: shows list of recent games', (tester) async {
-      final app = await makeOfflineTestProviderScope(tester, child: const Application());
+      final app = await _makeOfflineApp(tester);
       await tester.pumpWidget(app);
 
       final container = ProviderScope.containerOf(tester.element(find.byType(Application)));
@@ -187,11 +221,7 @@ void main() {
     });
 
     testWidgets('authUser, with stored games: shows list of recent games', (tester) async {
-      final app = await makeOfflineTestProviderScope(
-        tester,
-        child: const Application(),
-        authUser: fakeAuthUser,
-      );
+      final app = await _makeOfflineApp(tester, authUser: fakeAuthUser);
       await tester.pumpWidget(app);
 
       final container = ProviderScope.containerOf(tester.element(find.byType(Application)));
@@ -213,7 +243,7 @@ void main() {
       const customizeTip =
           "Tip: You can add more widgets to the Home Screen or remove those you don't need!";
       testWidgets('shown when logged out', (tester) async {
-        final app = await makeTestProviderScope(tester, child: const Application());
+        final app = await _makeApp(tester);
 
         await tester.pumpWidget(app);
 
@@ -225,11 +255,7 @@ void main() {
       });
 
       testWidgets('shown when logged in', (tester) async {
-        final app = await makeTestProviderScope(
-          tester,
-          child: const Application(),
-          authUser: fakeAuthUser,
-        );
+        final app = await _makeApp(tester, authUser: fakeAuthUser);
 
         await tester.pumpWidget(app);
 
@@ -241,11 +267,7 @@ void main() {
       });
 
       testWidgets('Can be dismissed via button', (tester) async {
-        final app = await makeTestProviderScope(
-          tester,
-          child: const Application(),
-          defaultPreferences: {kWelcomeMessageShownKey: true},
-        );
+        final app = await _makeApp(tester, defaultPreferences: {kWelcomeMessageShownKey: true});
 
         await tester.pumpWidget(app);
 
@@ -260,7 +282,7 @@ void main() {
       });
 
       testWidgets('Not shown if already dismissed', (tester) async {
-        final app = await makeTestProviderScope(tester, child: const Application());
+        final app = await _makeApp(tester);
 
         TestLichessBinding.instance.sharedPreferences.setBool(
           'app_hide_home_widget_customization_tip',
@@ -277,11 +299,7 @@ void main() {
       });
 
       testWidgets('Can be dismissed via going to settings', (tester) async {
-        final app = await makeTestProviderScope(
-          tester,
-          child: const Application(),
-          defaultPreferences: {kWelcomeMessageShownKey: true},
-        );
+        final app = await _makeApp(tester, defaultPreferences: {kWelcomeMessageShownKey: true});
 
         await tester.pumpWidget(app);
 
@@ -307,7 +325,7 @@ void main() {
       testWidgets('Not shown when > $kColdAppStartsHideCustomizationTipThreshold app starts', (
         tester,
       ) async {
-        final app = await makeTestProviderScope(tester, child: const Application());
+        final app = await _makeApp(tester);
 
         TestLichessBinding.instance.numAppStarts = kColdAppStartsHideCustomizationTipThreshold + 1;
 
@@ -325,7 +343,7 @@ void main() {
       const nnueFilesMissingTip =
           'New Stockfish version available! Go to the settings to download the updated NNUE file.';
       testWidgets('Shown if engine pref is latest sf and NNUE files are missing', (tester) async {
-        final app = await makeTestProviderScope(
+        final app = await _makeApp(
           tester,
           overrides: {
             stockfishNnueServiceProvider: stockfishNnueServiceProvider.overrideWithValue(
@@ -340,7 +358,6 @@ void main() {
                   .toJson(),
             ),
           },
-          child: const Application(),
         );
 
         await tester.pumpWidget(app);
@@ -352,7 +369,7 @@ void main() {
       });
 
       testWidgets('Not shown if nnue files are available', (tester) async {
-        final app = await makeTestProviderScope(
+        final app = await _makeApp(
           tester,
           overrides: {
             stockfishNnueServiceProvider: stockfishNnueServiceProvider.overrideWithValue(
@@ -367,7 +384,6 @@ void main() {
                   .toJson(),
             ),
           },
-          child: const Application(),
         );
 
         await tester.pumpWidget(app);
@@ -379,7 +395,7 @@ void main() {
       });
 
       testWidgets('Not shown if engine pref is sfLight', (tester) async {
-        final app = await makeTestProviderScope(
+        final app = await _makeApp(
           tester,
           overrides: {
             stockfishNnueServiceProvider: stockfishNnueServiceProvider.overrideWithValue(
@@ -394,7 +410,6 @@ void main() {
                   .toJson(),
             ),
           },
-          child: const Application(),
         );
 
         await tester.pumpWidget(app);
@@ -410,12 +425,9 @@ void main() {
     testWidgets('offline-capable widgets are kept, server-backed ones are replaced', (
       tester,
     ) async {
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         authUser: fakeAuthUser,
-        // Tall surface so the whole list is laid out and nothing is missed
-        // simply for being below the fold.
         surfaceSize: const Size(390, 1600),
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
@@ -443,9 +455,8 @@ void main() {
     });
 
     testWidgets('a 502 shows the outage message', (tester) async {
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
@@ -464,9 +475,8 @@ void main() {
     });
 
     testWidgets('a 503 shows the maintenance message', (tester) async {
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         authUser: fakeAuthUser,
         overrides: {
           httpClientFactoryProvider: httpClientFactoryProvider.overrideWith((ref) {
@@ -487,7 +497,7 @@ void main() {
 
   group('Sign in options', () {
     testWidgets('opens the email login screen', (tester) async {
-      final app = await makeTestProviderScope(tester, child: const Application());
+      final app = await _makeApp(tester);
       await tester.pumpWidget(app);
       await tester.pumpAndSettle();
 
@@ -502,9 +512,8 @@ void main() {
 
   group('Sign in error handling', () {
     testWidgets('shows an error snackbar when sign-in fails', (tester) async {
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         overrides: {
           appAuthProvider: appAuthProvider.overrideWith(
             (ref) => FakeFlutterAppAuth((request) async => throw Exception('authorization failed')),
@@ -525,9 +534,8 @@ void main() {
     });
 
     testWidgets('does not show a snackbar when the user cancels sign-in', (tester) async {
-      final app = await makeTestProviderScope(
+      final app = await _makeApp(
         tester,
-        child: const Application(),
         overrides: {
           appAuthProvider: appAuthProvider.overrideWith(
             (ref) => FakeFlutterAppAuth((request) async => throw userCancelled()),

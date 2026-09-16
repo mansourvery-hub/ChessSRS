@@ -31,7 +31,7 @@ class MoreTabScreen extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (bool didPop, _) {
         if (!didPop) {
-          ref.read(currentBottomTabProvider.notifier).state = BottomTab.home;
+          ref.read(currentBottomTabProvider.notifier).state = BottomTab.review;
         }
       },
       child: PlatformScaffold(
@@ -69,6 +69,16 @@ class _Body extends ConsumerWidget {
             header: SettingsSectionTitle(context.l10n.tools),
             hasLeading: true,
             children: [
+              ListTile(
+                leading: const Icon(Icons.school_outlined),
+                trailing: Theme.of(context).platform == TargetPlatform.iOS
+                    ? const CupertinoListTileChevron()
+                    : null,
+                title: const Text('Repertoire Review'),
+                onTap: () {
+                  ref.read(currentBottomTabProvider.notifier).state = BottomTab.review;
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.upload_file_outlined),
                 trailing: Theme.of(context).platform == TargetPlatform.iOS
