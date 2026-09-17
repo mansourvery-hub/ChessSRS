@@ -137,7 +137,14 @@ before the core review loop is in the owner's hands.
 
 ## Phase 4 — Listudy integration (isolated modules)
 
-Per `docs/INTEGRATION_MAP.md`: training-loop semantics (sibling reset on
+- [x] **L1: Due-Aware & Weighted-Random Opponent Reply Selection (Listudy Semantics)**
+      1. Repertoire branching: opponent variation selection inspects subtrees for due decisions.
+      2. Branches containing due cards are prioritized so drills dynamically guide the player to due material rather than always playing `.first`.
+      3. Multiple due branches are selected using weighted randomness proportional to due move density, preventing repetition across sessions.
+      4. Fallback in Practice Mode weights by subtree size so all variations get proportionate practice.
+      5. Full deterministic replay in tests via injectable `Random`. Documented in `docs/review.md`. *(done: 2026-09-17)*
+
+Per `docs/INTEGRATION_MAP.md`: remaining training-loop semantics (sibling reset on
 error, weighted-random opponent replies), chapter/FEN behaviors, tree caching
 by PGN hash. Optional where flagged (hints, arrows, comments) — only with
 beta-feedback justification.

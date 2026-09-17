@@ -48,6 +48,32 @@ not:
 
 A previously auto-played decision must become testable again when its SRS state becomes due, even after a very long interval.
 
+## Opponent Variation Selection (Due-Aware & Anti-Repetition)
+
+In a chess repertoire, the opponent frequently has multiple branching responses at a given position.
+
+### The Problem with Static Selection (`children.first`)
+Consider a repertoire for White where after **`1. e4`**, Black has three branches in the study tree:
+- Branch A: **`1... c5`** (Sicilian Defense)
+- Branch B: **`1... e5`** (Open Game)
+- Branch C: **`1... e6`** (French Defense)
+
+If the review engine naively selects `activeNode.children.first`:
+- The opponent will **always** play `1... c5`.
+- The user will never face `1... e5` or `1... e6` during the auto-traversal loop.
+- Even if the user has 5 decisions due today in the French Defense (`1... e6`), Black would still stubbornly play the Sicilian, starving the due French variations of practice.
+
+### The Due-Aware Algorithm
+When the opponent must choose an auto-reply among multiple child nodes:
+
+1. **Subtree Due Detection**: The engine calculates how many due decisions exist in the subtree of each candidate opponent branch.
+2. **Prioritize Due Branches**:
+   - If one or more branches have due material, branches with 0 due material are filtered out.
+   - If exactly one branch has due material (e.g., only `1... e6` has reviews due), the opponent plays that branch to guide the user to the due cards.
+   - If multiple branches have due material (e.g., both `1... c5` and `1... e6` have reviews due), the engine selects between them with weighted randomness proportional to due density, ensuring anti-repetition across sessions.
+3. **Practice / Cram Fallback**:
+   - In `ReviewMode.practice` (where all cards are drillable regardless of due date) or if no branch has due material, the engine selects among all candidate branches with anti-repetition so all variations get practiced evenly.
+
 ## Due selection
 
 Default scope: all studies.

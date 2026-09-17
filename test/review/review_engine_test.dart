@@ -1,9 +1,22 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math';
+
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class _FixedRandom implements Random {
+  _FixedRandom(this._value);
+  final int _value;
+  @override
+  int nextInt(int max) => _value % max;
+  @override
+  bool nextBool() => true;
+  @override
+  double nextDouble() => 0.0;
+}
 
 void main() {
   group('ReviewSession Engine', () {
@@ -380,6 +393,249 @@ void main() {
         expect(result2.event, isNull);
         expect(result2.updatedState.lapseCount, 0); // No lapse recorded!
         expect(result2.updatedState.repetitionCount, 5); // Repetitions not reset!
+      },
+    );
+
+    test(
+      'due-aware opponent selection: plays branch with due moves over branch with no due moves',
+      () {
+        final study = Study(
+          id: 'study-branches',
+          title: 'Openings',
+          createdAt: baseTime,
+          updatedAt: baseTime,
+        );
+
+        // Root -> 1. e4 (dec-1) -> has 2 Black branches:
+        // Branch A: 1... e5 -> 2. Nf3 (dec-e5, NOT due)
+        // Branch B: 1... c5 -> 2. Nf3 (dec-c5, DUE)
+        const nodeRoot = RepertoireNode(
+          id: 'root',
+          fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+          fenKey: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -',
+          children: [
+            RepertoireNode(
+              id: 'node-e4',
+              fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+              fenKey: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -',
+              incomingMove: RepertoireMove(from: 'e2', to: 'e4', san: 'e4'),
+              children: [
+                RepertoireNode(
+                  id: 'node-e5',
+                  fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2',
+                  fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                  incomingMove: RepertoireMove(from: 'e7', to: 'e5', san: 'e5'),
+                  children: [
+                    RepertoireNode(
+                      id: 'node-nf3-e5',
+                      fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                      fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                      incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                    ),
+                  ],
+                ),
+                RepertoireNode(
+                  id: 'node-c5',
+                  fen: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2',
+                  fenKey: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                  incomingMove: RepertoireMove(from: 'c7', to: 'c5', san: 'c5'),
+                  children: [
+                    RepertoireNode(
+                      id: 'node-nf3-c5',
+                      fen: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                      fenKey: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                      incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+
+        final chapter = Chapter(
+          id: 'ch-1',
+          studyId: study.id,
+          sourceOrder: 0,
+          title: 'Main',
+          startingFen: nodeRoot.fen,
+          root: nodeRoot,
+        );
+
+        final dec1 = RepertoireDecision(
+          id: 'dec-1',
+          studyId: study.id,
+          chapterId: chapter.id,
+          nodeId: 'root',
+          expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+        );
+        final decE5 = RepertoireDecision(
+          id: 'dec-e5',
+          studyId: study.id,
+          chapterId: chapter.id,
+          nodeId: 'node-e5',
+          expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        );
+        final decC5 = RepertoireDecision(
+          id: 'dec-c5',
+          studyId: study.id,
+          chapterId: chapter.id,
+          nodeId: 'node-c5',
+          expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        );
+
+        final engine = ReviewEngine(clock: clock);
+
+        final statesWithDec1Due = {
+          'dec-1': ReviewState.initial(decisionId: 'dec-1'),
+          'dec-e5': ReviewState(
+            decisionId: 'dec-e5',
+            nextDueAt: baseTime.add(const Duration(days: 5)),
+            repetitionCount: 2,
+          ),
+          'dec-c5': ReviewState(
+            decisionId: 'dec-c5',
+            nextDueAt: baseTime.subtract(const Duration(hours: 1)),
+            repetitionCount: 1,
+          ),
+        };
+
+        final session = engine.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: [dec1, decE5, decC5],
+          reviewStates: statesWithDec1Due,
+        );
+
+        expect(session.currentPrompt?.decision.id, 'dec-1');
+
+        // User plays 1. e4: Opponent must pick between 1... e5 and 1... c5.
+        // Branch A (1... e5) has NO due cards (scheduled in 5 days).
+        // Branch B (1... c5) HAS due cards (dec-c5 is due).
+        // Due-aware opponent selection plays 1... c5!
+        final stepResult = session.submitMove(from: 'e2', to: 'e4');
+        expect(stepResult.isCorrect, isTrue);
+        expect(stepResult.autoPlayedMoves.length, 1);
+        expect(stepResult.autoPlayedMoves.first.move.san, 'c5');
+        expect(stepResult.nextPrompt?.decision.id, 'dec-c5');
+      },
+    );
+
+    test(
+      'due-aware opponent selection: weights selection between multiple branches with due moves',
+      () {
+        final study = Study(
+          id: 'study-branches-2',
+          title: 'Openings',
+          createdAt: baseTime,
+          updatedAt: baseTime,
+        );
+
+        const nodeRoot = RepertoireNode(
+          id: 'root',
+          fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+          fenKey: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -',
+          children: [
+            RepertoireNode(
+              id: 'node-e4',
+              fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+              fenKey: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -',
+              incomingMove: RepertoireMove(from: 'e2', to: 'e4', san: 'e4'),
+              children: [
+                RepertoireNode(
+                  id: 'node-e5',
+                  fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2',
+                  fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                  incomingMove: RepertoireMove(from: 'e7', to: 'e5', san: 'e5'),
+                  children: [
+                    RepertoireNode(
+                      id: 'node-nf3-e5',
+                      fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                      fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                      incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                    ),
+                  ],
+                ),
+                RepertoireNode(
+                  id: 'node-c5',
+                  fen: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2',
+                  fenKey: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                  incomingMove: RepertoireMove(from: 'c7', to: 'c5', san: 'c5'),
+                  children: [
+                    RepertoireNode(
+                      id: 'node-nf3-c5',
+                      fen: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                      fenKey: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                      incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+
+        final chapter = Chapter(
+          id: 'ch-1',
+          studyId: study.id,
+          sourceOrder: 0,
+          title: 'Main',
+          startingFen: nodeRoot.fen,
+          root: nodeRoot,
+        );
+
+        final dec1 = RepertoireDecision(
+          id: 'dec-1',
+          studyId: study.id,
+          chapterId: chapter.id,
+          nodeId: 'root',
+          expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+        );
+        final decE5 = RepertoireDecision(
+          id: 'dec-e5',
+          studyId: study.id,
+          chapterId: chapter.id,
+          nodeId: 'node-e5',
+          expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        );
+        final decC5 = RepertoireDecision(
+          id: 'dec-c5',
+          studyId: study.id,
+          chapterId: chapter.id,
+          nodeId: 'node-c5',
+          expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        );
+
+        // Both dec-e5 and dec-c5 are due!
+        final states = {
+          'dec-1': ReviewState.initial(decisionId: 'dec-1'),
+          'dec-e5': ReviewState.initial(decisionId: 'dec-e5'),
+          'dec-c5': ReviewState.initial(decisionId: 'dec-c5'),
+        };
+
+        // FakeRandom(0): roll = 0, weight of e5 is 1, so 0 < 1 -> selects e5
+        final engineA = ReviewEngine(clock: clock, random: _FixedRandom(0));
+        final sessionA = engineA.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: [dec1, decE5, decC5],
+          reviewStates: states,
+        );
+        final resultA = sessionA.submitMove(from: 'e2', to: 'e4');
+        expect(resultA.isCorrect, isTrue);
+        expect(resultA.autoPlayedMoves.first.move.san, 'e5');
+
+        // FakeRandom(1): roll = 1, weight of e5 is 1 (1 not < 1), remaining roll = 0 < 1 -> selects c5
+        final engineB = ReviewEngine(clock: clock, random: _FixedRandom(1));
+        final sessionB = engineB.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: [dec1, decE5, decC5],
+          reviewStates: states,
+        );
+        final resultB = sessionB.submitMove(from: 'e2', to: 'e4');
+        expect(resultB.isCorrect, isTrue);
+        expect(resultB.autoPlayedMoves.first.move.san, 'c5');
       },
     );
   });

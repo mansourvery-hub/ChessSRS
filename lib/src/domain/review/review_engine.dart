@@ -1,6 +1,8 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math';
+
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/clock.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
@@ -13,10 +15,15 @@ import 'package:chess_srs/src/domain/study.dart';
 
 /// Factory and configuration engine for [ReviewSession]s.
 class ReviewEngine {
-  const ReviewEngine({this.scheduler = const SimpleScheduler(), this.clock = const SystemClock()});
+  const ReviewEngine({
+    this.scheduler = const SimpleScheduler(),
+    this.clock = const SystemClock(),
+    this.random,
+  });
 
   final Scheduler scheduler;
   final Clock clock;
+  final Random? random;
 
   ReviewSession createSession({
     required List<Study> studies,
@@ -25,6 +32,7 @@ class ReviewEngine {
     required Map<String, ReviewState> reviewStates,
     ReviewScope scope = const ReviewScope.all(),
     ReviewMode mode = ReviewMode.srs,
+    Random? random,
   }) {
     return ReviewSession(
       studies: studies,
@@ -35,6 +43,7 @@ class ReviewEngine {
       mode: mode,
       scheduler: scheduler,
       clock: clock,
+      random: random ?? this.random,
     );
   }
 }

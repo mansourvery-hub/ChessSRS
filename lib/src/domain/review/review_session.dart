@@ -1,6 +1,8 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math';
+
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/clock.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
@@ -31,7 +33,9 @@ class ReviewSession {
     this.mode = ReviewMode.srs,
     this.scheduler = const SimpleScheduler(),
     this.clock = const SystemClock(),
-  }) : _studies = {for (final s in studies) s.id: s},
+    Random? random,
+  }) : _random = random ?? Random(),
+       _studies = {for (final s in studies) s.id: s},
        _chapters = {for (final c in chapters) c.id: c},
        _reviewStates = Map<String, ReviewState>.from(reviewStates),
        _decisionForNode = {for (final d in decisions) d.nodeId: d} {
@@ -67,6 +71,7 @@ class ReviewSession {
   final ReviewMode mode;
   final Scheduler scheduler;
   final Clock clock;
+  final Random _random;
 
   final Map<String, Study> _studies;
   final Map<String, Chapter> _chapters;
@@ -260,8 +265,8 @@ class ReviewSession {
         break;
       }
 
-      // Opponent turn: first child represents opponent continuation
-      final opponentChild = activeNode.children.first;
+      // Opponent turn: select response using due-aware & weighted selection (Listudy semantics)
+      final opponentChild = _selectOpponentChild(activeNode, now);
       final opponentMove = opponentChild.incomingMove!;
       autoPlayed.add(
         AutoPlayedMove(
@@ -419,5 +424,82 @@ class ReviewSession {
       return Side.black;
     }
     return Side.white;
+  }
+
+  /// Selects the opponent response among multiple children.
+  ///
+  /// Uses Listudy-inspired due-aware selection (docs/review.md §Opponent Variation Selection):
+  /// 1. Prioritizes opponent branches that lead to moves currently due for review.
+  /// 2. If multiple branches have due moves, selects among them using weighted
+  ///    randomness proportional to due move density.
+  /// 3. In practice mode or if no branch has due moves, selects among all branches
+  ///    using anti-repetition weighted randomness proportional to subtree size.
+  RepertoireNode _selectOpponentChild(RepertoireNode node, DateTime now) {
+    if (node.children.length == 1) {
+      return node.children.first;
+    }
+
+    final dueCounts = <RepertoireNode, int>{};
+    for (final child in node.children) {
+      dueCounts[child] = _countDueDecisionsInSubtree(child, now);
+    }
+
+    final dueChildren = node.children.where((c) => (dueCounts[c] ?? 0) > 0).toList();
+    if (dueChildren.isNotEmpty) {
+      return _selectWeighted(dueChildren, dueCounts);
+    }
+
+    // Fallback: weight by total subtree size so larger variations get proportionate practice
+    final subtreeSizes = <RepertoireNode, int>{};
+    for (final child in node.children) {
+      subtreeSizes[child] = _countNodesInSubtree(child);
+    }
+    return _selectWeighted(node.children, subtreeSizes);
+  }
+
+  int _countDueDecisionsInSubtree(RepertoireNode node, DateTime now) {
+    var count = 0;
+    final decision = _decisionForNode[node.id];
+    if (decision != null) {
+      final state = _reviewStates[decision.id];
+      final isDue = mode == ReviewMode.practice || state == null || state.isDueAt(now);
+      if (isDue) {
+        count++;
+      }
+    }
+    for (final child in node.children) {
+      count += _countDueDecisionsInSubtree(child, now);
+    }
+    return count;
+  }
+
+  int _countNodesInSubtree(RepertoireNode node) {
+    var count = 1;
+    for (final child in node.children) {
+      count += _countNodesInSubtree(child);
+    }
+    return count;
+  }
+
+  RepertoireNode _selectWeighted(
+    List<RepertoireNode> candidates,
+    Map<RepertoireNode, int> weights,
+  ) {
+    if (candidates.length == 1) return candidates.first;
+
+    final totalWeight = candidates.fold<int>(0, (sum, c) => sum + (weights[c] ?? 1));
+    if (totalWeight <= 0) {
+      return candidates[_random.nextInt(candidates.length)];
+    }
+
+    var roll = _random.nextInt(totalWeight);
+    for (final candidate in candidates) {
+      final weight = weights[candidate] ?? 1;
+      if (roll < weight) {
+        return candidate;
+      }
+      roll -= weight;
+    }
+    return candidates.first;
   }
 }
