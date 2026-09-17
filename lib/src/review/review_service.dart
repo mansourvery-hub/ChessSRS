@@ -65,11 +65,13 @@ class ReviewService {
       allChapters.addAll(chapters);
     }
 
-    final decisions = scope.studyId != null
-        ? await repository.getDecisionsByStudy(scope.studyId!)
-        : (scope.openingFamily != null
-              ? await _getOpeningDecisions(allChapters, scope.openingFamily!, studies)
-              : await _getActiveDecisions(studies));
+    final decisions = scope.chapterId != null
+        ? await repository.getDecisionsByChapter(scope.chapterId!)
+        : (scope.studyId != null
+              ? await repository.getDecisionsByStudy(scope.studyId!)
+              : (scope.openingFamily != null
+                    ? await _getOpeningDecisions(allChapters, scope.openingFamily!, studies)
+                    : await _getActiveDecisions(studies)));
 
     final reviewStatesList = await repository.getAllReviewStates();
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
@@ -178,6 +179,23 @@ class ReviewScopeDrawer extends ConsumerWidget {
               ),
             ),
             const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Symbols.view_list_rounded),
+              title: const Text('Chapters'),
+              subtitle: const Text('View and train specific chapters in this study'),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
+                final repo = await ref.read(srsStudyRepositoryProvider.future);
+                final chapters = await repo.getChaptersByStudy(study.id);
+                if (context.mounted) {
+                  Navigator.of(
+                    context,
+                    rootNavigator: true,
+                  ).push(StudyChaptersScreen.buildRoute(study: study, chapters: chapters));
+                }
+              },
+            ),
             ListTile(
               leading: const Icon(Symbols.explore_rounded),
               title: const Text('Analyze Study'),

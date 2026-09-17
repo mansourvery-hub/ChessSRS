@@ -75,6 +75,32 @@ void main() {
       expect(b.matches(a), isTrue);
     });
 
+    test('matches() handles castling equivalence (e1g1 matches e1h1, e1c1 matches e1a1)', () {
+      // White Kingside
+      const standardOO = RepertoireMove(from: 'e1', to: 'g1', san: 'O-O');
+      const chess960OO = RepertoireMove(from: 'e1', to: 'h1', san: 'O-O');
+      expect(standardOO.matches(chess960OO), isTrue);
+      expect(chess960OO.matches(standardOO), isTrue);
+
+      // White Queenside
+      const standardOOO = RepertoireMove(from: 'e1', to: 'c1', san: 'O-O-O');
+      const chess960OOO = RepertoireMove(from: 'e1', to: 'a1', san: 'O-O-O');
+      expect(standardOOO.matches(chess960OOO), isTrue);
+      expect(chess960OOO.matches(standardOOO), isTrue);
+
+      // Black Kingside
+      const blackOO = RepertoireMove(from: 'e8', to: 'g8', san: 'O-O');
+      const black960OO = RepertoireMove(from: 'e8', to: 'h8', san: 'O-O');
+      expect(blackOO.matches(black960OO), isTrue);
+      expect(black960OO.matches(blackOO), isTrue);
+
+      // Black Queenside
+      const blackOOO = RepertoireMove(from: 'e8', to: 'c8', san: 'O-O-O');
+      const black960OOO = RepertoireMove(from: 'e8', to: 'a8', san: 'O-O-O');
+      expect(blackOOO.matches(black960OOO), isTrue);
+      expect(black960OOO.matches(blackOOO), isTrue);
+    });
+
     test('equality ignores san field', () {
       const a = RepertoireMove(from: 'e2', to: 'e4', san: 'e4');
       const b = RepertoireMove(from: 'e2', to: 'e4');

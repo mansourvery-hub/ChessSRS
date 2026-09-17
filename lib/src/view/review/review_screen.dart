@@ -108,12 +108,15 @@ class _AppBarTitle extends StatelessWidget {
     if (state.scope.openingFamily != null) {
       title = state.scope.openingFamily!;
     } else if (state.scope.studyId != null) {
-      title = state.studies
-          .firstWhere(
-            (s) => s.id == state.scope.studyId,
-            orElse: () => const Study(id: '', title: 'Study'),
-          )
-          .title;
+      final study = state.studies.firstWhere(
+        (s) => s.id == state.scope.studyId,
+        orElse: () => const Study(id: '', title: 'Study'),
+      );
+      if (state.scope.chapterId != null && state.currentPrompt?.chapterTitle != null) {
+        title = '${study.title} • ${state.currentPrompt!.chapterTitle}';
+      } else {
+        title = study.title;
+      }
     } else {
       title = 'All Studies';
     }
@@ -290,12 +293,21 @@ class _ActiveReviewView extends ConsumerWidget {
     }
 
     final showAnnotations = ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations));
+    final isAnswerRevealed = isLapse || state.revealedComment != null;
     // Commentary shapes are strictly hidden during active recall (before guess)
     // and only revealed post-guess (on success or lapse) when annotations are enabled.
-    if (showAnnotations && state.revealedComment != null && state.revealedComment!.isNotEmpty) {
-      final pgnComment = PgnComment.fromPgn(state.revealedComment!);
-      for (final pgnShape in pgnComment.shapes) {
-        shapes.add(pgnShape.chessground);
+    if (showAnnotations && isAnswerRevealed) {
+      if (prompt.comment != null && prompt.comment!.isNotEmpty) {
+        final promptPgn = PgnComment.fromPgn(prompt.comment!);
+        for (final pgnShape in promptPgn.shapes) {
+          shapes.add(pgnShape.chessground);
+        }
+      }
+      if (state.revealedComment != null && state.revealedComment!.isNotEmpty) {
+        final revealedPgn = PgnComment.fromPgn(state.revealedComment!);
+        for (final pgnShape in revealedPgn.shapes) {
+          shapes.add(pgnShape.chessground);
+        }
       }
     }
 

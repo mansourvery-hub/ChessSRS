@@ -29,9 +29,27 @@ class RepertoireMove {
   /// Returns the UCI string for this move, e.g. `'e2e4'` or `'e7e8q'`.
   String get uci => '$from$to${promotion ?? ''}';
 
-  /// Returns true when [other] represents the same move (from/to/promotion).
-  bool matches(RepertoireMove other) =>
-      from == other.from && to == other.to && promotion == other.promotion;
+  static const _kingTakesRookCastles = {
+    'e1c1': 'e1a1',
+    'e1g1': 'e1h1',
+    'e8c8': 'e8a8',
+    'e8g8': 'e8h8',
+  };
+
+  static String _normalizeUci(String moveUci) => _kingTakesRookCastles[moveUci] ?? moveUci;
+
+  /// Returns true when [other] represents the same move (from/to/promotion),
+  /// including equivalence between standard and king-takes-rook castling notations
+  /// (e.g. e1g1 matches e1h1 for O-O, e1c1 matches e1a1 for O-O-O).
+  bool matches(RepertoireMove other) {
+    if (promotion != other.promotion) return false;
+    final f1 = from.toLowerCase();
+    final t1 = to.toLowerCase();
+    final f2 = other.from.toLowerCase();
+    final t2 = other.to.toLowerCase();
+    if (f1 == f2 && t1 == t2) return true;
+    return _normalizeUci('$f1$t1') == _normalizeUci('$f2$t2');
+  }
 
   RepertoireMove copyWith({String? from, String? to, String? promotion, String? san}) {
     return RepertoireMove(

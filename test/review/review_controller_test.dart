@@ -412,5 +412,37 @@ void main() {
         NormalMove(from: Square.fromName(nextIncoming!.from), to: Square.fromName(nextIncoming.to)),
       );
     });
+
+    test('user playing O-O on board is accepted when expected move is castling', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      // Simple Italian line where White castles O-O:
+      // 1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. O-O *
+      const pgn = '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. O-O *';
+      await controller.importPgnText(
+        pgnText: pgn,
+        title: 'Castling Test',
+        repertoireSide: Side.white,
+      );
+
+      // Move 1: 1. e4
+      await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+
+      // Move 2: 2. Nf3
+      await controller.onUserMove(const NormalMove(from: Square.g1, to: Square.f3));
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+
+      // Move 3: 3. Bc4
+      await controller.onUserMove(const NormalMove(from: Square.f1, to: Square.c4));
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+
+      // Move 4: User plays O-O by dragging King from e1 to g1 on board!
+      final result = await controller.onUserMove(const NormalMove(from: Square.e1, to: Square.g1));
+      expect(result, isNotNull);
+      expect(result!.isCorrect, isTrue);
+      expect(container.read(reviewControllerProvider).requireValue.feedback, ReviewFeedback.none);
+    });
   });
 }

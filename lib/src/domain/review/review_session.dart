@@ -114,15 +114,8 @@ class ReviewSession {
     final prevState = _reviewStates[decision.id] ?? ReviewState.initial(decisionId: decision.id);
 
     // Validate move against expected repertoire moves (Invariant §2.1)
-    final expectedMatch = prompt.expectedMoves.where((exp) {
-      final matchSquares =
-          exp.from.toLowerCase() == from.toLowerCase() && exp.to.toLowerCase() == to.toLowerCase();
-      if (!matchSquares) return false;
-      if (promotion != null && exp.promotion != null) {
-        return exp.promotion!.toLowerCase() == promotion.toLowerCase();
-      }
-      return true;
-    }).firstOrNull;
+    final movePlayed = RepertoireMove(from: from, to: to, promotion: promotion);
+    final expectedMatch = prompt.expectedMoves.where((exp) => exp.matches(movePlayed)).firstOrNull;
 
     final now = clock.now();
 
@@ -214,15 +207,8 @@ class ReviewSession {
       throw StateError('Cannot retry move: review session has no active prompt');
     }
 
-    final expectedMatch = prompt.expectedMoves.where((exp) {
-      final matchSquares =
-          exp.from.toLowerCase() == from.toLowerCase() && exp.to.toLowerCase() == to.toLowerCase();
-      if (!matchSquares) return false;
-      if (promotion != null && exp.promotion != null) {
-        return exp.promotion!.toLowerCase() == promotion.toLowerCase();
-      }
-      return true;
-    }).firstOrNull;
+    final movePlayed = RepertoireMove(from: from, to: to, promotion: promotion);
+    final expectedMatch = prompt.expectedMoves.where((exp) => exp.matches(movePlayed)).firstOrNull;
 
     final currentState =
         _reviewStates[prompt.decision.id] ?? ReviewState.initial(decisionId: prompt.decision.id);
@@ -394,18 +380,7 @@ class ReviewSession {
 
   RepertoireNode? _findChildForMove(RepertoireNode? node, RepertoireMove move) {
     if (node == null) return null;
-    return node.children.where((c) {
-      final inc = c.incomingMove;
-      if (inc == null) return false;
-      final matchSquares =
-          inc.from.toLowerCase() == move.from.toLowerCase() &&
-          inc.to.toLowerCase() == move.to.toLowerCase();
-      if (!matchSquares) return false;
-      if (move.promotion != null && inc.promotion != null) {
-        return inc.promotion!.toLowerCase() == move.promotion!.toLowerCase();
-      }
-      return true;
-    }).firstOrNull;
+    return node.childForMove(move);
   }
 
   void _indexNodes(RepertoireNode node, [RepertoireNode? parent]) {

@@ -157,8 +157,36 @@ class StudyChaptersScreen extends ConsumerWidget {
                     style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12.0),
                   )
                 : null,
-            trailing: const Icon(Symbols.chevron_right_rounded),
-            onTap: () => openChapterAnalysis(context, ref, study: study, chapter: chapter),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Symbols.explore_rounded),
+                  tooltip: 'Analyze chapter',
+                  onPressed: () =>
+                      openChapterAnalysis(context, ref, study: study, chapter: chapter),
+                ),
+                IconButton(
+                  icon: const Icon(Symbols.fitness_center_rounded),
+                  tooltip: 'Practice chapter',
+                  onPressed: () {
+                    ref
+                        .read(reviewControllerProvider.notifier)
+                        .startPracticeMode(
+                          scope: ReviewScope.chapter(studyId: study.id, chapterId: chapter.id),
+                        );
+                    Navigator.of(context).pop();
+                  },
+                ),
+                const Icon(Symbols.chevron_right_rounded),
+              ],
+            ),
+            onTap: () {
+              ref
+                  .read(reviewControllerProvider.notifier)
+                  .changeScope(ReviewScope.chapter(studyId: study.id, chapterId: chapter.id));
+              Navigator.of(context).pop();
+            },
           );
         },
       ),

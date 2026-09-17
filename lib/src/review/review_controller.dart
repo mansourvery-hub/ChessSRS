@@ -354,7 +354,9 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       ),
     );
 
-    // 2. If opponent has an auto-reply, pause briefly then show it
+    // 2. If opponent has an auto-reply, pause briefly then show it.
+    // If it's the final move of the line (no opponent reply), pause so the user
+    // sees their move actualized on the board before the line transitions.
     final opponentMoves = result.autoPlayedMoves.where((m) => !m.isUserMove).toList();
     if (opponentMoves.isNotEmpty) {
       await Future<void>.delayed(const Duration(milliseconds: 350));
@@ -368,7 +370,14 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       final oppPos = _parseFen(oppMove.fenAfter);
 
       state = AsyncData(state.value!.copyWith(boardPosition: oppPos, lastMove: oppNormalMove));
+      try {
+        ref.read(moveFeedbackServiceProvider).moveFeedback();
+      } catch (_) {}
       await Future<void>.delayed(const Duration(milliseconds: 200));
+      if (!ref.mounted) return;
+    } else {
+      // Final move of line: pause so user sees their move actualized on the board
+      await Future<void>.delayed(const Duration(milliseconds: 400));
       if (!ref.mounted) return;
     }
 
@@ -631,13 +640,20 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   String? _resolveComment(ReviewPrompt? prompt, RepertoireMove? expectedMove) {
     if (prompt == null) return null;
-    if (expectedMove != null && prompt.currentNode != null) {
-      final child = prompt.currentNode!.childForMove(expectedMove);
-      if (child?.comment != null && child!.comment!.trim().isNotEmpty) {
-        return child.comment!.trim();
-      }
+    final child = expectedMove != null && prompt.currentNode != null
+        ? prompt.currentNode!.childForMove(expectedMove)
+        : null;
+    final childComment = child?.comment?.trim();
+    final promptComment = prompt.comment?.trim();
+
+    if (childComment != null &&
+        childComment.isNotEmpty &&
+        promptComment != null &&
+        promptComment.isNotEmpty &&
+        childComment != promptComment) {
+      return '$childComment\n\n$promptComment';
     }
-    return prompt.comment?.trim();
+    return childComment?.isNotEmpty == true ? childComment : promptComment;
   }
 
   Position _parseFen(String fen) {

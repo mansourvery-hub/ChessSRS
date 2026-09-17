@@ -148,6 +148,11 @@ before the core review loop is in the owner's hands.
       2. Post-guess reveal: on correct answer or lapse, PGN shapes from study comments are rendered directly onto the Chessground board.
       3. Clean text: `PgnComment.fromPgn` strips raw `[%cal ...]` and `[%csl ...]` tags from displayed text descriptions.
       4. Distraction-free toggle: "Show board arrows & shapes" switch added in `SettingsScreen` backed by `StudyPrefs.showAnnotations`. *(done: 2026-09-17)*
+- [x] **L3: Castling Normalization, Move Pacing, Board Annotations & Chapter Scoping**
+      1. Castling normalization: `RepertoireMove.matches` and `ReviewSession` equivalence between standard UCI (`e1g1`, `e1c1`, `e8g8`, `e8c8`) and king-takes-rook (`e1h1`, `e1a1`, `e8h8`, `e8a8`). Playing O-O on the board is accepted cleanly.
+      2. Move pacing: added 400ms pause when completing the final move of a line so user sees their piece land and highlight on the board before the line transitions.
+      3. Board annotations & shapes: extracted shapes from both prompt position comments and revealed move comments post-guess, displaying author circles and arrows with proper colors.
+      4. Chapter scoping: support chapter-level review scope (`ReviewScope.chapter`) from `StudyChaptersScreen` and the drawer's Chapters action sheet, letting users isolate and train individual chapters without mixing other lines. *(done: 2026-09-17)*
 
 Per `docs/INTEGRATION_MAP.md`: remaining training-loop semantics (sibling reset on
 error, weighted-random opponent replies), chapter/FEN behaviors, tree caching

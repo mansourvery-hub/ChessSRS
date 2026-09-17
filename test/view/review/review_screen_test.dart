@@ -285,8 +285,8 @@ void main() {
       expect(find.text('Chapter 1: Open Games'), findsOneWidget);
       expect(find.text('Chapter 2: French Defense'), findsOneWidget);
 
-      // Tap on Chapter 1
-      await tester.tap(find.text('Chapter 1: Open Games'));
+      // Tap Analyze icon on Chapter 1
+      await tester.tap(find.byTooltip('Analyze chapter').first);
       await pumpAsync(tester, 200);
       await tester.pumpAndSettle();
 
