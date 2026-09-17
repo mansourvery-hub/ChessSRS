@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/view/more/import_pgn_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,6 +34,12 @@ class SharedPgnService {
   StreamSubscription<dynamic>? _subscription;
 
   Future<void> start() async {
+    // Shared PGN via native platform channels is only supported on Android and iOS.
+    if (defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.iOS) {
+      return;
+    }
+
     // Handle the PGN the app was cold-started with (if any) after the first
     // frame so the navigator is ready.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
