@@ -4,6 +4,7 @@
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/game/game_board_params.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
@@ -253,6 +254,20 @@ class _AllCaughtUpView extends ConsumerWidget {
   }
 }
 
+extension on PgnCommentShape {
+  Shape get chessground {
+    final shapeColor = switch (color) {
+      CommentShapeColor.green => ShapeColor.green,
+      CommentShapeColor.red => ShapeColor.red,
+      CommentShapeColor.blue => ShapeColor.blue,
+      CommentShapeColor.yellow => ShapeColor.yellow,
+    };
+    return from != to
+        ? Arrow(color: shapeColor.color, orig: from, dest: to)
+        : Circle(color: shapeColor.color, orig: from);
+  }
+}
+
 /// Active review board view driven by GameLayout.
 class _ActiveReviewView extends ConsumerWidget {
   const _ActiveReviewView({required this.state});
@@ -272,6 +287,16 @@ class _ActiveReviewView extends ConsumerWidget {
         final dest = Square.fromName(state.expectedMove!.to);
         shapes.add(Arrow(orig: orig, dest: dest, color: Colors.orangeAccent));
       } catch (_) {}
+    }
+
+    final showAnnotations = ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations));
+    // Commentary shapes are strictly hidden during active recall (before guess)
+    // and only revealed post-guess (on success or lapse) when annotations are enabled.
+    if (showAnnotations && state.revealedComment != null && state.revealedComment!.isNotEmpty) {
+      final pgnComment = PgnComment.fromPgn(state.revealedComment!);
+      for (final pgnShape in pgnComment.shapes) {
+        shapes.add(pgnShape.chessground);
+      }
     }
 
     final playerSide = state.boardOrientation == Side.white ? PlayerSide.white : PlayerSide.black;
@@ -338,7 +363,8 @@ class _BottomReviewFeedback extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final showComments = ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments));
     final isLapse = state.feedback == ReviewFeedback.incorrect;
-    final comment = showComments ? state.revealedComment : null;
+    final rawComment = state.revealedComment;
+    final comment = showComments && rawComment != null ? PgnComment.fromPgn(rawComment).text : null;
 
     if (isLapse) {
       return Container(

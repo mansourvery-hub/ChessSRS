@@ -126,6 +126,15 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (_) => ref.read(studyPreferencesProvider.notifier).togglePgnComments(),
               ),
               SwitchListTile(
+                secondary: const Icon(Symbols.draw_rounded),
+                title: const Text('Show board arrows & shapes'),
+                subtitle: const Text(
+                  'Display visual arrows and circle highlights from study notes',
+                ),
+                value: ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations)),
+                onChanged: (_) => ref.read(studyPreferencesProvider.notifier).toggleAnnotations(),
+              ),
+              SwitchListTile(
                 secondary: const Icon(Symbols.smart_toy_rounded),
                 title: const Text('Animate opponent moves'),
                 subtitle: const Text('Play opponent’s previous move when starting a new line'),

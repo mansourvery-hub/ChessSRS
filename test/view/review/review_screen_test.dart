@@ -3,13 +3,16 @@
 
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_service.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
+import 'package:chess_srs/src/widgets/game_layout.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -327,6 +330,109 @@ void main() {
 
         // Now the comment is revealed as explanation
         expect(find.text('Best by test'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'board shapes and arrows from PGN comments are withheld before move and revealed on lapse',
+      (tester) async {
+        final importResult = importPgn(
+          '1. e4 {[%cal Gf3e5][%csl Re5] Attacks the center} e5 *',
+          studyTitle: 'King Pawn with Shapes',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(importResult);
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        // Before guessing: GameLayout has NO shapes (anti-spoiler)
+        var layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isEmpty);
+        expect(find.text('Attacks the center'), findsNothing);
+
+        // Play incorrect move: d2 -> d4 instead of e2 -> e4
+        await playMove(tester, 'd2', 'd4');
+        await pumpAsync(tester, 100);
+
+        // After lapse: GameLayout displays the expected move arrow PLUS the comment shapes (arrow and circle)
+        layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isNotNull);
+        expect(layout.shapes!.isNotEmpty, isTrue);
+        expect(
+          layout.shapes!.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
+          isTrue,
+        );
+        expect(layout.shapes!.any((s) => s is Circle && s.orig == Square.e5), isTrue);
+
+        // Clean comment text without raw [%cal ...] markup
+        expect(find.text('Attacks the center'), findsOneWidget);
+        expect(find.textContaining('[%cal'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'when showAnnotations is disabled, board shapes from comments are withheld even after lapse',
+      (tester) async {
+        final importResult = importPgn(
+          '1. e4 {[%cal Gf3e5][%csl Re5] Attacks the center} e5 *',
+          studyTitle: 'King Pawn with Shapes Disabled',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(importResult);
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        // Disable annotations via studyPreferencesProvider
+        final element = tester.element(find.byType(ReviewScreen));
+        final container = ProviderScope.containerOf(element);
+        await container.read(studyPreferencesProvider.notifier).toggleAnnotations();
+        await pumpAsync(tester);
+
+        // Play incorrect move: d2 -> d4 instead of e2 -> e4
+        await playMove(tester, 'd2', 'd4');
+        await pumpAsync(tester, 100);
+
+        // After lapse: only the expected move arrow is present; commentary shapes (Gf3e5, Re5) are NOT added
+        final layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isNotNull);
+        expect(
+          layout.shapes!.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
+          isFalse,
+        );
+        expect(layout.shapes!.any((s) => s is Circle && s.orig == Square.e5), isFalse);
+
+        // Text is still present (unless comments are disabled separately)
+        expect(find.text('Attacks the center'), findsOneWidget);
       },
     );
 
