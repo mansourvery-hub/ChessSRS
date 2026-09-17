@@ -349,16 +349,68 @@ void main() {
       await controller.onUserMove(const NormalMove(from: Square.g1, to: Square.f3));
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      // Now transitioning to branch 2: Black plays 1... c5, White to play 2. Nf3.
-      // Initially, board is at parent position (after 1. e4, before 1... c5)
+      // Now transitioning to the other branch: White to play against opponent's response.
+      // Initially, board is at parent position (before opponent's move)
       state = container.read(reviewControllerProvider).requireValue;
       expect(state.currentPrompt, isNotNull);
-      expect(state.currentPrompt!.incomingMove?.san, 'c5');
+      final incoming = state.currentPrompt!.incomingMove;
+      expect(incoming, isNotNull);
 
-      // Wait for pre-move animation of 1... c5
+      // Wait for pre-move animation of the opponent's incoming branch move
       await Future<void>.delayed(const Duration(milliseconds: 400));
       final stateAfterPreMove = container.read(reviewControllerProvider).requireValue;
-      expect(stateAfterPreMove.lastMove, const NormalMove(from: Square.c7, to: Square.c5));
+      expect(
+        stateAfterPreMove.lastMove,
+        NormalMove(from: Square.fromName(incoming!.from), to: Square.fromName(incoming.to)),
+      );
+    });
+
+    test('acknowledgeLapse (skip after error) plays opponent pre-move on next prompt', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      // Repertoire for Black: White plays 1. e4 (Prompt 1: 1... e6)
+      // Then next line: White plays 1. d4 (Prompt 2: 1... d5)
+      const pgn = '''
+[Event "French"]
+1. e4 e6 *
+
+[Event "Queen Pawn"]
+1. d4 d5 *
+''';
+      await controller.importPgnText(
+        pgnText: pgn,
+        title: 'Black Repertoire',
+        repertoireSide: Side.black,
+      );
+
+      // Wait for pre-move of Prompt 1
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.currentPrompt, isNotNull);
+
+      // User plays wrong move
+      await controller.onUserMove(const NormalMove(from: Square.a7, to: Square.a6));
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.feedback, ReviewFeedback.incorrect);
+
+      // User taps "Skip" after error (calls acknowledgeLapse)
+      controller.acknowledgeLapse();
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.feedback, ReviewFeedback.none);
+      expect(state.isLapseAcknowledged, isTrue);
+
+      // Next prompt has an incoming move (White's move)
+      final nextIncoming = state.currentPrompt?.incomingMove;
+      expect(nextIncoming, isNotNull);
+
+      // Wait for pre-move animation of White's move onto the board
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      final stateAfter = container.read(reviewControllerProvider).requireValue;
+      expect(
+        stateAfter.lastMove,
+        NormalMove(from: Square.fromName(nextIncoming!.from), to: Square.fromName(nextIncoming.to)),
+      );
     });
   });
 }

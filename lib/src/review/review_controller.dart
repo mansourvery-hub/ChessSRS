@@ -516,10 +516,16 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final session = _service.activeSession;
     final nextPrompt = session?.currentPrompt;
 
+    final shouldAnimate =
+        nextPrompt != null &&
+        nextPrompt.incomingMove != null &&
+        nextPrompt.parentFen != null &&
+        _shouldAnimateOpponentPreMove;
+
     Position? nextPosition;
     Side nextOrientation = currentState.boardOrientation;
     if (nextPrompt != null) {
-      nextPosition = _parseFen(nextPrompt.fen);
+      nextPosition = shouldAnimate ? _parseFen(nextPrompt.parentFen!) : _parseFen(nextPrompt.fen);
       nextOrientation = nextPrompt.sideToMove;
     }
 
@@ -536,6 +542,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         clearRevealedComment: true,
       ),
     );
+
+    if (shouldAnimate) {
+      _playIncomingPreMove(nextPrompt);
+    }
   }
 
   /// Skips the current prompt, moving it to the back of the queue.
