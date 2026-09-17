@@ -64,6 +64,10 @@ class StudyPreferencesNotifier extends Notifier<StudyPrefs> with PreferencesStor
   Future<void> toggleSmallBoard() {
     return save(state.copyWith(smallBoard: !state.smallBoard));
   }
+
+  Future<void> toggleAnimateOpponentPreMove() {
+    return save(state.copyWith(animateOpponentPreMove: !state.animateOpponentPreMove));
+  }
 }
 
 @Freezed(fromJson: true, toJson: true)
@@ -77,6 +81,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     @JsonKey(defaultValue: true) required bool showBestMoveArrow,
     @JsonKey(defaultValue: true) required bool showAnnotations,
     @JsonKey(defaultValue: true) required bool showPgnComments,
+    @JsonKey(defaultValue: true) required bool animateOpponentPreMove,
     @JsonKey(defaultValue: false) required bool inlineNotation,
     @JsonKey(defaultValue: false) required bool smallBoard,
     @JsonKey(defaultValue: StudyListOrder.hot) required StudyListOrder listOrder,
@@ -89,6 +94,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     showBestMoveArrow: true,
     showAnnotations: true,
     showPgnComments: true,
+    animateOpponentPreMove: true,
     inlineNotation: false,
     smallBoard: false,
     listOrder: StudyListOrder.hot,

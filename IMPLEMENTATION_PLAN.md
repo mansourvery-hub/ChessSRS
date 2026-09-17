@@ -130,6 +130,10 @@ before the core review loop is in the owner's hands.
       2. Batched due-count computation (`getDueSummary` and `getChapterOpenings`) preventing recursive JSON tree parsing loops during count queries.
       3. Native study analysis: single-chapter studies route directly to `AnalysisScreen`, multi-chapter studies open `StudyChaptersScreen`.
       4. `AnalysisScreen` displays study name and chapter name from PGN headers. *(done: 2026-09-17)*
+- [x] **B6: Opponent Pre-Move Animation on Line Transitions & Settings Toggle**
+      1. Domain: `parentFen` and `incomingMove` tracked on `ReviewPrompt` via parent node indexing in `ReviewSession`.
+      2. Preferences: `animateOpponentPreMove` toggle in `StudyPrefs` and `SettingsScreen`.
+      3. UX: When transitioning to a new variation, at session start, or on skip, the board loads the parent position and smoothly animates the opponent's incoming move with sound and square highlights before prompting the user's recall. *(done: 2026-09-17)*
 
 ## Phase 4 — Listudy integration (isolated modules)
 

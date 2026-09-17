@@ -73,6 +73,7 @@ class ReviewSession {
   final Map<String, ReviewState> _reviewStates;
   final Map<String, RepertoireDecision> _decisionForNode;
   final Map<String, RepertoireNode> _nodesById = {};
+  final Map<String, RepertoireNode> _parentOfNode = {};
 
   final List<RepertoireDecision> _dueQueue = [];
   ReviewPrompt? _currentPrompt;
@@ -366,6 +367,7 @@ class ReviewSession {
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     final fenKey = node?.fenKey ?? fen;
     final side = _sideFromFen(fen);
+    final parentNode = node != null ? _parentOfNode[node.id] : null;
 
     return ReviewPrompt(
       decision: decision,
@@ -380,6 +382,8 @@ class ReviewSession {
       comment: node?.comment,
       chapterTitle: chapter?.title,
       studyTitle: study?.title,
+      parentFen: parentNode?.fen,
+      incomingMove: node?.incomingMove,
     );
   }
 
@@ -399,10 +403,13 @@ class ReviewSession {
     }).firstOrNull;
   }
 
-  void _indexNodes(RepertoireNode node) {
+  void _indexNodes(RepertoireNode node, [RepertoireNode? parent]) {
     _nodesById[node.id] = node;
+    if (parent != null) {
+      _parentOfNode[node.id] = parent;
+    }
     for (final child in node.children) {
-      _indexNodes(child);
+      _indexNodes(child, node);
     }
   }
 

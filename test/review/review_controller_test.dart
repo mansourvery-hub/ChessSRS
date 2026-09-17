@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/model/common/service/sound_service.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/review/review_service.dart';
@@ -10,8 +11,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../binding.dart';
+import '../model/common/service/fake_sound_service.dart';
+
 void main() {
   setUpAll(() {
+    TestLichessBinding.ensureInitialized();
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
@@ -39,6 +44,7 @@ void main() {
         overrides: [
           srsStudyRepositoryProvider.overrideWith((ref) => repo),
           clockProvider.overrideWithValue(clock),
+          soundServiceProvider.overrideWithValue(FakeSoundService()),
           reviewServiceProvider.overrideWith(
             (ref) =>
                 ReviewService(repository: repo, scheduler: const SimpleScheduler(), clock: clock),
@@ -92,7 +98,14 @@ void main() {
       expect(state.currentPrompt, isNotNull);
       expect(state.boardOrientation, Side.black);
       expect(state.boardPosition, isNotNull);
-      expect(state.boardPosition!.turn, Side.black);
+
+      // Pre-move animation: starts at parent position (White's turn before 1. e4),
+      // then animates White's 1. e4 onto the board so Black sees opponent's move!
+      expect(state.boardPosition!.turn, Side.white);
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      final stateAfterPreMove = container.read(reviewControllerProvider).requireValue;
+      expect(stateAfterPreMove.boardPosition!.turn, Side.black);
+      expect(stateAfterPreMove.lastMove, const NormalMove(from: Square.e2, to: Square.e4));
     });
 
     test('handles correct move and advances queue', () async {
@@ -306,6 +319,46 @@ void main() {
       state = container.read(reviewControllerProvider).requireValue;
       expect(state.isPracticeMode, isFalse);
       expect(state.isComplete, isTrue);
+    });
+
+    test('branch transition plays opponent pre-move when line changes', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      // Repertoire for White with 2 branches:
+      // Line 1: 1. e4 e5 2. Nf3
+      // Line 2: 1. e4 c5 2. Nf3
+      const pgn = '1. e4 e5 (1... c5 2. Nf3) 2. Nf3 *';
+      await controller.importPgnText(
+        pgnText: pgn,
+        title: 'Two Branches',
+        repertoireSide: Side.white,
+      );
+
+      // Prompt 1: 1. e4 (at initial position, incomingMove is null)
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.currentPrompt, isNotNull);
+      expect(state.currentPrompt!.incomingMove, isNull);
+
+      // User plays 1. e4
+      await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+      // Auto-reply plays 1... e5
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+
+      // User plays 2. Nf3 to complete branch 1
+      await controller.onUserMove(const NormalMove(from: Square.g1, to: Square.f3));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      // Now transitioning to branch 2: Black plays 1... c5, White to play 2. Nf3.
+      // Initially, board is at parent position (after 1. e4, before 1... c5)
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.currentPrompt, isNotNull);
+      expect(state.currentPrompt!.incomingMove?.san, 'c5');
+
+      // Wait for pre-move animation of 1... c5
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      final stateAfterPreMove = container.read(reviewControllerProvider).requireValue;
+      expect(stateAfterPreMove.lastMove, const NormalMove(from: Square.c7, to: Square.c5));
     });
   });
 }

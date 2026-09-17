@@ -21,6 +21,8 @@ class ReviewPrompt {
     this.comment,
     this.studyTitle,
     this.chapterTitle,
+    this.parentFen,
+    this.incomingMove,
   });
 
   final RepertoireDecision decision;
@@ -35,6 +37,8 @@ class ReviewPrompt {
   final String? comment;
   final String? studyTitle;
   final String? chapterTitle;
+  final String? parentFen;
+  final RepertoireMove? incomingMove;
 
   @override
   bool operator ==(Object other) =>

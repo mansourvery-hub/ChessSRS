@@ -125,6 +125,14 @@ class SettingsScreen extends ConsumerWidget {
                 value: ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments)),
                 onChanged: (_) => ref.read(studyPreferencesProvider.notifier).togglePgnComments(),
               ),
+              SwitchListTile(
+                secondary: const Icon(Symbols.smart_toy_rounded),
+                title: const Text('Animate opponent moves'),
+                subtitle: const Text('Play opponent’s previous move when starting a new line'),
+                value: ref.watch(studyPreferencesProvider.select((p) => p.animateOpponentPreMove)),
+                onChanged: (_) =>
+                    ref.read(studyPreferencesProvider.notifier).toggleAnimateOpponentPreMove(),
+              ),
               ListTile(
                 leading: const Icon(Icons.memory_outlined),
                 title: const Text('Chess engine'),

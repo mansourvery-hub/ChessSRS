@@ -4,6 +4,8 @@
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/import/pgn_exporter.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
+import 'package:chess_srs/src/model/common/service/move_feedback.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_service.dart';
 import 'package:dartchess/dartchess.dart';
@@ -102,6 +104,14 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   ReviewService get _service => ref.read(reviewServiceProvider);
   StudyRepository get _repository => ref.read(reviewServiceProvider).repository;
 
+  bool get _shouldAnimateOpponentPreMove {
+    try {
+      return ref.read(studyPreferencesProvider).animateOpponentPreMove;
+    } catch (_) {
+      return true;
+    }
+  }
+
   @override
   Future<ReviewScreenState> build() async {
     // Wait for repository provider to be ready if needed
@@ -144,9 +154,19 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     Side orientation = Side.white;
     Move? lastMove;
 
+    final shouldAnimate =
+        prompt != null &&
+        prompt.incomingMove != null &&
+        prompt.parentFen != null &&
+        _shouldAnimateOpponentPreMove;
+
     if (prompt != null) {
-      position = _parseFen(prompt.fen);
+      position = shouldAnimate ? _parseFen(prompt.parentFen!) : _parseFen(prompt.fen);
       orientation = prompt.sideToMove;
+    }
+
+    if (shouldAnimate) {
+      Future.microtask(() => _playIncomingPreMove(prompt));
     }
 
     return ReviewScreenState(
@@ -356,10 +376,19 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final session = _service.activeSession!;
     final nextPrompt = session.currentPrompt;
 
+    final shouldAnimateBranchPreMove =
+        opponentMoves.isEmpty &&
+        nextPrompt != null &&
+        nextPrompt.incomingMove != null &&
+        nextPrompt.parentFen != null &&
+        _shouldAnimateOpponentPreMove;
+
     Position? nextPosition;
     Side nextOrientation = currentState.boardOrientation;
     if (nextPrompt != null) {
-      nextPosition = _parseFen(nextPrompt.fen);
+      nextPosition = shouldAnimateBranchPreMove
+          ? _parseFen(nextPrompt.parentFen!)
+          : _parseFen(nextPrompt.fen);
       nextOrientation = nextPrompt.sideToMove;
     }
 
@@ -398,8 +427,18 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
+        lastMove: shouldAnimateBranchPreMove
+            ? null
+            : (opponentMoves.isNotEmpty ? state.value?.lastMove : null),
+        clearLastMove: shouldAnimateBranchPreMove,
+        revealedComment: null,
+        clearRevealedComment: true,
       ),
     );
+
+    if (shouldAnimateBranchPreMove) {
+      await _playIncomingPreMove(nextPrompt);
+    }
   }
 
   /// Submits a move played by the user.
@@ -506,10 +545,16 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
     final nextPrompt = _service.skipCurrentPrompt();
 
+    final shouldAnimate =
+        nextPrompt != null &&
+        nextPrompt.incomingMove != null &&
+        nextPrompt.parentFen != null &&
+        _shouldAnimateOpponentPreMove;
+
     Position? nextPosition;
     Side nextOrientation = currentState.boardOrientation;
     if (nextPrompt != null) {
-      nextPosition = _parseFen(nextPrompt.fen);
+      nextPosition = shouldAnimate ? _parseFen(nextPrompt.parentFen!) : _parseFen(nextPrompt.fen);
       nextOrientation = nextPrompt.sideToMove;
     }
 
@@ -526,6 +571,35 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         clearRevealedComment: true,
       ),
     );
+
+    if (shouldAnimate) {
+      _playIncomingPreMove(nextPrompt);
+    }
+  }
+
+  Future<void> _playIncomingPreMove(ReviewPrompt prompt) async {
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!ref.mounted) return;
+    final currentState = state.value;
+    if (currentState == null || currentState.currentPrompt?.decision.id != prompt.decision.id) {
+      return;
+    }
+
+    final incoming = prompt.incomingMove;
+    if (incoming == null) return;
+
+    final normalMove = NormalMove(
+      from: Square.fromName(incoming.from),
+      to: Square.fromName(incoming.to),
+      promotion: incoming.promotion != null ? Role.fromChar(incoming.promotion!) : null,
+    );
+    final targetPos = _parseFen(prompt.fen);
+
+    try {
+      ref.read(moveFeedbackServiceProvider).moveFeedback();
+    } catch (_) {}
+
+    state = AsyncData(currentState.copyWith(boardPosition: targetPos, lastMove: normalMove));
   }
 
   /// Imports a repertoire from PGN text and immediately loads it for review.
