@@ -1,7 +1,6 @@
 import 'package:app_settings/app_settings.dart';
 import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/db/database.dart';
-import 'package:chess_srs/src/domain/chess_fsrs_scheduler.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/preloaded_data.dart';
 import 'package:chess_srs/src/model/settings/general_preferences.dart';
@@ -17,6 +16,8 @@ import 'package:chess_srs/src/view/settings/board_settings_screen.dart';
 import 'package:chess_srs/src/view/settings/engine_settings_screen.dart';
 import 'package:chess_srs/src/view/settings/http_log_screen.dart';
 import 'package:chess_srs/src/view/settings/sound_settings_screen.dart';
+import 'package:chess_srs/src/view/settings/srs_settings_screen.dart';
+import 'package:chess_srs/src/view/settings/theme_settings_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
 import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -106,7 +107,7 @@ class SettingsScreen extends ConsumerWidget {
                     ? const CupertinoListTileChevron()
                     : null,
                 onTap: () {
-                  Navigator.of(context).push(SoundSettingsScreen.buildRoute());
+                  Navigator.of(context).push(ThemeSettingsScreen.buildRoute());
                 },
               ),
               ListTile(
@@ -119,213 +120,15 @@ class SettingsScreen extends ConsumerWidget {
                   Navigator.of(context).push(BoardSettingsScreen.buildRoute());
                 },
               ),
-              SwitchListTile(
-                secondary: const Icon(Symbols.comment_rounded),
-                title: const Text('Show move notes & comments'),
-                subtitle: const Text('Display study explanations after guessing moves'),
-                value: ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments)),
-                onChanged: (_) => ref.read(studyPreferencesProvider.notifier).togglePgnComments(),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Symbols.draw_rounded),
-                title: const Text('Show board arrows & shapes'),
-                subtitle: const Text(
-                  'Display visual arrows and circle highlights from study notes',
-                ),
-                value: ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations)),
-                onChanged: (_) => ref.read(studyPreferencesProvider.notifier).toggleAnnotations(),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Symbols.smart_toy_rounded),
-                title: const Text('Animate opponent moves'),
-                subtitle: const Text('Play opponent’s previous move when starting a new line'),
-                value: ref.watch(studyPreferencesProvider.select((p) => p.animateOpponentPreMove)),
-                onChanged: (_) =>
-                    ref.read(studyPreferencesProvider.notifier).toggleAnimateOpponentPreMove(),
-              ),
               SettingsListTile(
                 icon: const Icon(Symbols.schedule_rounded),
-                settingsLabel: const Text('SRS scheduling algorithm'),
+                settingsLabel: const Text('Spaced repetition (SRS)'),
                 settingsValue: ref.watch(
                   studyPreferencesProvider.select((p) => p.schedulerType.label),
                 ),
                 onTap: () {
-                  final currentType = ref.read(studyPreferencesProvider).schedulerType;
-                  showChoicePicker<SchedulerType>(
-                    context,
-                    choices: SchedulerType.values,
-                    selectedItem: currentType,
-                    labelBuilder: (t) => Text(t.label),
-                    onSelectedItemChanged: (SchedulerType? value) {
-                      if (value != null) {
-                        ref.read(studyPreferencesProvider.notifier).setSchedulerType(value);
-                      }
-                    },
-                  );
+                  Navigator.of(context).push(SrsSettingsScreen.buildRoute());
                 },
-              ),
-              if (ref.watch(
-                studyPreferencesProvider.select((p) => p.schedulerType == SchedulerType.fsrs),
-              )) ...[
-                SettingsListTile(
-                  icon: const Icon(Symbols.target),
-                  settingsLabel: const Text('Target recall retention'),
-                  settingsValue:
-                      '${(ref.watch(studyPreferencesProvider.select((p) => p.targetRetention)) * 100).round()}%',
-                  onTap: () {
-                    final current = ref.read(studyPreferencesProvider).targetRetention;
-                    showChoicePicker<double>(
-                      context,
-                      choices: const [0.80, 0.85, 0.88, 0.90, 0.95],
-                      selectedItem: current,
-                      labelBuilder: (v) => Text(
-                        '${(v * 100).round()}% ${v >= 0.95
-                            ? "(Tournament mode)"
-                            : v == 0.88
-                            ? "(Default)"
-                            : ""}',
-                      ),
-                      onSelectedItemChanged: (double? value) {
-                        if (value != null) {
-                          ref.read(studyPreferencesProvider.notifier).setTargetRetention(value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Symbols.timeline_rounded, size: 20),
-                  title: const Text(
-                    'FSRS interval progression preview',
-                    style: TextStyle(fontSize: 12.0),
-                  ),
-                  subtitle: Builder(
-                    builder: (context) {
-                      final targetRetention = ref.watch(
-                        studyPreferencesProvider.select((p) => p.targetRetention),
-                      );
-                      final intervals = fsrsIntervalProgressionPreview(
-                        targetRetention: targetRetention,
-                      );
-                      String fmt(double d) =>
-                          d >= 10 ? '${d.round()}d' : '${d.toStringAsFixed(1)}d';
-                      return Text(
-                        intervals.map(fmt).join(' → '),
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-              if (ref.watch(
-                studyPreferencesProvider.select(
-                  (p) => p.schedulerType == SchedulerType.simple && p.srsDiagnostics,
-                ),
-              )) ...[
-                const ListTile(
-                  dense: true,
-                  leading: Icon(Symbols.timeline_rounded, size: 20),
-                  title: Text('Simple doubling interval preview', style: TextStyle(fontSize: 12.0)),
-                  subtitle: Text(
-                    '1d → 2d → 4d → 8d → 16d',
-                    style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-              ],
-              if (ref.watch(
-                studyPreferencesProvider.select(
-                  (p) => p.schedulerType == SchedulerType.easeScaling,
-                ),
-              )) ...[
-                SettingsListTile(
-                  icon: const Icon(Symbols.tune_rounded),
-                  settingsLabel: const Text('Initial ease factor'),
-                  settingsValue:
-                      '${ref.watch(studyPreferencesProvider.select((p) => p.schedulerEase))}x',
-                  onTap: () {
-                    final current = ref.read(studyPreferencesProvider).schedulerEase;
-                    showChoicePicker<double>(
-                      context,
-                      choices: const [1.5, 2.0, 2.5, 3.0, 3.5],
-                      selectedItem: current,
-                      labelBuilder: (v) => Text('${v}x (interval after first success)'),
-                      onSelectedItemChanged: (double? value) {
-                        if (value != null) {
-                          ref.read(studyPreferencesProvider.notifier).setSchedulerEase(value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                SettingsListTile(
-                  icon: const Icon(Symbols.trending_up_rounded),
-                  settingsLabel: const Text('Growth rate scaling'),
-                  settingsValue:
-                      '${ref.watch(studyPreferencesProvider.select((p) => p.schedulerScaling))}x',
-                  onTap: () {
-                    final current = ref.read(studyPreferencesProvider).schedulerScaling;
-                    showChoicePicker<double>(
-                      context,
-                      choices: const [1.2, 1.3, 1.5, 1.8, 2.0],
-                      selectedItem: current,
-                      labelBuilder: (v) => Text('${v}x (multiplier on subsequent reviews)'),
-                      onSelectedItemChanged: (double? value) {
-                        if (value != null) {
-                          ref.read(studyPreferencesProvider.notifier).setSchedulerScaling(value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Symbols.timeline_rounded, size: 20),
-                  title: const Text(
-                    'Interval progression preview',
-                    style: TextStyle(fontSize: 12.0),
-                  ),
-                  subtitle: Builder(
-                    builder: (context) {
-                      final prefs = ref.watch(studyPreferencesProvider);
-                      final ease = prefs.schedulerEase;
-                      final scaling = prefs.schedulerScaling;
-                      const r1 = 1.0;
-                      final r2 = r1 * ease;
-                      final r3 = r2 * scaling;
-                      final r4 = r3 * scaling;
-                      final r5 = r4 * scaling;
-                      String fmt(double d) =>
-                          d == d.roundToDouble() ? '${d.toInt()}d' : '${d.toStringAsFixed(1)}d';
-                      return Text(
-                        '${fmt(r1)} → ${fmt(r2)} → ${fmt(r3)} → ${fmt(r4)} → ${fmt(r5)}',
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-              SwitchListTile(
-                secondary: const Icon(Symbols.bug_report_rounded),
-                title: const Text('Developer / SRS diagnostics'),
-                subtitle: const Text(
-                  'Show mathematical memory metrics (DSR) and graph effects during review',
-                ),
-                value: ref.watch(studyPreferencesProvider.select((p) => p.srsDiagnostics)),
-                onChanged: (_) =>
-                    ref.read(studyPreferencesProvider.notifier).toggleSrsDiagnostics(),
               ),
               ListTile(
                 leading: const Icon(Icons.memory_outlined),

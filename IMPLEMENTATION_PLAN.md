@@ -216,6 +216,10 @@ remains a later option — never a redesign.
       2. Settings toggle: added `srsDiagnostics` boolean in `StudyPrefs` under `Review & SRS` ("Developer / SRS diagnostics").
       3. Live FSRS progression preview: `SettingsScreen` renders dynamic interval preview (`fsrsIntervalProgressionPreview`) adapting in real time to the selected target retention (e.g. 90% vs 95% tournament prep).
       4. Review HUD overlay: when enabled, displays a discreet diagnostics card below the board showing position Retrievability ($R$), Stability in days ($S$), Difficulty ($D$), Reps/Lapses, transposition badges, and step outcomes (e.g. interval growth, auto-traversal exposure, or lapse contagion). *(done: 2026-09-18)*
+- [x] **R6: Unified Spaced Repetition (SRS) Settings Screen**
+      1. Consolidation: unified all SRS and review-related settings (algorithm selector, FSRS target retention, parametric scaling controls, interval progression previews, board feedback/animation switches, and SRS diagnostics) into a dedicated `SrsSettingsScreen`.
+      2. Clean Information Architecture: replaced 10 loose controls in the root `SettingsScreen` list with a single `Spaced repetition (SRS)` row reflecting current algorithm state, mirroring Sound, Background, and Board settings.
+      3. In-Session Quick Access: added a direct SRS settings shortcut action to `ReviewScreen`'s AppBar for tuning parameters during active practice. *(done: 2026-09-18)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

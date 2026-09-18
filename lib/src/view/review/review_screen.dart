@@ -11,6 +11,7 @@ import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_scope_drawer.dart';
+import 'package:chess_srs/src/view/settings/srs_settings_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/game_layout.dart';
 import 'package:chessground/chessground.dart';
@@ -45,6 +46,11 @@ class ReviewScreen extends ConsumerWidget {
         ),
         actions: [
           const _AnnotationsQuickToggle(),
+          IconButton(
+            icon: const Icon(Symbols.tune_rounded),
+            tooltip: 'SRS settings',
+            onPressed: () => Navigator.of(context).push(SrsSettingsScreen.buildRoute()),
+          ),
           reviewStateAsync.maybeWhen(
             data: (state) {
               if (state.isPracticeMode) {

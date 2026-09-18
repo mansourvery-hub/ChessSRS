@@ -951,5 +951,19 @@ void main() {
       expect(find.textContaining('R: 100% (New)'), findsOneWidget);
       expect(find.textContaining('D: 5.0/10'), findsOneWidget);
     });
+
+    testWidgets('tapping SRS settings action in AppBar opens SrsSettingsScreen', (tester) async {
+      final app = await makeTestProviderScopeApp(tester, home: const ReviewScreen());
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      expect(find.byTooltip('SRS settings'), findsOneWidget);
+      await tester.tap(find.byTooltip('SRS settings'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Spaced Repetition (SRS)'), findsOneWidget);
+      expect(find.text('Algorithm & Intervals'), findsOneWidget);
+    });
   });
 }
