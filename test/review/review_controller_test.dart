@@ -48,8 +48,11 @@ void main() {
           clockProvider.overrideWithValue(clock),
           soundServiceProvider.overrideWithValue(FakeSoundService()),
           reviewServiceProvider.overrideWith(
-            (ref) =>
-                ReviewService(repository: repo, scheduler: const SimpleScheduler(), clock: clock),
+            (ref) => ReviewService(
+              repository: repo,
+              scheduler: ref.watch(schedulerProvider),
+              clock: clock,
+            ),
           ),
         ],
       );
@@ -583,6 +586,64 @@ void main() {
       // Repository still contains exactly 1 study
       state = container.read(reviewControllerProvider).requireValue;
       expect(state.studies.length, 1);
+    });
+
+    test(
+      'renaming study inside the app does not cause PGN re-import to be treated as new',
+      () async {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        const pgn = '1. e4 c5 2. Nf3 d6 *';
+        final res1 = await controller.importPgnText(
+          pgnText: pgn,
+          title: 'Sicilian Defense',
+          repertoireSide: Side.white,
+        );
+        expect(res1.isDuplicate, isFalse);
+
+        // Rename the study inside the app
+        await controller.renameStudy(res1.study.id, 'My Custom Sicilian');
+        var state = container.read(reviewControllerProvider).requireValue;
+        expect(state.studies.first.title, 'My Custom Sicilian');
+
+        // Re-import the original PGN file
+        final res2 = await controller.importPgnText(
+          pgnText: pgn,
+          title: 'Sicilian Defense',
+          repertoireSide: Side.white,
+        );
+
+        // It must be recognized as duplicate, NOT treated as a new study!
+        expect(res2.isDuplicate, isTrue);
+        expect(res2.study.id, equals(res1.study.id));
+
+        // Still exactly 1 study in repository
+        state = container.read(reviewControllerProvider).requireValue;
+        expect(state.studies.length, 1);
+        expect(state.studies.first.title, 'My Custom Sicilian');
+      },
+    );
+
+    test('changing scheduler preference automatically reloads session with new scheduler', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      const pgn = '1. e4 e5 2. Nf3 *';
+      await controller.importPgnText(pgnText: pgn, repertoireSide: Side.white);
+
+      var session = container.read(reviewControllerProvider).requireValue.session!;
+      expect(session.scheduler, isA<SimpleScheduler>());
+
+      // Switch to EaseScalingScheduler in preferences
+      final prefsNotifier = container.read(studyPreferencesProvider.notifier);
+      await prefsNotifier.setSchedulerType(SchedulerType.easeScaling);
+      await prefsNotifier.setSchedulerEase(3.0);
+      await controller.reload();
+
+      session = container.read(reviewControllerProvider).requireValue.session!;
+      expect(session.scheduler, isA<EaseScalingScheduler>());
+      expect((session.scheduler as EaseScalingScheduler).ease, 3.0);
     });
   });
 }

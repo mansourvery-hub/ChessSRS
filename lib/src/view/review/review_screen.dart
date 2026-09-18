@@ -414,6 +414,22 @@ class _BottomReviewFeedback extends ConsumerWidget {
     final comment = showComments && rawComment != null ? PgnComment.fromPgn(rawComment).text : null;
 
     if (state.isAwaitingAdvance) {
+      String? scheduledIntervalText;
+      if (state.currentPrompt != null && state.session != null) {
+        final decState = state.session!.reviewStates[state.currentPrompt!.decision.id];
+        if (decState != null && decState.nextDueAt != null) {
+          final lastTime = decState.lastReviewedAt ?? DateTime.now();
+          final diff = decState.nextDueAt!.difference(lastTime);
+          final hours = diff.inHours;
+          final days = hours / 24.0;
+          final formattedDays = days == days.roundToDouble()
+              ? '${days.toInt()}d'
+              : '${days.toStringAsFixed(1)}d';
+          final streak = decState.repetitionCount;
+          scheduledIntervalText = 'Next review in $formattedDays (rep $streak)';
+        }
+      }
+
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -434,13 +450,28 @@ class _BottomReviewFeedback extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8.0),
                 Expanded(
-                  child: Text(
-                    'Move Explanation',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.0,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Move Explanation',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.0,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      if (scheduledIntervalText != null)
+                        Text(
+                          scheduledIntervalText,
+                          style: TextStyle(
+                            fontSize: 11.0,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 FilledButton.icon(

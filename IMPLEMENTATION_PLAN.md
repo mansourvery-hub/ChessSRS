@@ -191,6 +191,11 @@ remains a later option — never a redesign.
 
 ## Phase 6 — Refinement (current)
 
+- [x] **R1: Beta Fixes — Desktop Choice Picker, Scheduler Reactivity & Move-Tree Canonical Hashing**
+      1. Desktop choice picker: fixed `showChoicePicker` crashing on Linux desktop (`Unexpected platform TargetPlatform.linux`) by using Material dialog fallback for non-iOS platforms.
+      2. Scheduler reactivity & observability: connected `ReviewController` to `schedulerProvider` changes to reload active sessions in real time when settings change, added interval progression preview in `SettingsScreen`, and displayed scheduled next review interval post-guess in `ReviewScreen`.
+      3. Move-tree canonical hashing: `computePgnHash` now hashes starting positions and move variation trees rather than volatile PGN metadata headers (`Event`, `Date`, etc.), preventing study renaming from breaking duplicate detection. Added auto-backfill of `pgnHash` for pre-v9 studies in SQLite. *(done: 2026-09-18)*
+
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only
 then differentiation features justified by specs or beta feedback.

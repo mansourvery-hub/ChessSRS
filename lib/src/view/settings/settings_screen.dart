@@ -208,6 +208,36 @@ class SettingsScreen extends ConsumerWidget {
                     );
                   },
                 ),
+                ListTile(
+                  dense: true,
+                  leading: const Icon(Symbols.timeline_rounded, size: 20),
+                  title: const Text(
+                    'Interval progression preview',
+                    style: TextStyle(fontSize: 12.0),
+                  ),
+                  subtitle: Builder(
+                    builder: (context) {
+                      final prefs = ref.watch(studyPreferencesProvider);
+                      final ease = prefs.schedulerEase;
+                      final scaling = prefs.schedulerScaling;
+                      const r1 = 1.0;
+                      final r2 = r1 * ease;
+                      final r3 = r2 * scaling;
+                      final r4 = r3 * scaling;
+                      final r5 = r4 * scaling;
+                      String fmt(double d) =>
+                          d == d.roundToDouble() ? '${d.toInt()}d' : '${d.toStringAsFixed(1)}d';
+                      return Text(
+                        '${fmt(r1)} → ${fmt(r2)} → ${fmt(r3)} → ${fmt(r4)} → ${fmt(r5)}',
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
               ListTile(
                 leading: const Icon(Icons.memory_outlined),

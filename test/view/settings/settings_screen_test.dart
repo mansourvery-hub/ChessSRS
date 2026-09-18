@@ -50,5 +50,20 @@ void main() {
     expect(find.text('2.5x'), findsOneWidget);
     expect(find.text('Growth rate scaling'), findsOneWidget);
     expect(find.text('1.5x'), findsOneWidget);
+
+    // Progression preview is displayed
+    expect(find.text('Interval progression preview'), findsOneWidget);
+    expect(find.text('1d → 2.5d → 3.8d → 5.6d → 8.4d'), findsOneWidget);
+
+    // Tap to change initial ease factor
+    await tester.tap(find.text('Initial ease factor'));
+    await tester.pumpAndSettle();
+
+    // Select 3.0x
+    await tester.tap(find.text('3.0x (interval after first success)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('3.0x'), findsOneWidget);
+    expect(find.text('1d → 3d → 4.5d → 6.8d → 10.1d'), findsOneWidget);
   });
 }

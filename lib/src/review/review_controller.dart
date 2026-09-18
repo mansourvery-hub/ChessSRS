@@ -180,6 +180,12 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   @override
   Future<ReviewScreenState> build() async {
+    ref.listen(schedulerProvider, (previous, next) {
+      if (previous != null && previous != next) {
+        reload();
+      }
+    });
+
     // Wait for repository provider to be ready if needed
     final repoAsync = ref.watch(srsStudyRepositoryProvider);
     final repo = repoAsync.asData?.value;
@@ -265,10 +271,14 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   /// Reloads the session and due counts for the current scope.
   Future<void> reload() async {
     _pendingAdvancement = null;
+    if (!ref.mounted) return;
     final currentState = state.value;
     final currentScope = currentState?.scope ?? const ReviewScope.all();
     final currentMode = currentState?.mode ?? ReviewMode.srs;
-    state = await AsyncValue.guard(() => _loadState(currentScope, currentMode));
+    final newState = await AsyncValue.guard(() => _loadState(currentScope, currentMode));
+    if (ref.mounted) {
+      state = newState;
+    }
   }
 
   /// Starts non-destructive pre-match rehearsal / cram mode (PRODUCT.md Journey 4).
@@ -797,7 +807,22 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     Side? repertoireSide,
   }) async {
     final hash = computePgnHash(pgnText);
-    final existingStudy = await _repository.getStudyByPgnHash(hash);
+    var existingStudy = await _repository.getStudyByPgnHash(hash);
+
+    if (existingStudy == null && title != null && title.trim().isNotEmpty) {
+      final allStudies = await _repository.getAllStudies();
+      final matchByTitle = allStudies
+          .where((s) => s.title.trim().toLowerCase() == title.trim().toLowerCase())
+          .firstOrNull;
+      if (matchByTitle != null) {
+        final chapters = await _repository.getChaptersByStudy(matchByTitle.id);
+        final existingHash = matchByTitle.pgnHash ?? computeRepertoireTreeHash(chapters);
+        if (existingHash == hash) {
+          existingStudy = matchByTitle;
+        }
+      }
+    }
+
     if (existingStudy != null) {
       await changeScope(ReviewScope.study(existingStudy.id));
       return ImportResult(

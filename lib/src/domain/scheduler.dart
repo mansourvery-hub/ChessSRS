@@ -79,7 +79,9 @@ class SimpleScheduler implements Scheduler {
           nextInterval = _clamp(baseInterval);
         } else {
           // stability encodes current interval in milliseconds
-          final current = Duration(milliseconds: previous.stability.round());
+          final current = previous.stability > 0
+              ? Duration(milliseconds: previous.stability.round())
+              : baseInterval;
           nextInterval = _clamp(
             Duration(milliseconds: (current.inMilliseconds * intervalMultiplier).round()),
           );
@@ -164,7 +166,10 @@ class EaseScalingScheduler implements Scheduler {
             Duration(milliseconds: (firstInterval.inMilliseconds * ease).round()),
           );
         } else {
-          final current = Duration(milliseconds: previous.stability.round());
+          final baseMs = (firstInterval.inMilliseconds * ease).round();
+          final current = previous.stability > 0
+              ? Duration(milliseconds: previous.stability.round())
+              : Duration(milliseconds: baseMs);
           nextInterval = _clamp(Duration(milliseconds: (current.inMilliseconds * scaling).round()));
         }
         return previous.copyWith(

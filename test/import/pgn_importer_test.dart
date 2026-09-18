@@ -404,5 +404,29 @@ void main() {
       expect(result.study.pgnHash, isNotNull);
       expect(result.study.pgnHash, equals(computePgnHash(pgn)));
     });
+
+    test(
+      'computes identical hash when PGN headers/titles are renamed but moves are identical',
+      () {
+        const pgn1 = '''
+[Event "French Defense"]
+[Date "2024.01.01"]
+1. e4 e6 2. d4 d5 *
+''';
+        const pgn2 = '''
+[Event "My Custom French Repertoire"]
+[Date "2026.09.18"]
+1. e4 e6 2. d4 d5 *
+''';
+        expect(computePgnHash(pgn1), equals(computePgnHash(pgn2)));
+      },
+    );
+
+    test('computeRepertoireTreeHash matches computePgnHash for same moves', () {
+      const pgn = '1. e4 e5 2. Nf3 Nc6 3. Bc4 *';
+      final importResult = importPgn(pgn);
+      final treeHash = computeRepertoireTreeHash(importResult.chapters);
+      expect(treeHash, equals(computePgnHash(pgn)));
+    });
   });
 }

@@ -97,8 +97,30 @@ class SqliteStudyRepository implements StudyRepository {
       whereArgs: [pgnHash],
       limit: 1,
     );
-    if (rows.isEmpty) return null;
-    return _studyFromRow(rows.first);
+    if (rows.isNotEmpty) {
+      return _studyFromRow(rows.first);
+    }
+
+    // Auto-backfill: if any existing studies have null pgnHash, inspect their chapters
+    final unhashedRows = await _db.query(kTableSrsStudy, where: 'pgnHash IS NULL');
+    for (final row in unhashedRows) {
+      final study = _studyFromRow(row);
+      final chapters = await getChaptersByStudy(study.id);
+      if (chapters.isNotEmpty) {
+        final computedHash = computeRepertoireTreeHash(chapters);
+        await _db.update(
+          kTableSrsStudy,
+          {'pgnHash': computedHash},
+          where: 'id = ?',
+          whereArgs: [study.id],
+        );
+        if (computedHash == pgnHash) {
+          return study.copyWith(pgnHash: computedHash);
+        }
+      }
+    }
+
+    return null;
   }
 
   @override

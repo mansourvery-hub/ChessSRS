@@ -11,10 +11,71 @@ import 'package:chess_srs/src/domain/study.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dartchess/dartchess.dart';
 
-/// Computes a canonical SHA-256 fingerprint for PGN content (Listudy tree_hash pattern).
+/// Computes a canonical SHA-256 fingerprint for PGN content based on its
+/// starting positions and move variation trees (Listudy tree_hash pattern).
+///
+/// Strips volatile metadata tags (Event, Site, Date, Round, etc.) so that
+/// renaming a study or modifying PGN headers preserves the repertoire identity.
 String computePgnHash(String pgnText) {
+  try {
+    final games = PgnGame.parseMultiGamePgn(pgnText);
+    if (games.isNotEmpty) {
+      final buffer = StringBuffer();
+      for (final game in games) {
+        final fen = game.headers['FEN'];
+        if (fen != null && fen.trim().isNotEmpty) {
+          buffer.write('FEN:${fenKey(fen)};');
+        }
+        _appendPgnNodeMoves(game.moves, buffer);
+        buffer.write('|');
+      }
+      final canonicalStr = buffer.toString();
+      if (canonicalStr.isNotEmpty) {
+        return sha256.convert(utf8.encode(canonicalStr)).toString();
+      }
+    }
+  } catch (_) {}
+
+  // Fallback if parsing fails
   final normalized = pgnText.trim();
   return sha256.convert(utf8.encode(normalized)).toString();
+}
+
+void _appendPgnNodeMoves(PgnNode<PgnNodeData> node, StringBuffer buffer) {
+  for (final child in node.children) {
+    buffer.write(child.data.san);
+    buffer.write(',');
+    _appendPgnNodeMoves(child, buffer);
+  }
+}
+
+/// Computes a canonical SHA-256 fingerprint from domain [Chapter] trees.
+///
+/// Guaranteed to produce the exact same fingerprint as [computePgnHash] for
+/// identical chess material, allowing automatic backfilling of existing studies.
+String computeRepertoireTreeHash(List<Chapter> chapters) {
+  final buffer = StringBuffer();
+  for (final ch in chapters) {
+    if (ch.startingFen != null && ch.startingFen!.trim().isNotEmpty) {
+      buffer.write('FEN:${fenKey(ch.startingFen!)};');
+    }
+    if (ch.root != null) {
+      _appendRepertoireNodeMoves(ch.root!, buffer);
+    }
+    buffer.write('|');
+  }
+  final canonicalStr = buffer.toString();
+  return sha256.convert(utf8.encode(canonicalStr)).toString();
+}
+
+void _appendRepertoireNodeMoves(RepertoireNode node, StringBuffer buffer) {
+  for (final child in node.children) {
+    if (child.incomingMove != null) {
+      buffer.write(child.incomingMove!.san);
+      buffer.write(',');
+    }
+    _appendRepertoireNodeMoves(child, buffer);
+  }
 }
 
 /// Structured error produced during PGN import.
