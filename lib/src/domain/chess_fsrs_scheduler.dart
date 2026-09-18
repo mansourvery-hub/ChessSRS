@@ -230,3 +230,24 @@ class ChessFsrsScheduler implements Scheduler {
   @override
   int get hashCode => Object.hash(targetRetention, maxIntervalDays, minIntervalDays);
 }
+
+/// Generates a preview of the interval ladder (in days) for consecutive successful recalls
+/// under [targetRetention].
+List<double> fsrsIntervalProgressionPreview({
+  required double targetRetention,
+  int steps = 5,
+  ChessFsrsParams params = const ChessFsrsParams.chessDefaults(),
+}) {
+  final intervals = <double>[];
+  var d = fsrsInitialDifficulty(FsrsRating.good, params);
+  var s = params.w2; // Initial stability for Rating.good in days
+  final effectiveR = targetRetention.clamp(0.70, 0.99);
+
+  for (var i = 0; i < steps; i++) {
+    final intervalDays = fsrsIntervalForTarget(s, effectiveR);
+    intervals.add(intervalDays);
+    d = fsrsNextDifficulty(d, FsrsRating.good, params);
+    s = fsrsNextStabilitySuccess(d, s, effectiveR, params);
+  }
+  return List.unmodifiable(intervals);
+}

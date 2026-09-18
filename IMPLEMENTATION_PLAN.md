@@ -211,6 +211,11 @@ remains a later option — never a redesign.
       3. Auto-traversal exposure credit (§B.2): bounded micro-stability bump ($\varepsilon = 0.08$) for non-due moves passed over during review traversal, throttled to 1/calendar day and refused for already-due items.
       4. Confusable sibling coupling (§B.4): dynamically couples sibling difficulty ($\Delta D = 0.35$) when an incorrect move matches an alternative repertoire continuation.
       5. Incremental side-effect persistence: `ReviewSession` reports `sideEffectStates` in `ReviewStepResult`, incrementally persisted to `position_knowledge_state` in SQLite by `ReviewService`. *(done: 2026-09-18)*
+- [x] **R5: Opt-In SRS Debug Diagnostics Mode (Vanilla Clean, Debug for Beta-Testing)**
+      1. Zero-friction vanilla mode: default application remains 100% clean, minimal, and calm with zero metrics clutter or cognitive load.
+      2. Settings toggle: added `srsDiagnostics` boolean in `StudyPrefs` under `Review & SRS` ("Developer / SRS diagnostics").
+      3. Live FSRS progression preview: `SettingsScreen` renders dynamic interval preview (`fsrsIntervalProgressionPreview`) adapting in real time to the selected target retention (e.g. 90% vs 95% tournament prep).
+      4. Review HUD overlay: when enabled, displays a discreet diagnostics card below the board showing position Retrievability ($R$), Stability in days ($S$), Difficulty ($D$), Reps/Lapses, transposition badges, and step outcomes (e.g. interval growth, auto-traversal exposure, or lapse contagion). *(done: 2026-09-18)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

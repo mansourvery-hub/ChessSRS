@@ -438,12 +438,14 @@ class _BottomReviewFeedback extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final showComments = ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments));
+    final showDiagnostics = ref.watch(studyPreferencesProvider.select((p) => p.srsDiagnostics));
     final isLapse = state.feedback == ReviewFeedback.incorrect;
     final rawComment = state.revealedComment;
     final comment = showComments && rawComment != null ? PgnComment.fromPgn(rawComment).text : null;
 
+    final Widget feedbackCard;
     if (state.isAwaitingAdvance) {
-      return Container(
+      feedbackCard = Container(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         decoration: BoxDecoration(
@@ -507,10 +509,8 @@ class _BottomReviewFeedback extends ConsumerWidget {
           ],
         ),
       );
-    }
-
-    if (isLapse) {
-      return Container(
+    } else if (isLapse) {
+      feedbackCard = Container(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         decoration: BoxDecoration(
@@ -559,36 +559,185 @@ class _BottomReviewFeedback extends ConsumerWidget {
           ],
         ),
       );
+    } else {
+      // Default quiet idle prompt (no "Good move!" message clutter)
+      feedbackCard = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Your move (${state.boardOrientation == Side.white ? 'White' : 'Black'})',
+                  style: Styles.subtitle,
+                ),
+                TextButton.icon(
+                  icon: const Icon(Symbols.skip_next_rounded),
+                  label: const Text('Skip'),
+                  onPressed: onSkip,
+                ),
+              ],
+            ),
+            if (comment != null && comment.trim().isNotEmpty) ...[
+              const SizedBox(height: 4.0),
+              Text(
+                comment.trim(),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: Styles.formDescription,
+              ),
+            ],
+          ],
+        ),
+      );
     }
 
-    // Default quiet idle prompt (no "Good move!" message clutter)
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    if (!showDiagnostics) {
+      return feedbackCard;
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SrsDiagnosticsOverlay(state: state),
+        feedbackCard,
+      ],
+    );
+  }
+}
+
+class _SrsDiagnosticsOverlay extends StatelessWidget {
+  const _SrsDiagnosticsOverlay({required this.state});
+
+  final ReviewScreenState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final prompt = state.currentPrompt;
+    if (prompt == null) return const SizedBox.shrink();
+
+    final session = state.session;
+    final dec = prompt.decision;
+    final reviewState = session?.reviewStates[dec.canonicalId] ?? session?.reviewStates[dec.id];
+    final now = session?.clock.now() ?? DateTime.now();
+
+    final isNew = reviewState == null || reviewState.isNew || reviewState.stability <= 0;
+    final reps = reviewState?.repetitionCount ?? 0;
+    final lapses = reviewState?.lapseCount ?? 0;
+    final diff = reviewState != null && reviewState.difficulty > 0
+        ? reviewState.difficulty.toStringAsFixed(1)
+        : '5.0';
+
+    final stabilityDays = (reviewState?.stability ?? 0) / 86400000;
+    final stabStr = stabilityDays > 0
+        ? (stabilityDays >= 10
+              ? '${stabilityDays.round()}d'
+              : '${stabilityDays.toStringAsFixed(1)}d')
+        : '0d';
+
+    final double retrievability;
+    if (isNew) {
+      retrievability = 1.0;
+    } else {
+      final elapsedDays = reviewState.lastReviewedAt != null
+          ? now.difference(reviewState.lastReviewedAt!).inMilliseconds / 86400000
+          : 0.0;
+      retrievability = fsrsRetrievability(elapsedDays, stabilityDays);
+    }
+    final rPercent = (retrievability * 100).round();
+
+    final isTransposed = dec.canonicalStateId != null && dec.canonicalStateId != dec.id;
+    final lastResult = state.lastStepResult;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4),
+        ),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Row(
+            children: [
+              const Icon(Symbols.bug_report_rounded, size: 14.0, color: Colors.orangeAccent),
+              const SizedBox(width: 4.0),
+              Text(
+                'SRS DIAGNOSTICS',
+                style: TextStyle(
+                  fontSize: 10.0,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const Spacer(),
+              if (isTransposed)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: const Text(
+                    'Transposition',
+                    style: TextStyle(fontSize: 9.0, color: Colors.blue),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Your move (${state.boardOrientation == Side.white ? 'White' : 'Black'})',
-                style: Styles.subtitle,
+                'R: $rPercent% (${isNew ? "New" : "Recall"})',
+                style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.w600,
+                  color: rPercent >= 85
+                      ? Colors.green
+                      : (rPercent >= 70 ? Colors.orange : Colors.red),
+                ),
               ),
-              TextButton.icon(
-                icon: const Icon(Symbols.skip_next_rounded),
-                label: const Text('Skip'),
-                onPressed: onSkip,
+              Text(
+                'S: $stabStr',
+                style: const TextStyle(fontSize: 11.0, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                'D: $diff/10',
+                style: const TextStyle(fontSize: 11.0, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                'Reps: $reps | Lapses: $lapses',
+                style: TextStyle(
+                  fontSize: 11.0,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
-          if (comment != null && comment.trim().isNotEmpty) ...[
-            const SizedBox(height: 4.0),
+          if (lastResult != null) ...[
+            const SizedBox(height: 3.0),
             Text(
-              comment.trim(),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
-              style: Styles.formDescription,
+              lastResult.isCorrect
+                  ? 'Last: Pass → Next due in ${(lastResult.updatedState.stability / 86400000).toStringAsFixed(1)}d'
+                        '${lastResult.sideEffectStates.isNotEmpty ? " (+${lastResult.sideEffectStates.length} auto-exp)" : ""}'
+                  : 'Last: Lapse! Contagion applied to ${lastResult.sideEffectStates.length} descendant(s)',
+              style: TextStyle(
+                fontSize: 10.0,
+                color: lastResult.isCorrect ? Colors.green : Colors.redAccent,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ],

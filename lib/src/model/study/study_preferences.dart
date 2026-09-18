@@ -107,6 +107,10 @@ class StudyPreferencesNotifier extends Notifier<StudyPrefs> with PreferencesStor
   Future<void> setTargetRetention(double retention) {
     return save(state.copyWith(targetRetention: retention));
   }
+
+  Future<void> toggleSrsDiagnostics() {
+    return save(state.copyWith(srsDiagnostics: !state.srsDiagnostics));
+  }
 }
 
 @Freezed(fromJson: true, toJson: true)
@@ -123,6 +127,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     @JsonKey(defaultValue: true) required bool animateOpponentPreMove,
     @JsonKey(defaultValue: false) required bool inlineNotation,
     @JsonKey(defaultValue: false) required bool smallBoard,
+    @JsonKey(defaultValue: false) required bool srsDiagnostics,
     @JsonKey(defaultValue: StudyListOrder.hot) required StudyListOrder listOrder,
     @JsonKey(defaultValue: SchedulerType.simple) required SchedulerType schedulerType,
     @JsonKey(defaultValue: 0.88) required double targetRetention,
@@ -140,6 +145,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     animateOpponentPreMove: true,
     inlineNotation: false,
     smallBoard: false,
+    srsDiagnostics: false,
     listOrder: StudyListOrder.hot,
     schedulerType: SchedulerType.simple,
     targetRetention: 0.88,

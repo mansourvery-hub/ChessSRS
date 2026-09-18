@@ -1,6 +1,7 @@
 import 'package:app_settings/app_settings.dart';
 import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/domain/chess_fsrs_scheduler.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/preloaded_data.dart';
 import 'package:chess_srs/src/model/settings/general_preferences.dart';
@@ -192,6 +193,53 @@ class SettingsScreen extends ConsumerWidget {
                     );
                   },
                 ),
+                ListTile(
+                  dense: true,
+                  leading: const Icon(Symbols.timeline_rounded, size: 20),
+                  title: const Text(
+                    'FSRS interval progression preview',
+                    style: TextStyle(fontSize: 12.0),
+                  ),
+                  subtitle: Builder(
+                    builder: (context) {
+                      final targetRetention = ref.watch(
+                        studyPreferencesProvider.select((p) => p.targetRetention),
+                      );
+                      final intervals = fsrsIntervalProgressionPreview(
+                        targetRetention: targetRetention,
+                      );
+                      String fmt(double d) =>
+                          d >= 10 ? '${d.round()}d' : '${d.toStringAsFixed(1)}d';
+                      return Text(
+                        intervals.map(fmt).join(' → '),
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              if (ref.watch(
+                studyPreferencesProvider.select(
+                  (p) => p.schedulerType == SchedulerType.simple && p.srsDiagnostics,
+                ),
+              )) ...[
+                const ListTile(
+                  dense: true,
+                  leading: Icon(Symbols.timeline_rounded, size: 20),
+                  title: Text('Simple doubling interval preview', style: TextStyle(fontSize: 12.0)),
+                  subtitle: Text(
+                    '1d → 2d → 4d → 8d → 16d',
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
               ],
               if (ref.watch(
                 studyPreferencesProvider.select(
@@ -269,6 +317,16 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
               ],
+              SwitchListTile(
+                secondary: const Icon(Symbols.bug_report_rounded),
+                title: const Text('Developer / SRS diagnostics'),
+                subtitle: const Text(
+                  'Show mathematical memory metrics (DSR) and graph effects during review',
+                ),
+                value: ref.watch(studyPreferencesProvider.select((p) => p.srsDiagnostics)),
+                onChanged: (_) =>
+                    ref.read(studyPreferencesProvider.notifier).toggleSrsDiagnostics(),
+              ),
               ListTile(
                 leading: const Icon(Icons.memory_outlined),
                 title: const Text('Chess engine'),

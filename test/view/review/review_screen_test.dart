@@ -909,5 +909,47 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('SRS Diagnostics HUD is hidden by default and displayed when toggled', (
+      tester,
+    ) async {
+      final importResult = importPgn(
+        '1. e4 e5 *',
+        studyTitle: 'King Pawn Repertoire',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Vanilla mode: SRS Diagnostics HUD is NOT rendered
+      expect(find.text('SRS DIAGNOSTICS'), findsNothing);
+
+      // Toggle srsDiagnostics on
+      final element = tester.element(find.byType(ReviewScreen));
+      final container = ProviderScope.containerOf(element);
+      await container.read(studyPreferencesProvider.notifier).toggleSrsDiagnostics();
+      await pumpAsync(tester);
+
+      // Diagnostics HUD is now rendered with live metrics
+      expect(find.text('SRS DIAGNOSTICS'), findsOneWidget);
+      expect(find.textContaining('R: 100% (New)'), findsOneWidget);
+      expect(find.textContaining('D: 5.0/10'), findsOneWidget);
+    });
   });
 }

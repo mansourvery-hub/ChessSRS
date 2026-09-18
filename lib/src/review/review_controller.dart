@@ -33,6 +33,7 @@ class ReviewScreenState {
     this.isAwaitingAdvance = false,
     this.studyProgress = const {},
     this.chapterProgress = const {},
+    this.lastStepResult,
   });
 
   final List<Study> studies;
@@ -53,6 +54,7 @@ class ReviewScreenState {
   final String? revealedComment;
   final ReviewMode mode;
   final bool isAwaitingAdvance;
+  final ReviewStepResult? lastStepResult;
 
   bool get hasStudies => studies.isNotEmpty;
   bool get hasDuePositions => (totalDueCount > 0 || isPracticeMode) && currentPrompt != null;
@@ -150,6 +152,8 @@ class ReviewScreenState {
     bool clearRevealedComment = false,
     ReviewMode? mode,
     bool? isAwaitingAdvance,
+    ReviewStepResult? lastStepResult,
+    bool clearLastStepResult = false,
   }) {
     return ReviewScreenState(
       studies: studies ?? this.studies,
@@ -170,6 +174,7 @@ class ReviewScreenState {
       revealedComment: clearRevealedComment ? null : (revealedComment ?? this.revealedComment),
       mode: mode ?? this.mode,
       isAwaitingAdvance: isAwaitingAdvance ?? this.isAwaitingAdvance,
+      lastStepResult: clearLastStepResult ? null : (lastStepResult ?? this.lastStepResult),
     );
   }
 }
@@ -496,6 +501,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         clearExpectedMove: true,
         isLapseAcknowledged: true,
         revealedComment: comment,
+        lastStepResult: result,
       ),
     );
 
@@ -720,6 +726,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
             currentState.currentPrompt,
             result.expectedMoves.firstOrNull,
           ),
+          lastStepResult: result,
         ),
       );
     }

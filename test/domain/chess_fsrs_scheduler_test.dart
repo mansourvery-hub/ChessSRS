@@ -136,5 +136,18 @@ void main() {
 
       expect(tournamentInterval.inHours, lessThan(normalInterval.inHours));
     });
+
+    test('fsrsIntervalProgressionPreview generates monotonically growing intervals', () {
+      final intervals90 = fsrsIntervalProgressionPreview(targetRetention: 0.90);
+      expect(intervals90.length, 5);
+      for (var i = 1; i < intervals90.length; i++) {
+        expect(intervals90[i], greaterThan(intervals90[i - 1]));
+      }
+
+      final intervals95 = fsrsIntervalProgressionPreview(targetRetention: 0.95);
+      expect(intervals95.length, 5);
+      // Higher target retention produces shorter intervals for equal stability
+      expect(intervals95[0], lessThan(intervals90[0]));
+    });
   });
 }
