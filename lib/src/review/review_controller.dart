@@ -87,6 +87,46 @@ class ReviewScreenState {
     return totalProgress;
   }
 
+  /// The earliest upcoming review timestamp scheduled in the future for this session's scope.
+  DateTime? get nextReviewDueAt {
+    final sessionStates = session?.reviewStates.values;
+    if (sessionStates == null || sessionStates.isEmpty) return null;
+    final now = session?.clock.now() ?? DateTime.now();
+    DateTime? earliest;
+    for (final s in sessionStates) {
+      if (s.nextDueAt != null && s.nextDueAt!.isAfter(now)) {
+        if (earliest == null || s.nextDueAt!.isBefore(earliest)) {
+          earliest = s.nextDueAt;
+        }
+      }
+    }
+    return earliest;
+  }
+
+  /// Human-readable relative time until the next review is due across this scope.
+  String? get timeUntilNextReview {
+    final due = nextReviewDueAt;
+    if (due == null) return null;
+    final now = session?.clock.now() ?? DateTime.now();
+    final diff = due.difference(now);
+    if (diff.isNegative) return 'due now';
+
+    final minutes = diff.inMinutes;
+    final hours = diff.inHours;
+    final days = diff.inDays;
+
+    if (minutes < 60) {
+      return minutes <= 1 ? 'in 1 minute' : 'in $minutes minutes';
+    } else if (hours < 24) {
+      return hours == 1 ? 'in 1 hour' : 'in $hours hours';
+    } else if (days == 1) {
+      final remHours = hours % 24;
+      return remHours > 0 ? 'in 1 day, $remHours hr' : 'in 1 day';
+    } else {
+      return 'in $days days';
+    }
+  }
+
   ReviewScreenState copyWith({
     List<Study>? studies,
     ReviewScope? scope,

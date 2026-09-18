@@ -849,6 +849,7 @@ void main() {
 
       // All Caught Up view: shows 2/2 positions mastered (100%) and progress bar
       expect(find.text('All Caught Up!'), findsOneWidget);
+      expect(find.textContaining('Next review in 1 day'), findsOneWidget);
       expect(find.text('2/2 positions mastered (100%)'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
 

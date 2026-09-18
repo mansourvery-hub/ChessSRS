@@ -227,7 +227,36 @@ class _AllCaughtUpView extends ConsumerWidget {
             const Icon(Symbols.check_circle_rounded, size: 80, color: LichessColors.secondary),
             const SizedBox(height: 20.0),
             const Text('All Caught Up!', style: Styles.title, textAlign: TextAlign.center),
-            const SizedBox(height: 12.0),
+            const SizedBox(height: 10.0),
+            if (state.timeUntilNextReview != null) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Symbols.schedule_rounded,
+                      size: 16.0,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 6.0),
+                    Text(
+                      'Next review ${state.timeUntilNextReview}',
+                      style: TextStyle(
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const Text(
               '0 positions due for review right now across this repertoire.',
               style: Styles.subtitle,
@@ -414,22 +443,6 @@ class _BottomReviewFeedback extends ConsumerWidget {
     final comment = showComments && rawComment != null ? PgnComment.fromPgn(rawComment).text : null;
 
     if (state.isAwaitingAdvance) {
-      String? scheduledIntervalText;
-      if (state.currentPrompt != null && state.session != null) {
-        final decState = state.session!.reviewStates[state.currentPrompt!.decision.id];
-        if (decState != null && decState.nextDueAt != null) {
-          final lastTime = decState.lastReviewedAt ?? DateTime.now();
-          final diff = decState.nextDueAt!.difference(lastTime);
-          final hours = diff.inHours;
-          final days = hours / 24.0;
-          final formattedDays = days == days.roundToDouble()
-              ? '${days.toInt()}d'
-              : '${days.toStringAsFixed(1)}d';
-          final streak = decState.repetitionCount;
-          scheduledIntervalText = 'Next review in $formattedDays (rep $streak)';
-        }
-      }
-
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
@@ -450,28 +463,13 @@ class _BottomReviewFeedback extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8.0),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Move Explanation',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.0,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      if (scheduledIntervalText != null)
-                        Text(
-                          scheduledIntervalText,
-                          style: TextStyle(
-                            fontSize: 11.0,
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                    ],
+                  child: Text(
+                    'Move Explanation',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.0,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
                 FilledButton.icon(
