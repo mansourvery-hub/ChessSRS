@@ -458,5 +458,27 @@ void main() {
         await db.close();
       }
     });
+
+    test('getStudyByPgnHash retrieves study by SHA-256 fingerprint', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+
+      try {
+        const hash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+        const study = Study(id: 's_hashed', title: 'Hashed Study', pgnHash: hash);
+        await repo.saveStudy(study);
+
+        final found = await repo.getStudyByPgnHash(hash);
+        expect(found, isNotNull);
+        expect(found!.id, 's_hashed');
+        expect(found.title, 'Hashed Study');
+        expect(found.pgnHash, hash);
+
+        final notFound = await repo.getStudyByPgnHash('non_existent_hash');
+        expect(notFound, isNull);
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

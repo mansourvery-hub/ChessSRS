@@ -1,12 +1,21 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:convert';
+
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
 import 'package:chess_srs/src/domain/repertoire_move.dart';
 import 'package:chess_srs/src/domain/repertoire_node.dart';
 import 'package:chess_srs/src/domain/study.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dartchess/dartchess.dart';
+
+/// Computes a canonical SHA-256 fingerprint for PGN content (Listudy tree_hash pattern).
+String computePgnHash(String pgnText) {
+  final normalized = pgnText.trim();
+  return sha256.convert(utf8.encode(normalized)).toString();
+}
 
 /// Structured error produced during PGN import.
 ///
@@ -37,6 +46,7 @@ class ImportResult {
     required this.chapters,
     required this.decisions,
     required this.errors,
+    this.isDuplicate = false,
   });
 
   /// The created [Study] container.
@@ -52,13 +62,16 @@ class ImportResult {
   /// Non-empty means some chapters or moves were skipped or quarantined.
   final List<ImportError> errors;
 
+  /// Whether this import was identified as an exact duplicate of an existing study.
+  final bool isDuplicate;
+
   bool get hasErrors => errors.isNotEmpty;
   bool get isEmpty => chapters.isEmpty;
 
   @override
   String toString() =>
       'ImportResult(chapters: ${chapters.length}, decisions: ${decisions.length}, '
-      'errors: ${errors.length})';
+      'errors: ${errors.length}, duplicate: $isDuplicate)';
 }
 
 /// Derives a 4-field FEN position key from a full 6-field FEN.
@@ -97,12 +110,14 @@ ImportResult importPgn(
   String studyTitle = 'Imported Study',
   Side? repertoireSide,
 }) {
+  final pgnHash = computePgnHash(pgnText);
+
   final List<PgnGame<PgnNodeData>> games;
   try {
     games = PgnGame.parseMultiGamePgn(pgnText);
   } catch (e) {
     // Catastrophic parse failure — return an empty result with one error.
-    final study = Study.create(title: studyTitle);
+    final study = Study.create(title: studyTitle, pgnHash: pgnHash);
     return ImportResult(
       study: study,
       chapters: const [],
@@ -112,11 +127,11 @@ ImportResult importPgn(
   }
 
   if (games.isEmpty) {
-    final study = Study.create(title: studyTitle);
+    final study = Study.create(title: studyTitle, pgnHash: pgnHash);
     return ImportResult(study: study, chapters: const [], decisions: const [], errors: const []);
   }
 
-  final study = Study.create(title: studyTitle);
+  final study = Study.create(title: studyTitle, pgnHash: pgnHash);
   final chapters = <Chapter>[];
   final decisions = <RepertoireDecision>[];
   final errors = <ImportError>[];

@@ -164,6 +164,10 @@ before the core review loop is in the owner's hands.
          - `ReviewScopeDrawer`: displays learned/total counts and percentage per study and for All Studies.
          - `StudyChaptersScreen`: displays chapter learned/total moves, percentage, and due status.
          - `ReviewScreen`: All Caught Up state displays mastered positions count and linear progress bar. *(done: 2026-09-18)*
+- [x] **L6: PGN Hash Fingerprinting & Duplicate Import Detection (`tree_hash`)**
+      1. Canonical hashing: SHA-256 fingerprinting utility `computePgnHash` attached to `Study.pgnHash` on import.
+      2. Persistence migration (v9): added `pgnHash TEXT` column and index on `srs_study` table with SQLite schema migration and `getStudyByPgnHash` lookup.
+      3. Import flow & UI: `ReviewController.importPgnText` checks for duplicate PGN hashes, avoiding duplicate studies/decisions, switching directly to the existing study, and displaying informational feedback in `RepertoireImportDialog`. *(done: 2026-09-18)*
 
 Per `docs/INTEGRATION_MAP.md`: remaining training-loop semantics (sibling reset on
 error, weighted-random opponent replies), chapter/FEN behaviors, tree caching

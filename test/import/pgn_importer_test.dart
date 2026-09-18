@@ -380,4 +380,29 @@ void main() {
       }
     });
   });
+
+  group('computePgnHash & fingerprinting', () {
+    test(
+      'computes identical SHA-256 hash for identical PGN text regardless of surrounding whitespace',
+      () {
+        const pgn1 = '1. e4 e5 2. Nf3 Nc6 *';
+        const pgn2 = '   1. e4 e5 2. Nf3 Nc6 * \n\n';
+        expect(computePgnHash(pgn1), equals(computePgnHash(pgn2)));
+        expect(computePgnHash(pgn1).length, 64);
+      },
+    );
+
+    test('computes different hash for modified PGN content', () {
+      const pgn1 = '1. e4 e5 2. Nf3 Nc6 *';
+      const pgn2 = '1. e4 c5 2. Nf3 d6 *';
+      expect(computePgnHash(pgn1), isNot(equals(computePgnHash(pgn2))));
+    });
+
+    test('importPgn attaches pgnHash to created Study', () {
+      const pgn = '1. d4 d5 2. c4 *';
+      final result = importPgn(pgn);
+      expect(result.study.pgnHash, isNotNull);
+      expect(result.study.pgnHash, equals(computePgnHash(pgn)));
+    });
+  });
 }

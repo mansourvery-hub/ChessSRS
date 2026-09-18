@@ -74,11 +74,19 @@ class _RepertoireImportDialogState extends ConsumerState<RepertoireImportDialog>
 
       if (mounted) {
         Navigator.of(context).pop();
-        showSnackBar(
-          context,
-          'Imported "${result.study.title}" (${result.decisions.length} recall positions)',
-          type: SnackBarType.success,
-        );
+        if (result.isDuplicate) {
+          showSnackBar(
+            context,
+            'Repertoire "${result.study.title}" is already imported and up to date',
+            type: SnackBarType.info,
+          );
+        } else {
+          showSnackBar(
+            context,
+            'Imported "${result.study.title}" (${result.decisions.length} recall positions)',
+            type: SnackBarType.success,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

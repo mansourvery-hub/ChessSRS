@@ -14,12 +14,25 @@ class Study {
     this.createdAt,
     this.updatedAt,
     this.isActive = true,
+    this.pgnHash,
   });
 
   /// Creates a new [Study] with a freshly-generated UUID.
-  factory Study.create({required String title, DateTime? createdAt, bool isActive = true}) {
+  factory Study.create({
+    required String title,
+    DateTime? createdAt,
+    bool isActive = true,
+    String? pgnHash,
+  }) {
     final now = createdAt ?? DateTime.now();
-    return Study(id: newId(), title: title, createdAt: now, updatedAt: now, isActive: isActive);
+    return Study(
+      id: newId(),
+      title: title,
+      createdAt: now,
+      updatedAt: now,
+      isActive: isActive,
+      pgnHash: pgnHash,
+    );
   }
 
   /// The unique stable identifier for this study.
@@ -34,13 +47,17 @@ class Study {
   /// Whether this study is included in the global daily review pool (PRODUCT.md Journey 5).
   final bool isActive;
 
-  Study copyWith({String? title, DateTime? updatedAt, bool? isActive}) {
+  /// SHA-256 fingerprint of the source PGN content (Listudy tree_hash pattern).
+  final String? pgnHash;
+
+  Study copyWith({String? title, DateTime? updatedAt, bool? isActive, String? pgnHash}) {
     return Study(
       id: id,
       title: title ?? this.title,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
+      pgnHash: pgnHash ?? this.pgnHash,
     );
   }
 
@@ -52,11 +69,12 @@ class Study {
           other.title == title &&
           other.createdAt == createdAt &&
           other.updatedAt == updatedAt &&
-          other.isActive == isActive;
+          other.isActive == isActive &&
+          other.pgnHash == pgnHash;
 
   @override
-  int get hashCode => Object.hash(id, title, createdAt, updatedAt, isActive);
+  int get hashCode => Object.hash(id, title, createdAt, updatedAt, isActive, pgnHash);
 
   @override
-  String toString() => 'Study(id: $id, title: $title, active: $isActive)';
+  String toString() => 'Study(id: $id, title: $title, active: $isActive, hash: $pgnHash)';
 }

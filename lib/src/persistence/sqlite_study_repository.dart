@@ -30,6 +30,7 @@ class SqliteStudyRepository implements StudyRepository {
         'createdAt': result.study.createdAt?.toIso8601String() ?? now,
         'updatedAt': result.study.updatedAt?.toIso8601String() ?? now,
         'isActive': result.study.isActive ? 1 : 0,
+        'pgnHash': result.study.pgnHash,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       final chapterBatch = txn.batch();
@@ -77,12 +78,25 @@ class SqliteStudyRepository implements StudyRepository {
       'createdAt': study.createdAt?.toIso8601String() ?? now,
       'updatedAt': study.updatedAt?.toIso8601String() ?? now,
       'isActive': study.isActive ? 1 : 0,
+      'pgnHash': study.pgnHash,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<Study?> getStudy(String id) async {
     final rows = await _db.query(kTableSrsStudy, where: 'id = ?', whereArgs: [id], limit: 1);
+    if (rows.isEmpty) return null;
+    return _studyFromRow(rows.first);
+  }
+
+  @override
+  Future<Study?> getStudyByPgnHash(String pgnHash) async {
+    final rows = await _db.query(
+      kTableSrsStudy,
+      where: 'pgnHash = ?',
+      whereArgs: [pgnHash],
+      limit: 1,
+    );
     if (rows.isEmpty) return null;
     return _studyFromRow(rows.first);
   }
@@ -441,6 +455,7 @@ class SqliteStudyRepository implements StudyRepository {
       createdAt: DateTime.parse(row['createdAt']! as String),
       updatedAt: DateTime.parse(row['updatedAt']! as String),
       isActive: isActive,
+      pgnHash: row['pgnHash'] as String?,
     );
   }
 

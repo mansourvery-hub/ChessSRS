@@ -554,5 +554,35 @@ void main() {
       expect(state.isAwaitingAdvance, isFalse);
       expect(state.isComplete, isTrue);
     });
+
+    test('importing identical PGN detects duplicate and avoids data duplication', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      const pgn = '1. e4 e5 2. Nf3 *';
+      final res1 = await controller.importPgnText(
+        pgnText: pgn,
+        title: 'Original Study',
+        repertoireSide: Side.white,
+      );
+      expect(res1.isDuplicate, isFalse);
+
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.studies.length, 1);
+      expect(state.studies.first.title, 'Original Study');
+
+      // Re-importing identical PGN content
+      final res2 = await controller.importPgnText(
+        pgnText: pgn,
+        title: 'Duplicate Attempt',
+        repertoireSide: Side.white,
+      );
+      expect(res2.isDuplicate, isTrue);
+      expect(res2.study.id, equals(res1.study.id));
+
+      // Repository still contains exactly 1 study
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.studies.length, 1);
+    });
   });
 }

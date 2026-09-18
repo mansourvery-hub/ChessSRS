@@ -787,11 +787,28 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   }
 
   /// Imports a repertoire from PGN text and immediately loads it for review.
+  ///
+  /// Implements Listudy tree_hash change detection: if a study with identical
+  /// PGN hash already exists, avoids data duplication and switches directly to
+  /// reviewing that existing study.
   Future<ImportResult> importPgnText({
     required String pgnText,
     String? title,
     Side? repertoireSide,
   }) async {
+    final hash = computePgnHash(pgnText);
+    final existingStudy = await _repository.getStudyByPgnHash(hash);
+    if (existingStudy != null) {
+      await changeScope(ReviewScope.study(existingStudy.id));
+      return ImportResult(
+        study: existingStudy,
+        chapters: const [],
+        decisions: const [],
+        errors: const [],
+        isDuplicate: true,
+      );
+    }
+
     final result = importPgn(
       pgnText,
       studyTitle: title ?? 'Imported Study',

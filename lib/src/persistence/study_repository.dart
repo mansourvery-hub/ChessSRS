@@ -22,6 +22,7 @@ abstract class StudyRepository {
   // Studies
   Future<void> saveStudy(Study study);
   Future<Study?> getStudy(String id);
+  Future<Study?> getStudyByPgnHash(String pgnHash);
   Future<List<Study>> getAllStudies();
   Future<List<Study>> getActiveStudies();
   Future<void> updateStudyActive(String studyId, bool isActive);

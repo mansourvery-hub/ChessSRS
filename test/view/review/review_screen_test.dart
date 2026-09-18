@@ -858,5 +858,55 @@ void main() {
 
       expect(find.text('2/2 learned (100%)'), findsNWidgets(2));
     });
+
+    testWidgets('RepertoireImportDialog indicates when imported PGN is already up to date', (
+      tester,
+    ) async {
+      const pgn = '1. e4 e5 2. Nf3 *';
+      final importResult = importPgn(
+        pgn,
+        studyTitle: 'King Pawn Repertoire',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer and click Import PGN
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      await tester.tap(find.text('Import PGN'));
+      await pumpAsync(tester);
+
+      expect(find.byType(RepertoireImportDialog), findsOneWidget);
+
+      // Enter same PGN into PGN text field
+      await tester.enterText(find.widgetWithText(TextField, 'PGN text'), pgn);
+      await tester.tap(find.text('Import and Start Review'));
+      await pumpAsync(tester, 600);
+
+      // Dialog is dismissed and info snackbar is shown
+      expect(find.byType(RepertoireImportDialog), findsNothing);
+      expect(
+        find.text('Repertoire "King Pawn Repertoire" is already imported and up to date'),
+        findsOneWidget,
+      );
+    });
   });
 }

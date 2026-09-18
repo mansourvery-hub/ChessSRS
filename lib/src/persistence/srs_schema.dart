@@ -16,8 +16,13 @@ void createSrsTables(Batch batch) {
       title TEXT NOT NULL,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL,
-      isActive INTEGER NOT NULL DEFAULT 1
+      isActive INTEGER NOT NULL DEFAULT 1,
+      pgnHash TEXT
     );
+  ''');
+  batch.execute('''
+    CREATE INDEX IF NOT EXISTS idx_srs_study_pgnHash
+    ON $kTableSrsStudy(pgnHash);
   ''');
 
   batch.execute('''
