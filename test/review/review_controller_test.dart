@@ -3,6 +3,7 @@
 
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/model/common/service/sound_service.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/review/review_service.dart';
@@ -27,6 +28,7 @@ void main() {
     late FixedClock clock;
 
     setUp(() async {
+      await TestLichessBinding.instance.sharedPreferences.clear();
       db = await databaseFactory.openDatabase(inMemoryDatabasePath);
       final batch = db.batch();
       createSrsTables(batch);
@@ -443,6 +445,114 @@ void main() {
       expect(result, isNotNull);
       expect(result!.isCorrect, isTrue);
       expect(container.read(reviewControllerProvider).requireValue.feedback, ReviewFeedback.none);
+    });
+
+    test(
+      'correct move with annotations pauses auto-advancement and advances on continueAdvancement',
+      () async {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        const pgn = '1. e4 {[%cal Ge4d5] Controls d5} e5 2. Nf3 *';
+        await controller.importPgnText(
+          pgnText: pgn,
+          title: 'King Pawn Annotated',
+          repertoireSide: Side.white,
+        );
+
+        var state = container.read(reviewControllerProvider).requireValue;
+        expect(state.totalDueCount, 2);
+
+        // Play 1. e4
+        final result = await controller.onUserMove(
+          const NormalMove(from: Square.e2, to: Square.e4),
+        );
+        expect(result, isNotNull);
+        expect(result!.isCorrect, isTrue);
+
+        // Should be paused awaiting continue, NOT auto-advanced!
+        state = container.read(reviewControllerProvider).requireValue;
+        expect(state.isAwaitingAdvance, isTrue);
+        expect(state.feedback, ReviewFeedback.correct);
+        expect(state.revealedComment, contains('Controls d5'));
+        expect(state.revealedComment, contains('[%cal Ge4d5]'));
+        // Position is White's move 1. e4 (opponent has not replied yet)
+        expect(state.lastMove, const NormalMove(from: Square.e2, to: Square.e4));
+        expect(state.totalDueCount, 2);
+
+        // Wait a moment: queue must remain paused and not auto-advance
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        state = container.read(reviewControllerProvider).requireValue;
+        expect(state.isAwaitingAdvance, isTrue);
+
+        // Learner continues
+        await controller.continueAdvancement();
+
+        // Opponent reply 1... e5 is played and next prompt (2. Nf3) is loaded
+        state = container.read(reviewControllerProvider).requireValue;
+        expect(state.isAwaitingAdvance, isFalse);
+        expect(state.feedback, ReviewFeedback.none);
+        expect(state.totalDueCount, 1);
+        expect(state.currentPrompt, isNotNull);
+        expect(state.currentPrompt!.expectedMoves.first.san, 'Nf3');
+      },
+    );
+
+    test(
+      'correct move with annotations disabled in preferences auto-advances without pausing',
+      () async {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        // Disable annotations and comments in preferences
+        final studyPrefs = container.read(studyPreferencesProvider.notifier);
+        await studyPrefs.toggleAnnotations();
+        await studyPrefs.togglePgnComments();
+
+        const pgn = '1. e4 {[%cal Ge4d5] Controls d5} e5 2. Nf3 *';
+        await controller.importPgnText(
+          pgnText: pgn,
+          title: 'King Pawn Disabled Annotations',
+          repertoireSide: Side.white,
+        );
+
+        // Play 1. e4
+        final result = await controller.onUserMove(
+          const NormalMove(from: Square.e2, to: Square.e4),
+        );
+        expect(result, isNotNull);
+        expect(result!.isCorrect, isTrue);
+
+        // Does not pause awaiting continue
+        final state = container.read(reviewControllerProvider).requireValue;
+        expect(state.isAwaitingAdvance, isFalse);
+        expect(state.totalDueCount, 1);
+        expect(state.currentPrompt!.expectedMoves.first.san, 'Nf3');
+      },
+    );
+
+    test('moving on the board while awaiting advance continues advancement', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      const pgn = '1. e4 {Good move} *';
+      await controller.importPgnText(
+        pgnText: pgn,
+        title: 'Single Move Annotated',
+        repertoireSide: Side.white,
+      );
+
+      // Play 1. e4
+      await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.isAwaitingAdvance, isTrue);
+
+      // User interacts with board by playing/tapping a move
+      await controller.onUserMove(const NormalMove(from: Square.e4, to: Square.e5));
+
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.isAwaitingAdvance, isFalse);
+      expect(state.isComplete, isTrue);
     });
   });
 }

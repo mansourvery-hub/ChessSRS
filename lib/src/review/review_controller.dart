@@ -30,6 +30,7 @@ class ReviewScreenState {
     this.revealedComment,
     this.mode = ReviewMode.srs,
     this.openingDueCounts = const {},
+    this.isAwaitingAdvance = false,
   });
 
   final List<Study> studies;
@@ -47,11 +48,14 @@ class ReviewScreenState {
   final bool isLapseAcknowledged;
   final String? revealedComment;
   final ReviewMode mode;
+  final bool isAwaitingAdvance;
 
   bool get hasStudies => studies.isNotEmpty;
   bool get hasDuePositions => (totalDueCount > 0 || isPracticeMode) && currentPrompt != null;
   bool get isComplete =>
-      hasStudies && ((totalDueCount == 0 && !isPracticeMode) || currentPrompt == null);
+      hasStudies &&
+      !isAwaitingAdvance &&
+      ((totalDueCount == 0 && !isPracticeMode) || currentPrompt == null);
   bool get isPracticeMode => mode == ReviewMode.practice;
 
   ReviewScreenState copyWith({
@@ -74,6 +78,7 @@ class ReviewScreenState {
     String? revealedComment,
     bool clearRevealedComment = false,
     ReviewMode? mode,
+    bool? isAwaitingAdvance,
   }) {
     return ReviewScreenState(
       studies: studies ?? this.studies,
@@ -91,6 +96,7 @@ class ReviewScreenState {
       isLapseAcknowledged: isLapseAcknowledged ?? this.isLapseAcknowledged,
       revealedComment: clearRevealedComment ? null : (revealedComment ?? this.revealedComment),
       mode: mode ?? this.mode,
+      isAwaitingAdvance: isAwaitingAdvance ?? this.isAwaitingAdvance,
     );
   }
 }
@@ -100,9 +106,36 @@ final reviewControllerProvider = AsyncNotifierProvider<ReviewController, ReviewS
   ReviewController.new,
 );
 
+class _PendingAdvancement {
+  const _PendingAdvancement({
+    required this.currentState,
+    required this.result,
+    required this.isFirstAttempt,
+  });
+
+  final ReviewScreenState currentState;
+  final ReviewStepResult result;
+  final bool isFirstAttempt;
+}
+
 class ReviewController extends AsyncNotifier<ReviewScreenState> {
   ReviewService get _service => ref.read(reviewServiceProvider);
   StudyRepository get _repository => ref.read(reviewServiceProvider).repository;
+
+  _PendingAdvancement? _pendingAdvancement;
+
+  bool _hasAnnotationsOrShapes(String? comment) {
+    if (comment == null || comment.trim().isEmpty) return false;
+    try {
+      final prefs = ref.read(studyPreferencesProvider);
+      final pgn = PgnComment.fromPgn(comment);
+      final hasText = prefs.showPgnComments && pgn.text?.trim().isNotEmpty == true;
+      final hasShapes = prefs.showAnnotations && pgn.shapes.isNotEmpty;
+      return hasText || hasShapes;
+    } catch (_) {
+      return comment.trim().isNotEmpty;
+    }
+  }
 
   bool get _shouldAnimateOpponentPreMove {
     try {
@@ -188,11 +221,13 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Changes the active review scope (all studies or a specific study).
   Future<void> changeScope(ReviewScope scope) async {
+    _pendingAdvancement = null;
     state = await AsyncValue.guard(() => _loadState(scope));
   }
 
   /// Reloads the session and due counts for the current scope.
   Future<void> reload() async {
+    _pendingAdvancement = null;
     final currentState = state.value;
     final currentScope = currentState?.scope ?? const ReviewScope.all();
     final currentMode = currentState?.mode ?? ReviewMode.srs;
@@ -201,12 +236,14 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Starts non-destructive pre-match rehearsal / cram mode (PRODUCT.md Journey 4).
   Future<void> startPracticeMode({ReviewScope? scope}) async {
+    _pendingAdvancement = null;
     final targetScope = scope ?? state.value?.scope ?? const ReviewScope.all();
     state = await AsyncValue.guard(() => _loadState(targetScope, ReviewMode.practice));
   }
 
   /// Exits practice mode and returns to standard SRS review.
   Future<void> exitPracticeMode() async {
+    _pendingAdvancement = null;
     final currentScope = state.value?.scope ?? const ReviewScope.all();
     state = await AsyncValue.guard(() => _loadState(currentScope, ReviewMode.srs));
   }
@@ -327,6 +364,24 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     return studyToPgn(study, chapters);
   }
 
+  /// Advances to the next prompt after pausing to display move commentary or shapes.
+  Future<void> continueAdvancement() async {
+    final pending = _pendingAdvancement;
+    if (pending == null) return;
+    _pendingAdvancement = null;
+
+    // Dismiss awaiting advance immediately so user receives instant tactile feedback
+    if (state.value != null && state.value!.isAwaitingAdvance) {
+      state = AsyncData(state.value!.copyWith(isAwaitingAdvance: false));
+    }
+
+    await _executeAdvancement(
+      currentState: pending.currentState,
+      result: pending.result,
+      isFirstAttempt: pending.isFirstAttempt,
+    );
+  }
+
   /// Handles move animation, opponent reply pacing, and transition to the next prompt.
   Future<void> _handleCorrectAdvancement({
     required ReviewScreenState currentState,
@@ -339,6 +394,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         ? currentPos.play(userMove)
         : null;
 
+    final comment = _resolveComment(currentState.currentPrompt, result.expectedMoves.firstOrNull);
+
     // 1. Immediately show user's move on the board
     state = AsyncData(
       currentState.copyWith(
@@ -347,20 +404,48 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
-        revealedComment: _resolveComment(
-          currentState.currentPrompt,
-          result.expectedMoves.firstOrNull,
-        ),
+        revealedComment: comment,
       ),
     );
 
-    // 2. If opponent has an auto-reply, pause briefly then show it.
+    // If annotations/shapes are present, pause auto-advancement so the learner
+    // can read commentary and inspect board shapes before advancing.
+    final hasAnnotations =
+        _hasAnnotationsOrShapes(comment) ||
+        _hasAnnotationsOrShapes(currentState.currentPrompt?.comment);
+
+    if (hasAnnotations) {
+      _pendingAdvancement = _PendingAdvancement(
+        currentState: currentState,
+        result: result,
+        isFirstAttempt: isFirstAttempt,
+      );
+      state = AsyncData(
+        state.value!.copyWith(isAwaitingAdvance: true, feedback: ReviewFeedback.correct),
+      );
+      return;
+    }
+
+    await _executeAdvancement(
+      currentState: currentState,
+      result: result,
+      isFirstAttempt: isFirstAttempt,
+    );
+  }
+
+  Future<void> _executeAdvancement({
+    required ReviewScreenState currentState,
+    required ReviewStepResult result,
+    required bool isFirstAttempt,
+  }) async {
+    // 2. If opponent has an auto-reply, pause briefly then show it with smooth piece animation.
     // If it's the final move of the line (no opponent reply), pause so the user
     // sees their move actualized on the board before the line transitions.
     final opponentMoves = result.autoPlayedMoves.where((m) => !m.isUserMove).toList();
     if (opponentMoves.isNotEmpty) {
-      await Future<void>.delayed(const Duration(milliseconds: 350));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       if (!ref.mounted) return;
+
       final oppMove = opponentMoves.first;
       final oppNormalMove = NormalMove(
         from: Square.fromName(oppMove.move.from),
@@ -369,15 +454,21 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       );
       final oppPos = _parseFen(oppMove.fenAfter);
 
-      state = AsyncData(state.value!.copyWith(boardPosition: oppPos, lastMove: oppNormalMove));
+      state = AsyncData(
+        state.value!.copyWith(
+          boardPosition: oppPos,
+          lastMove: oppNormalMove,
+          isAwaitingAdvance: false,
+        ),
+      );
       try {
         ref.read(moveFeedbackServiceProvider).moveFeedback();
       } catch (_) {}
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       if (!ref.mounted) return;
     } else {
       // Final move of line: pause so user sees their move actualized on the board
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await Future<void>.delayed(const Duration(milliseconds: 350));
       if (!ref.mounted) return;
     }
 
@@ -436,6 +527,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
+        isAwaitingAdvance: false,
         lastMove: shouldAnimateBranchPreMove
             ? null
             : (opponentMoves.isNotEmpty ? state.value?.lastMove : null),
@@ -454,6 +546,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   Future<ReviewStepResult?> onUserMove(Move move) async {
     final currentState = state.asData?.value;
     if (currentState == null || currentState.currentPrompt == null) return null;
+    if (currentState.isAwaitingAdvance) {
+      await continueAdvancement();
+      return null;
+    }
     if (move is! NormalMove) return null;
 
     final from = move.from.name;
@@ -518,6 +614,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Acknowledges a lapse, clearing the expected move arrow and advancing.
   void acknowledgeLapse() {
+    _pendingAdvancement = null;
     final currentState = state.asData?.value;
     if (currentState == null) return;
 
@@ -547,6 +644,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
+        isAwaitingAdvance: false,
         clearLastMove: true,
         clearRevealedComment: true,
       ),
@@ -559,6 +657,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Skips the current prompt, moving it to the back of the queue.
   void skip() {
+    _pendingAdvancement = null;
     final currentState = state.asData?.value;
     if (currentState == null || currentState.currentPrompt == null) return;
 
@@ -586,6 +685,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         feedback: ReviewFeedback.none,
         clearExpectedMove: true,
         isLapseAcknowledged: true,
+        isAwaitingAdvance: false,
         clearLastMove: true,
         clearRevealedComment: true,
       ),

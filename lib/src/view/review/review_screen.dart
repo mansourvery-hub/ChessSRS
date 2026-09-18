@@ -44,6 +44,7 @@ class ReviewScreen extends ConsumerWidget {
           orElse: () => const Text('Review'),
         ),
         actions: [
+          const _AnnotationsQuickToggle(),
           reviewStateAsync.maybeWhen(
             data: (state) {
               if (state.isPracticeMode) {
@@ -293,7 +294,7 @@ class _ActiveReviewView extends ConsumerWidget {
     }
 
     final showAnnotations = ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations));
-    final isAnswerRevealed = isLapse || state.revealedComment != null;
+    final isAnswerRevealed = isLapse || state.revealedComment != null || state.isAwaitingAdvance;
     // Commentary shapes are strictly hidden during active recall (before guess)
     // and only revealed post-guess (on success or lapse) when annotations are enabled.
     if (showAnnotations && isAnswerRevealed) {
@@ -316,6 +317,15 @@ class _ActiveReviewView extends ConsumerWidget {
     return GameLayout(
       orientation: state.boardOrientation,
       shapes: shapes.lock,
+      boardOverlay: state.isAwaitingAdvance
+          ? AspectRatio(
+              aspectRatio: 1.0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () => ref.read(reviewControllerProvider.notifier).continueAdvancement(),
+              ),
+            )
+          : null,
       boardParams: GameBoardParams.interactive(
         variant: Variant.standard,
         position: boardPosition,
@@ -328,7 +338,13 @@ class _ActiveReviewView extends ConsumerWidget {
       topTable: _TopReviewInfo(prompt: prompt, orientation: state.boardOrientation),
       bottomTable: _BottomReviewFeedback(
         state: state,
-        onContinue: () => ref.read(reviewControllerProvider.notifier).acknowledgeLapse(),
+        onContinue: () {
+          if (state.isAwaitingAdvance) {
+            ref.read(reviewControllerProvider.notifier).continueAdvancement();
+          } else {
+            ref.read(reviewControllerProvider.notifier).acknowledgeLapse();
+          }
+        },
         onSkip: () => ref.read(reviewControllerProvider.notifier).skip(),
       ),
     );
@@ -377,6 +393,73 @@ class _BottomReviewFeedback extends ConsumerWidget {
     final isLapse = state.feedback == ReviewFeedback.incorrect;
     final rawComment = state.revealedComment;
     final comment = showComments && rawComment != null ? PgnComment.fromPgn(rawComment).text : null;
+
+    if (state.isAwaitingAdvance) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Symbols.lightbulb_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20.0,
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    'Move Explanation',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.0,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                  ),
+                  icon: const Icon(Symbols.arrow_forward_rounded, size: 18),
+                  label: const Text('Continue'),
+                  onPressed: onContinue,
+                ),
+              ],
+            ),
+            if (comment != null && comment.trim().isNotEmpty) ...[
+              const SizedBox(height: 8.0),
+              Text(
+                comment.trim(),
+                maxLines: 6,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.0,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 4.0),
+              Text(
+                'Tap board or Continue when ready.',
+                style: TextStyle(
+                  fontSize: 12.0,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
 
     if (isLapse) {
       return Container(
@@ -462,6 +545,41 @@ class _BottomReviewFeedback extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _AnnotationsQuickToggle extends ConsumerWidget {
+  const _AnnotationsQuickToggle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prefs = ref.watch(studyPreferencesProvider);
+    final areAnnotationsActive = prefs.showAnnotations || prefs.showPgnComments;
+
+    return IconButton(
+      icon: Icon(
+        areAnnotationsActive ? Symbols.visibility_rounded : Symbols.visibility_off_rounded,
+      ),
+      tooltip: areAnnotationsActive ? 'Hide annotations' : 'Show annotations',
+      onPressed: () async {
+        final notifier = ref.read(studyPreferencesProvider.notifier);
+        if (areAnnotationsActive) {
+          if (prefs.showAnnotations) {
+            await notifier.toggleAnnotations();
+          }
+          if (prefs.showPgnComments) {
+            await notifier.togglePgnComments();
+          }
+        } else {
+          if (!prefs.showAnnotations) {
+            await notifier.toggleAnnotations();
+          }
+          if (!prefs.showPgnComments) {
+            await notifier.togglePgnComments();
+          }
+        }
+      },
     );
   }
 }

@@ -34,6 +34,7 @@ void main() {
     late FixedClock clock;
 
     setUp(() async {
+      await TestLichessBinding.instance.sharedPreferences.clear();
       db = await databaseFactory.openDatabase(inMemoryDatabasePath);
       final batch = db.batch();
       createSrsTables(batch);
@@ -637,5 +638,168 @@ void main() {
       // Study is deleted -> empty state
       expect(find.text('Welcome to ChessSRS'), findsOneWidget);
     });
+
+    testWidgets(
+      'correct move with commentary/shapes pauses auto-advancement with Move Explanation and Continue button',
+      (tester) async {
+        final importResult = importPgn(
+          '1. e4 {[%cal Gf3e5][%csl Re5] Attacks the center} e5 *',
+          studyTitle: 'King Pawn with Shapes',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(importResult);
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        // Before move: no shapes or comment
+        expect(find.text('Attacks the center'), findsNothing);
+        expect(find.text('Move Explanation'), findsNothing);
+
+        // Play correct move: e2 -> e4
+        await playMove(tester, 'e2', 'e4');
+        await pumpAsync(tester, 100);
+
+        // Auto-advancement paused: shows Move Explanation and Continue button
+        expect(find.text('Move Explanation'), findsOneWidget);
+        expect(find.text('Attacks the center'), findsOneWidget);
+        expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
+
+        // Shapes are displayed on the board
+        final layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isNotNull);
+        expect(
+          layout.shapes!.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
+          isTrue,
+        );
+        expect(layout.shapes!.any((s) => s is Circle && s.orig == Square.e5), isTrue);
+
+        // Tap Continue button
+        await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+        await pumpAsync(tester, 700);
+
+        // Queue advances (session caught up)
+        expect(find.text('All Caught Up!'), findsOneWidget);
+      },
+    );
+
+    testWidgets('tapping the board overlay while awaiting advance continues advancement', (
+      tester,
+    ) async {
+      final importResult = importPgn(
+        '1. e4 {Important center move} *',
+        studyTitle: 'King Pawn Tap Test',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Play correct move: e2 -> e4
+      await playMove(tester, 'e2', 'e4');
+      await pumpAsync(tester, 100);
+
+      // Paused awaiting continue
+      expect(find.text('Move Explanation'), findsOneWidget);
+
+      // Tap on the chessboard
+      await tester.tap(find.byType(Chessboard));
+      await pumpAsync(tester, 700);
+
+      // Successfully advanced to completion
+      expect(find.text('All Caught Up!'), findsOneWidget);
+    });
+
+    testWidgets(
+      'quick toggle action in AppBar toggles annotations and updates shapes/comments in real time',
+      (tester) async {
+        final importResult = importPgn(
+          '1. e4 {[%cal Gf3e5] Attacks the center} *',
+          studyTitle: 'Quick Toggle Test',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(importResult);
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        // Initially, annotations are enabled
+        expect(find.byTooltip('Hide annotations'), findsOneWidget);
+
+        // Play correct move: e2 -> e4
+        await playMove(tester, 'e2', 'e4');
+        await pumpAsync(tester, 100);
+
+        // Shapes and commentary are visible
+        var layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isNotEmpty);
+        expect(find.text('Attacks the center'), findsOneWidget);
+
+        // Tap the quick toggle button in AppBar
+        await tester.tap(find.byTooltip('Hide annotations'));
+        await pumpAsync(tester);
+
+        // Tooltip changes to 'Show annotations'
+        expect(find.byTooltip('Show annotations'), findsOneWidget);
+
+        // Shapes and comment text are hidden in real time!
+        layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isEmpty);
+        expect(find.text('Attacks the center'), findsNothing);
+
+        // Tap the quick toggle again to re-enable
+        await tester.tap(find.byTooltip('Show annotations'));
+        await pumpAsync(tester);
+
+        // Shapes and comment text reappear
+        expect(find.byTooltip('Hide annotations'), findsOneWidget);
+        layout = tester.widget<GameLayout>(find.byType(GameLayout));
+        expect(layout.shapes, isNotEmpty);
+        expect(find.text('Attacks the center'), findsOneWidget);
+      },
+    );
   });
 }

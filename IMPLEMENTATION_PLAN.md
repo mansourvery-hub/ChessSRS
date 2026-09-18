@@ -153,6 +153,10 @@ before the core review loop is in the owner's hands.
       2. Move pacing: added 400ms pause when completing the final move of a line so user sees their piece land and highlight on the board before the line transitions.
       3. Board annotations & shapes: extracted shapes from both prompt position comments and revealed move comments post-guess, displaying author circles and arrows with proper colors.
       4. Chapter scoping: support chapter-level review scope (`ReviewScope.chapter`) from `StudyChaptersScreen` and the drawer's Chapters action sheet, letting users isolate and train individual chapters without mixing other lines. *(done: 2026-09-17)*
+- [x] **L4: Move Explanation Pause & Quick Annotations Toggle**
+      1. Explanation pause: when move comments or board annotations exist, auto-advancement pauses post-guess so the user can study arrows and read explanations without rushing.
+      2. Advance controls: tactile advancement via a prominent "Continue" button or tapping anywhere on the board overlay.
+      3. Quick toggle: instant visibility toggle in the `ReviewScreen` AppBar allowing immediate hiding/showing of annotations on the fly. *(done: 2026-09-18)*
 
 Per `docs/INTEGRATION_MAP.md`: remaining training-loop semantics (sibling reset on
 error, weighted-random opponent replies), chapter/FEN behaviors, tree caching
