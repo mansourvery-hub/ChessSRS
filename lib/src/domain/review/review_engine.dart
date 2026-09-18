@@ -32,6 +32,8 @@ class ReviewEngine {
     required Map<String, ReviewState> reviewStates,
     ReviewScope scope = const ReviewScope.all(),
     ReviewMode mode = ReviewMode.srs,
+    int? prefetchBatchSize = 25,
+    int prefetchRefillThreshold = 3,
     Random? random,
   }) {
     return ReviewSession(
@@ -43,6 +45,8 @@ class ReviewEngine {
       mode: mode,
       scheduler: scheduler,
       clock: clock,
+      prefetchBatchSize: prefetchBatchSize,
+      prefetchRefillThreshold: prefetchRefillThreshold,
       random: random ?? this.random,
     );
   }

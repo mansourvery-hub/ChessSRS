@@ -56,6 +56,7 @@ abstract class StudyRepository {
   Future<ReviewState?> getReviewState(String decisionId);
   Future<List<ReviewState>> getAllReviewStates();
   Future<List<ReviewState>> getDueReviewStates(DateTime now);
+  Future<List<ReviewState>> getReviewStatesByDecisions(List<String> decisionIds);
 
   // Review events (SRS log)
   Future<void> saveReviewEvent(ReviewEvent event);

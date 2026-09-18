@@ -416,6 +416,27 @@ class SqliteStudyRepository implements StudyRepository {
     return rows.map(_reviewStateFromRow).toList(growable: false);
   }
 
+  @override
+  Future<List<ReviewState>> getReviewStatesByDecisions(List<String> decisionIds) async {
+    if (decisionIds.isEmpty) return const [];
+    const chunkSize = 400;
+    final results = <ReviewState>[];
+    for (var i = 0; i < decisionIds.length; i += chunkSize) {
+      final chunk = decisionIds.sublist(
+        i,
+        i + chunkSize > decisionIds.length ? decisionIds.length : i + chunkSize,
+      );
+      final placeholders = List.filled(chunk.length, '?').join(',');
+      final rows = await _db.query(
+        kTableSrsReviewState,
+        where: 'decisionId IN ($placeholders)',
+        whereArgs: chunk,
+      );
+      results.addAll(rows.map(_reviewStateFromRow));
+    }
+    return results;
+  }
+
   // ---------------------------------------------------------------------------
   // Review Events (SRS history)
   // ---------------------------------------------------------------------------

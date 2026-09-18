@@ -22,6 +22,7 @@ import 'package:dartchess/dartchess.dart';
 ///
 /// Encapsulates queue management, move validation against repertoire (Invariant §2.1),
 /// auto-traversal through opponent replies and already-learned user moves (Invariant §2.4),
+/// queue prefetching and buffering (chessrs PracticeMainPanel.tsx semantics),
 /// and deterministic time testing via [Clock] (Invariant §3.2).
 class ReviewSession {
   ReviewSession({
@@ -33,6 +34,8 @@ class ReviewSession {
     this.mode = ReviewMode.srs,
     this.scheduler = const SimpleScheduler(),
     this.clock = const SystemClock(),
+    this.prefetchBatchSize = 25,
+    this.prefetchRefillThreshold = 3,
     Random? random,
   }) : _random = random ?? Random(),
        _studies = {for (final s in studies) s.id: s},
@@ -59,11 +62,12 @@ class ReviewSession {
       }
       final state = _reviewStates[d.id];
       if (mode == ReviewMode.practice || state == null || state.isDueAt(now)) {
-        _dueQueue.add(d);
+        _unbufferedQueue.add(d);
       }
     }
 
-    _initialDueCount = _dueQueue.length;
+    _initialDueCount = _unbufferedQueue.length;
+    _refillPrefetchBuffer();
     _advanceToNextDue();
   }
 
@@ -73,6 +77,13 @@ class ReviewSession {
   final Clock clock;
   final Random _random;
 
+  /// Maximum batch size of due decisions to buffer in the active queue at once.
+  /// Null disables batching and buffers the entire queue.
+  final int? prefetchBatchSize;
+
+  /// Threshold at which the active prefetch buffer refills from unbuffered decisions.
+  final int prefetchRefillThreshold;
+
   final Map<String, Study> _studies;
   final Map<String, Chapter> _chapters;
   final Map<String, ReviewState> _reviewStates;
@@ -81,19 +92,32 @@ class ReviewSession {
   final Map<String, RepertoireNode> _parentOfNode = {};
 
   final List<RepertoireDecision> _dueQueue = [];
+  final List<RepertoireDecision> _unbufferedQueue = [];
   ReviewPrompt? _currentPrompt;
   int _completedCount = 0;
   late final int _initialDueCount;
+
+  void _refillPrefetchBuffer() {
+    if (prefetchBatchSize == null) {
+      _dueQueue.addAll(_unbufferedQueue);
+      _unbufferedQueue.clear();
+      return;
+    }
+    while (_dueQueue.length < prefetchBatchSize! && _unbufferedQueue.isNotEmpty) {
+      _dueQueue.add(_unbufferedQueue.removeAt(0));
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
 
   ReviewPrompt? get currentPrompt => _currentPrompt;
-  int get remainingDueCount => _dueQueue.length + (_currentPrompt != null ? 1 : 0);
+  int get remainingDueCount =>
+      _dueQueue.length + _unbufferedQueue.length + (_currentPrompt != null ? 1 : 0);
   int get completedCount => _completedCount;
   int get initialDueCount => _initialDueCount;
-  bool get isComplete => _currentPrompt == null && _dueQueue.isEmpty;
+  bool get isComplete => _currentPrompt == null && _dueQueue.isEmpty && _unbufferedQueue.isEmpty;
   Map<String, ReviewState> get reviewStates => Map.unmodifiable(_reviewStates);
 
   /// Returns the chapter with [chapterId] if present in this session.
@@ -182,7 +206,12 @@ class ReviewSession {
       // Re-queue the failed decision at the end of the session queue
       // so the user can re-test it before completing the session
       _dueQueue.removeWhere((d) => d.id == decision.id);
-      _dueQueue.add(decision);
+      _unbufferedQueue.removeWhere((d) => d.id == decision.id);
+      if (_unbufferedQueue.isNotEmpty) {
+        _unbufferedQueue.add(decision);
+      } else {
+        _dueQueue.add(decision);
+      }
 
       return ReviewStepResult(
         isCorrect: false,
@@ -272,6 +301,7 @@ class ReviewSession {
         if (isDue) {
           // Found next due decision along this branch!
           _dueQueue.removeWhere((d) => d.id == nextDecision.id);
+          _unbufferedQueue.removeWhere((d) => d.id == nextDecision.id);
           _currentPrompt = _buildPrompt(decision: nextDecision, node: opponentChild);
           return ReviewStepResult(
             isCorrect: true,
@@ -329,7 +359,11 @@ class ReviewSession {
   ReviewPrompt? skip() {
     if (_currentPrompt == null) return null;
     final skippedDecision = _currentPrompt!.decision;
-    _dueQueue.add(skippedDecision);
+    if (_unbufferedQueue.isNotEmpty) {
+      _unbufferedQueue.add(skippedDecision);
+    } else {
+      _dueQueue.add(skippedDecision);
+    }
     _advanceToNextDue();
     return _currentPrompt;
   }
@@ -339,6 +373,9 @@ class ReviewSession {
   // ---------------------------------------------------------------------------
 
   void _advanceToNextDue() {
+    if (_dueQueue.length <= prefetchRefillThreshold) {
+      _refillPrefetchBuffer();
+    }
     if (_dueQueue.isEmpty) {
       _currentPrompt = null;
       return;

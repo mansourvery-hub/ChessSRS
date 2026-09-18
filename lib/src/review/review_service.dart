@@ -68,37 +68,76 @@ class ReviewService {
   ReviewSession? get activeSession => _activeSession;
 
   /// Starts a new review session for the given [scope].
+  ///
+  /// Implements targeted scope prefetching (docs/INTEGRATION_MAP.md §From chessrs):
+  /// queries and deserializes only the chapters, decisions, and review states
+  /// relevant to [scope], optimizing session initialization time and memory footprint.
   Future<ReviewSession> startSession({
     ReviewScope scope = const ReviewScope.all(),
     ReviewMode mode = ReviewMode.srs,
+    int? prefetchBatchSize = 25,
+    int prefetchRefillThreshold = 3,
   }) async {
-    final studies = await repository.getAllStudies();
-    final allChapters = <Chapter>[];
-    for (final study in studies) {
-      final chapters = await repository.getChaptersByStudy(study.id);
-      allChapters.addAll(chapters);
+    final List<Study> targetStudies;
+    final List<Chapter> targetChapters;
+    final List<RepertoireDecision> decisions;
+
+    if (scope.chapterId != null) {
+      final chapter = await repository.getChapter(scope.chapterId!);
+      targetChapters = chapter != null ? [chapter] : const [];
+      final study = chapter != null ? await repository.getStudy(chapter.studyId) : null;
+      targetStudies = study != null ? [study] : const [];
+      decisions = await repository.getDecisionsByChapter(scope.chapterId!);
+    } else if (scope.studyId != null) {
+      final study = await repository.getStudy(scope.studyId!);
+      targetStudies = study != null ? [study] : const [];
+      targetChapters = await repository.getChaptersByStudy(scope.studyId!);
+      decisions = await repository.getDecisionsByStudy(scope.studyId!);
+    } else if (scope.openingFamily != null) {
+      final allStudies = await repository.getAllStudies();
+      final activeStudies = allStudies.where((s) => s.isActive).toList();
+      final chapterOpenings = await repository.getChapterOpenings();
+      final matchingChapterIds = chapterOpenings.entries
+          .where((e) => e.value?.trim() == scope.openingFamily!.trim())
+          .map((e) => e.key)
+          .toSet();
+
+      final chapters = <Chapter>[];
+      for (final s in activeStudies) {
+        final studyChapters = await repository.getChaptersByStudy(s.id);
+        chapters.addAll(studyChapters.where((c) => matchingChapterIds.contains(c.id)));
+      }
+      targetStudies = activeStudies;
+      targetChapters = chapters;
+      decisions = await _getOpeningDecisions(targetChapters, scope.openingFamily!, activeStudies);
+    } else {
+      final allStudies = await repository.getAllStudies();
+      final activeStudies = allStudies.where((s) => s.isActive).toList();
+      final chapters = <Chapter>[];
+      for (final s in activeStudies) {
+        final studyChapters = await repository.getChaptersByStudy(s.id);
+        chapters.addAll(studyChapters);
+      }
+      targetStudies = allStudies;
+      targetChapters = chapters;
+      decisions = await _getActiveDecisions(allStudies);
     }
 
-    final decisions = scope.chapterId != null
-        ? await repository.getDecisionsByChapter(scope.chapterId!)
-        : (scope.studyId != null
-              ? await repository.getDecisionsByStudy(scope.studyId!)
-              : (scope.openingFamily != null
-                    ? await _getOpeningDecisions(allChapters, scope.openingFamily!, studies)
-                    : await _getActiveDecisions(studies)));
-
-    final reviewStatesList = await repository.getAllReviewStates();
+    final decisionIds = decisions.map((d) => d.id).toList();
+    final reviewStatesList = await repository.getReviewStatesByDecisions(decisionIds);
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
 
     final engine = ReviewEngine(scheduler: scheduler, clock: clock);
 
     final session = engine.createSession(
-      studies: studies,
-      chapters: allChapters,
+      studies: targetStudies,
+      chapters: targetChapters,
       decisions: decisions,
       reviewStates: reviewStates,
       scope: scope,
       mode: mode,
+      prefetchBatchSize: prefetchBatchSize,
+      prefetchRefillThreshold: prefetchRefillThreshold,
     );
 
     _activeSession = session;

@@ -350,11 +350,7 @@ void main() {
           ease: 3.0,
           scaling: 1.8,
         );
-        final service = ReviewService(
-          repository: repo,
-          scheduler: customScheduler,
-          clock: clock,
-        );
+        final service = ReviewService(repository: repo, scheduler: customScheduler, clock: clock);
 
         try {
           const study = Study(id: 's_ease', title: 'Ease Study');
@@ -388,6 +384,51 @@ void main() {
           state = await repo.getReviewState(d.id);
           expect(state?.repetitionCount, 2);
           expect(state?.nextDueAt, clock.now().add(const Duration(days: 3)));
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
+    test(
+      'startSession with ReviewScope.chapter loads only target chapter and its decisions',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+        final service = ReviewService(repository: repo, clock: clock);
+
+        try {
+          const study = Study(id: 's_target', title: 'Target Study');
+          await repo.saveStudy(study);
+
+          final ch1 = Chapter.create(studyId: 's_target', sourceOrder: 0, title: 'Target Chapter');
+          final ch2 = Chapter.create(studyId: 's_target', sourceOrder: 1, title: 'Other Chapter');
+          await repo.saveChapter(ch1);
+          await repo.saveChapter(ch2);
+
+          final d1 = RepertoireDecision.create(
+            studyId: 's_target',
+            chapterId: ch1.id,
+            nodeId: 'n1',
+            expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+          );
+          final d2 = RepertoireDecision.create(
+            studyId: 's_target',
+            chapterId: ch2.id,
+            nodeId: 'n2',
+            expectedMoves: const [RepertoireMove(from: 'd2', to: 'd4', san: 'd4')],
+          );
+          await repo.saveDecisions([d1, d2]);
+
+          final session = await service.startSession(
+            scope: ReviewScope.chapter(studyId: 's_target', chapterId: ch1.id),
+          );
+
+          // Only ch1 decisions are loaded
+          expect(session.remainingDueCount, 1);
+          expect(session.currentPrompt?.chapterId, ch1.id);
+          expect(session.getChapter(ch1.id), isNotNull);
+          expect(session.getChapter(ch2.id), isNull);
         } finally {
           await db.close();
         }

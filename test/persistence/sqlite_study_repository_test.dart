@@ -480,5 +480,26 @@ void main() {
         await db.close();
       }
     });
+
+    test('getReviewStatesByDecisions retrieves only review states for specified IDs', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+
+      try {
+        const s1 = ReviewState(decisionId: 'dec-1', repetitionCount: 1);
+        const s2 = ReviewState(decisionId: 'dec-2', repetitionCount: 2);
+        const s3 = ReviewState(decisionId: 'dec-3', repetitionCount: 3);
+        await repo.saveReviewStates([s1, s2, s3]);
+
+        final queried = await repo.getReviewStatesByDecisions(['dec-1', 'dec-3']);
+        expect(queried.length, 2);
+        expect(queried.map((s) => s.decisionId).toSet(), equals({'dec-1', 'dec-3'}));
+
+        final emptyQuery = await repo.getReviewStatesByDecisions([]);
+        expect(emptyQuery, isEmpty);
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

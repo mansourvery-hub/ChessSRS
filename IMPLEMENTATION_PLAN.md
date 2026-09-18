@@ -181,9 +181,13 @@ beta-feedback justification.
       2. Configurable factors: initial interval (1d), ease multiplier (default 2.5x), and geometric growth rate scaling (default 1.5x) with lapse recovery and maximum interval clamping.
       3. User preferences & settings: `SchedulerType` picker in `SettingsScreen` backed by `StudyPrefs`, exposing ease and scaling factor controls when parametric scheduler is active.
       4. Dynamic engine binding: `ReviewService.schedulerProvider` automatically provisions the selected scheduling algorithm. *(done: 2026-09-18)*
+- [x] **S2: Targeted Scope Loading & Queue Prefetch Buffer (`queue_prefetch`)**
+      1. Targeted persistence queries: `ReviewService.startSession` queries only the chapters, decisions, and review states needed for the active scope, eliminating full-database JSON tree deserialization loops on session start.
+      2. Chunked review state lookup: `StudyRepository.getReviewStatesByDecisions` retrieves states exclusively for active decisions with 400-item SQLite chunking.
+      3. Queue prefetch buffer: `ReviewSession` buffers due items in bounded batches (`prefetchBatchSize: 25`) and refills automatically when remaining items reach threshold (`prefetchRefillThreshold: 3`), ensuring instant startup and low memory usage on massive repertoires (chessrs `PracticeMainPanel.tsx` semantics). *(done: 2026-09-18)*
 
-Per `docs/INTEGRATION_MAP.md`: queue prefetch behavior, opening grouping
-cross-study. FSRS remains a later option — never a redesign.
+Per `docs/INTEGRATION_MAP.md`: remaining chessrs behaviors integrated. FSRS
+remains a later option — never a redesign.
 
 ## Phase 6 — Refinement
 

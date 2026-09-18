@@ -638,5 +638,59 @@ void main() {
         expect(resultB.autoPlayedMoves.first.move.san, 'c5');
       },
     );
+
+    test(
+      'queue prefetching buffers decisions and refills when threshold is reached (chessrs semantics)',
+      () {
+        const study = Study(id: 's_prefetch', title: 'Prefetch Study');
+        final chapter = Chapter.create(studyId: 's_prefetch', sourceOrder: 0);
+
+        // Create 10 decisions
+        final decisions = List.generate(10, (i) {
+          return RepertoireDecision(
+            id: 'dec-$i',
+            studyId: study.id,
+            chapterId: chapter.id,
+            nodeId: 'node-$i',
+            expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4')],
+          );
+        });
+
+        final engine = ReviewEngine(clock: clock);
+
+        // Session configured with prefetchBatchSize: 3 and prefetchRefillThreshold: 1
+        final session = engine.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: decisions,
+          reviewStates: const {},
+          prefetchBatchSize: 3,
+          prefetchRefillThreshold: 1,
+        );
+
+        // Total remaining due count accurately accounts for all 10 items (1 current prompt + 9 queued)
+        expect(session.initialDueCount, 10);
+        expect(session.remainingDueCount, 10);
+        expect(session.currentPrompt?.decision.id, 'dec-0');
+
+        // Skip advances to dec-1, queue count should still be 10 (skipped item placed at back)
+        session.skip();
+        expect(session.currentPrompt?.decision.id, 'dec-1');
+        expect(session.remainingDueCount, 10);
+
+        // All 10 decisions are surfaced through the prefetch buffer
+        final promptIds = <String>{};
+        for (var i = 0; i < 15; i++) {
+          if (session.currentPrompt != null) {
+            promptIds.add(session.currentPrompt!.decision.id);
+            session.skip();
+          }
+        }
+
+        for (var i = 0; i < 10; i++) {
+          expect(promptIds.contains('dec-$i'), isTrue);
+        }
+      },
+    );
   });
 }
