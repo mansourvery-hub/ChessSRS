@@ -10,6 +10,7 @@ library;
 export 'chapter.dart';
 export 'chess_fsrs_scheduler.dart';
 export 'clock.dart';
+export 'graph_aware_review_coordinator.dart';
 export 'ids.dart';
 export 'position_knowledge_state.dart';
 export 'repertoire_decision.dart';

@@ -507,5 +507,108 @@ void main() {
         }
       },
     );
+
+    test(
+      'graph side effects: lapse on parent persists contagion updates to descendant canonical knowledge states in database',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+        try {
+          final service = ReviewService(repository: repo, clock: clock);
+
+          final study = Study(id: 's_graph', title: 'Graph Study', createdAt: now, updatedAt: now);
+          await repo.saveStudy(study);
+
+          const rootNode = RepertoireNode(
+            id: 'n_root',
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            fenKey: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -',
+            children: [
+              RepertoireNode(
+                id: 'n_e4',
+                fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+                fenKey: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -',
+                incomingMove: RepertoireMove(from: 'e2', to: 'e4', san: 'e4'),
+                children: [
+                  RepertoireNode(
+                    id: 'n_e5',
+                    fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2',
+                    fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                    incomingMove: RepertoireMove(from: 'e7', to: 'e5', san: 'e5'),
+                    children: [
+                      RepertoireNode(
+                        id: 'n_nf3',
+                        fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                        fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                        incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          const chapter = Chapter(
+            id: 'ch_g',
+            studyId: 's_graph',
+            title: 'Line',
+            sourceOrder: 0,
+            root: rootNode,
+          );
+          await repo.saveChapter(chapter);
+
+          final dec1 = RepertoireDecision.create(
+            studyId: 's_graph',
+            chapterId: 'ch_g',
+            nodeId: 'n_root',
+            expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+            canonicalStateId: 'canon_dec1',
+          );
+          final dec2 = RepertoireDecision.create(
+            studyId: 's_graph',
+            chapterId: 'ch_g',
+            nodeId: 'n_e5',
+            expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+            canonicalStateId: 'canon_dec2',
+          );
+          await repo.saveDecisions([dec1, dec2]);
+
+          // Set dec2 as learned with future due date
+          final initialDue = now.add(const Duration(days: 10));
+          const initialStability = 10.0 * 86400000;
+          await repo.savePositionKnowledgeState(
+            PositionKnowledgeState(
+              canonicalId: 'canon_dec2',
+              stability: initialStability,
+              difficulty: 4.0,
+              repetitionCount: 3,
+              lastReviewedAt: now.subtract(const Duration(days: 2)),
+              nextDueAt: initialDue,
+            ),
+          );
+
+          final session = await service.startSession(scope: const ReviewScope.study('s_graph'));
+          expect(session.currentPrompt?.decision.id, dec1.id);
+
+          // Submit incorrect move (lapse) on dec1
+          final stepResult = await service.submitMove(from: 'd2', to: 'd4');
+          expect(stepResult.isCorrect, isFalse);
+          expect(stepResult.sideEffectStates, isNotEmpty);
+
+          // Verify dec2 canonical state was updated in database via contagion!
+          final updatedChildKState = await repo.getPositionKnowledgeState('canon_dec2');
+          expect(updatedChildKState, isNotNull);
+          expect(updatedChildKState!.stability, lessThan(initialStability));
+          expect(updatedChildKState.difficulty, greaterThan(4.0));
+          expect(updatedChildKState.nextDueAt!.isBefore(initialDue), isTrue);
+          // Invariant: repetition count and lapse count are NOT changed for descendant
+          expect(updatedChildKState.repetitionCount, 3);
+          expect(updatedChildKState.lapseCount, 0);
+        } finally {
+          await db.close();
+        }
+      },
+    );
   });
 }

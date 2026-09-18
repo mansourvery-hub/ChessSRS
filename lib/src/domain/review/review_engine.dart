@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/clock.dart';
+import 'package:chess_srs/src/domain/graph_aware_review_coordinator.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
 import 'package:chess_srs/src/domain/review/review_mode.dart';
 import 'package:chess_srs/src/domain/review/review_scope.dart';
@@ -34,6 +35,7 @@ class ReviewEngine {
     ReviewMode mode = ReviewMode.srs,
     int? prefetchBatchSize = 25,
     int prefetchRefillThreshold = 3,
+    GraphAwareReviewCoordinator? coordinator,
     Random? random,
   }) {
     return ReviewSession(
@@ -47,6 +49,7 @@ class ReviewEngine {
       clock: clock,
       prefetchBatchSize: prefetchBatchSize,
       prefetchRefillThreshold: prefetchRefillThreshold,
+      coordinator: coordinator,
       random: random ?? this.random,
     );
   }

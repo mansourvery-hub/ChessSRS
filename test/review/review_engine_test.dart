@@ -692,5 +692,191 @@ void main() {
         }
       },
     );
+
+    test(
+      'lapse on prompt propagates lapse contagion to learned descendant decisions in the repertoire line',
+      () {
+        final (study, chapter, decisions) = buildTestRepertoire();
+        final dec1 = decisions[0]; // 1. e4
+        final dec2 = decisions[1]; // 2. Nf3 (descendant at depth 1)
+        final dec3 = decisions[2]; // 3. Bc4 (descendant at depth 2)
+
+        final initialDec2Due = baseTime.add(const Duration(days: 10));
+        final initialDec3Due = baseTime.add(const Duration(days: 20));
+
+        final reviewStates = {
+          dec1.id: ReviewState.initial(decisionId: dec1.id),
+          dec2.id: ReviewState(
+            decisionId: dec2.id,
+            stability: 10.0 * 86400000,
+            difficulty: 4.0,
+            repetitionCount: 3,
+            lastReviewedAt: baseTime.subtract(const Duration(days: 5)),
+            nextDueAt: initialDec2Due,
+          ),
+          dec3.id: ReviewState(
+            decisionId: dec3.id,
+            stability: 20.0 * 86400000,
+            difficulty: 4.0,
+            repetitionCount: 4,
+            lastReviewedAt: baseTime.subtract(const Duration(days: 5)),
+            nextDueAt: initialDec3Due,
+          ),
+        };
+
+        final engine = ReviewEngine(clock: clock);
+        final session = engine.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: decisions,
+          reviewStates: reviewStates,
+        );
+
+        expect(session.currentPrompt?.decision.id, dec1.id);
+
+        // Submit incorrect move (lapse) on dec-1
+        final stepResult = session.submitMove(from: 'd2', to: 'd4');
+        expect(stepResult.isCorrect, isFalse);
+        expect(stepResult.updatedState.lapseCount, 1);
+
+        // Lapse contagion should have updated dec-2 and dec-3
+        expect(stepResult.sideEffectStates.length, 2);
+
+        final updatedDec2 = session.reviewStates[dec2.id]!;
+        final updatedDec3 = session.reviewStates[dec3.id]!;
+
+        expect(updatedDec2.stability, lessThan(10.0 * 86400000));
+        expect(updatedDec2.difficulty, greaterThan(4.0));
+        expect(updatedDec2.nextDueAt!.isBefore(initialDec2Due), isTrue);
+
+        expect(updatedDec3.stability, lessThan(20.0 * 86400000));
+        expect(updatedDec3.difficulty, greaterThan(4.0));
+        expect(updatedDec3.nextDueAt!.isBefore(initialDec3Due), isTrue);
+      },
+    );
+
+    test(
+      'auto-traversal through non-due decisions grants auto-traversal credit and includes updated states in sideEffectStates',
+      () {
+        final (study, chapter, decisions) = buildTestRepertoire();
+        final dec1 = decisions[0]; // 1. e4 (due)
+        final dec2 = decisions[1]; // 2. Nf3 (learned, NOT due)
+        final dec3 = decisions[2]; // 3. Bc4 (due)
+
+        final initialDec2Due = baseTime.add(const Duration(days: 5));
+        const initialDec2Stability = 5.0 * 86400000;
+        final initialDec2LastReviewed = baseTime.subtract(const Duration(days: 2));
+
+        final reviewStates = {
+          dec1.id: ReviewState.initial(decisionId: dec1.id),
+          dec2.id: ReviewState(
+            decisionId: dec2.id,
+            stability: initialDec2Stability,
+            difficulty: 4.5,
+            repetitionCount: 2,
+            lastReviewedAt: initialDec2LastReviewed,
+            nextDueAt: initialDec2Due,
+          ),
+          dec3.id: ReviewState.initial(decisionId: dec3.id),
+        };
+
+        final engine = ReviewEngine(clock: clock);
+        final session = engine.createSession(
+          studies: [study],
+          chapters: [chapter],
+          decisions: decisions,
+          reviewStates: reviewStates,
+        );
+
+        expect(session.currentPrompt?.decision.id, dec1.id);
+
+        // Submit correct move 1. e4
+        final stepResult = session.submitMove(from: 'e2', to: 'e4');
+        expect(stepResult.isCorrect, isTrue);
+
+        // Engine auto-played 1... e5, bypassed non-due dec-2 (auto-played 2. Nf3),
+        // engine auto-played 2... Nc6, and arrived at dec-3
+        expect(stepResult.nextPrompt?.decision.id, dec3.id);
+
+        // Exposure credit granted to dec-2 and reported in sideEffectStates
+        expect(stepResult.sideEffectStates, isNotEmpty);
+        final exposedDec2 = stepResult.sideEffectStates.firstWhere((s) => s.decisionId == dec2.id);
+        expect(exposedDec2.stability, closeTo(initialDec2Stability * 1.08, 100));
+        expect(exposedDec2.nextDueAt!.isAfter(initialDec2Due), isTrue);
+        expect(exposedDec2.lastReviewedAt, equals(initialDec2LastReviewed));
+      },
+    );
+
+    test('playing a confusable sibling move couples difficulty of the sibling decision', () {
+      const study1 = Study(id: 's1', title: 'Study 1');
+      const study2 = Study(id: 's2', title: 'Study 2');
+
+      const rootFenKey = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
+      const root1 = RepertoireNode(
+        id: 'n1',
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        fenKey: rootFenKey,
+      );
+      const root2 = RepertoireNode(
+        id: 'n2',
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        fenKey: rootFenKey,
+      );
+
+      final dec1 = RepertoireDecision(
+        id: 'd1',
+        studyId: study1.id,
+        chapterId: 'c1',
+        nodeId: root1.id,
+        expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4')],
+      );
+      final dec2 = RepertoireDecision(
+        id: 'd2',
+        studyId: study2.id,
+        chapterId: 'c2',
+        nodeId: root2.id,
+        expectedMoves: const [RepertoireMove(from: 'd2', to: 'd4')],
+      );
+
+      final chapter1 = Chapter(
+        id: 'c1',
+        studyId: study1.id,
+        title: 'C1',
+        sourceOrder: 0,
+        root: root1,
+      );
+      final chapter2 = Chapter(
+        id: 'c2',
+        studyId: study2.id,
+        title: 'C2',
+        sourceOrder: 0,
+        root: root2,
+      );
+
+      final reviewStates = {
+        dec1.id: ReviewState(decisionId: dec1.id, stability: 1000, difficulty: 5.0),
+        dec2.id: ReviewState(decisionId: dec2.id, stability: 1000, difficulty: 4.0),
+      };
+
+      final engine = ReviewEngine(clock: clock);
+      final session = engine.createSession(
+        studies: [study1, study2],
+        chapters: [chapter1, chapter2],
+        decisions: [dec1, dec2],
+        reviewStates: reviewStates,
+        scope: const ReviewScope.study('s1'),
+      );
+
+      expect(session.currentPrompt?.decision.id, dec1.id);
+
+      // User plays d2d4 (the move from dec2) while prompted for dec1
+      final stepResult = session.submitMove(from: 'd2', to: 'd4');
+      expect(stepResult.isCorrect, isFalse);
+
+      final updatedDec2 = session.reviewStates[dec2.id]!;
+      // Difficulty coupled (+0.35)
+      expect(updatedDec2.difficulty, closeTo(4.35, 0.001));
+      expect(stepResult.sideEffectStates, contains(updatedDec2));
+    });
   });
 }

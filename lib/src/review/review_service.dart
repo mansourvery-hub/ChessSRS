@@ -186,6 +186,21 @@ class ReviewService {
       if (result.event != null) {
         await repository.saveReviewEvent(result.event!);
       }
+
+      // Persist any secondary states updated via graph effects (contagion, siblings, auto-traversal)
+      for (final sideState in result.sideEffectStates) {
+        final sideKState = PositionKnowledgeState(
+          canonicalId: sideState.decisionId,
+          firstReviewedAt: sideState.firstReviewedAt,
+          lastReviewedAt: sideState.lastReviewedAt,
+          nextDueAt: sideState.nextDueAt,
+          repetitionCount: sideState.repetitionCount,
+          lapseCount: sideState.lapseCount,
+          stability: sideState.stability,
+          difficulty: sideState.difficulty,
+        );
+        await repository.savePositionKnowledgeState(sideKState);
+      }
     }
 
     return result;

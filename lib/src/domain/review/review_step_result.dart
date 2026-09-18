@@ -16,6 +16,7 @@ class ReviewStepResult {
     required this.autoPlayedMoves,
     this.nextPrompt,
     this.sessionComplete = false,
+    this.sideEffectStates = const [],
   });
 
   final bool isCorrect;
@@ -26,6 +27,10 @@ class ReviewStepResult {
   final List<AutoPlayedMove> autoPlayedMoves;
   final ReviewPrompt? nextPrompt;
   final bool sessionComplete;
+
+  /// Secondary states updated as graph side-effects (lapse contagion, confusable
+  /// sibling coupling, or auto-traversal credit).
+  final List<ReviewState> sideEffectStates;
 
   @override
   String toString() =>

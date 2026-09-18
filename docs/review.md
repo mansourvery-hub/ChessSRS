@@ -164,3 +164,26 @@ Unlike generic flashcards where response speed approximates confidence, chess is
   - `Rating.good`: First committed move on the board is correct, regardless of think time. Interval advances using target retention ($R_{\text{target}}$).
   - `Rating.again`: Incorrect move, hint used, or a corrected false start. Lapse recorded; stability regresses.
 - Move latency is preserved purely as optional telemetry (`latencyEmaMs`), firewalled from interval calculations.
+
+## Graph-Aware Memory Propagation (`GraphAwareReviewCoordinator`)
+
+While the FSRS kernel manages single-node decay and stability updates, chess decisions exist in a structured graph of forced move orders, branching variations, and shared transpositions. `GraphAwareReviewCoordinator` wraps the scheduler with domain-specific graph effects:
+
+1. **Lapse Contagion (§B.1)**:
+   - When an error occurs at a decision point, child decisions in that line are not completely reset (avoiding demotivating full-subtree amnesia from a single misclick).
+   - Instead, exponentially decaying stability reduction is applied to direct descendants:
+     $$S_{\text{child}}' = S_{\text{child}} \times (1 - \lambda_0 \cdot e^{-\text{depth}/\tau}), \quad \lambda_0 = 0.18, \, \tau = 1.5$$
+   - Descendant difficulty is nudged ($\Delta D = \beta \cdot \text{decay}, \beta = 0.6$) and due dates are pulled forward proportionally.
+   - Child repetition streaks and lapse counters remain untouched.
+
+2. **Auto-Traversal Exposure Credit (§B.2)**:
+   - When non-due (already learned) decisions are auto-traversed during review, seeing the move played provides passive recall reinforcement.
+   - The decision receives a bounded micro-stability bump:
+     $$S' = S \times (1 + \varepsilon), \quad \varepsilon = 0.08$$
+   - Extended due date: $\text{nextDueAt}' = \text{nextDueAt} + \text{remaining} \times \varepsilon$.
+   - Throttled to once per calendar day to prevent farming, and strictly refused if the item is already due.
+
+3. **Confusable Sibling Coupling (§B.4)**:
+   - When a user plays an alternative legal continuation matching a sibling decision at the same position, the coordinator detects candidate interference.
+   - Sibling decision difficulty is coupled:
+     $$D_{\text{sibling}}' = \operatorname{clip}(D_{\text{sibling}} + \kappa, 1.0, 10.0), \quad \kappa = 0.35$$

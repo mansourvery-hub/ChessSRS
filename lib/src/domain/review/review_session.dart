@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/clock.dart';
+import 'package:chess_srs/src/domain/graph_aware_review_coordinator.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
 import 'package:chess_srs/src/domain/repertoire_move.dart';
 import 'package:chess_srs/src/domain/repertoire_node.dart';
@@ -36,11 +37,13 @@ class ReviewSession {
     this.clock = const SystemClock(),
     this.prefetchBatchSize = 25,
     this.prefetchRefillThreshold = 3,
+    GraphAwareReviewCoordinator? coordinator,
     Random? random,
   }) : _random = random ?? Random(),
        _studies = {for (final s in studies) s.id: s},
        _chapters = {for (final c in chapters) c.id: c},
        _reviewStates = Map<String, ReviewState>.from(reviewStates),
+       _decisionsById = {for (final d in decisions) d.id: d},
        _decisionForNode = {for (final d in decisions) d.nodeId: d} {
     // Index all nodes across chapter trees for O(1) lookup
     for (final chapter in chapters) {
@@ -48,6 +51,23 @@ class ReviewSession {
         _indexNodes(chapter.root!);
       }
     }
+
+    // Index canonical keys for (fenKey, expectedMoveUci)
+    for (final d in decisions) {
+      final node = _nodesById[d.nodeId];
+      if (node != null) {
+        for (final m in d.expectedMoves) {
+          _canonicalByFenMove['${node.fenKey}|${m.uci}'] = d.canonicalId;
+        }
+      }
+    }
+
+    _coordinator =
+        coordinator ??
+        GraphAwareReviewCoordinator(
+          scheduler: scheduler,
+          repo: _SessionReviewStateRepository(this),
+        );
 
     // Build initial due queue
     final now = clock.now();
@@ -91,12 +111,15 @@ class ReviewSession {
   /// Threshold at which the active prefetch buffer refills from unbuffered decisions.
   final int prefetchRefillThreshold;
 
+  late final GraphAwareReviewCoordinator _coordinator;
   final Map<String, Study> _studies;
   final Map<String, Chapter> _chapters;
   final Map<String, ReviewState> _reviewStates;
+  final Map<String, RepertoireDecision> _decisionsById;
   final Map<String, RepertoireDecision> _decisionForNode;
   final Map<String, RepertoireNode> _nodesById = {};
   final Map<String, RepertoireNode> _parentOfNode = {};
+  final Map<String, String> _canonicalByFenMove = {};
 
   final List<RepertoireDecision> _dueQueue = [];
   final List<RepertoireDecision> _unbufferedQueue = [];
@@ -164,7 +187,18 @@ class ReviewSession {
         nextState = prevState;
         event = null;
       } else {
-        nextState = scheduler.schedule(previous: prevState, result: ReviewResult.correct, now: now);
+        final graphNode = GraphNode(
+          decisionId: decision.canonicalId,
+          parentId: null,
+          fen4: prompt.fenKey,
+          expectedMoveUci: expectedMatch.uci,
+        );
+        final graphResult = _coordinator.recordActiveReview(
+          node: graphNode,
+          result: ReviewResult.correct,
+          now: now,
+        );
+        nextState = graphResult.primaryState;
         _reviewStates[decision.canonicalId] = nextState;
         _reviewStates[decision.id] = nextState;
 
@@ -193,18 +227,30 @@ class ReviewSession {
 
       ReviewState nextState;
       ReviewEvent? event;
+      List<ReviewState> sideEffects = const [];
 
       if (mode == ReviewMode.practice) {
         nextState = prevState;
         event = null;
       } else {
-        nextState = scheduler.schedule(
-          previous: prevState,
+        final graphNode = GraphNode(
+          decisionId: decision.canonicalId,
+          parentId: null,
+          fen4: prompt.fenKey,
+          expectedMoveUci: prompt.expectedMoves.first.uci,
+        );
+        final siblings = _findSiblingGraphNodes(decision);
+        final graphResult = _coordinator.recordActiveReview(
+          node: graphNode,
           result: ReviewResult.incorrect,
           now: now,
+          playedMoveUci: movePlayed.uci,
+          siblings: siblings,
         );
+        nextState = graphResult.primaryState;
         _reviewStates[decision.canonicalId] = nextState;
         _reviewStates[decision.id] = nextState;
+        sideEffects = graphResult.sideEffectStates;
 
         event = ReviewEvent(
           decisionId: decision.canonicalId,
@@ -234,6 +280,7 @@ class ReviewSession {
         autoPlayedMoves: const [],
         nextPrompt: _currentPrompt, // keeps prompt until user continues or retries
         sessionComplete: false,
+        sideEffectStates: sideEffects,
       );
     }
   }
@@ -284,6 +331,7 @@ class ReviewSession {
   }) {
     final now = clock.now();
     final autoPlayed = <AutoPlayedMove>[];
+    final sideEffects = <ReviewState>[];
     var activeNode = _findChildForMove(prompt.currentNode, expectedMatch);
 
     while (activeNode != null) {
@@ -328,6 +376,7 @@ class ReviewSession {
             autoPlayedMoves: autoPlayed,
             nextPrompt: _currentPrompt,
             sessionComplete: false,
+            sideEffectStates: sideEffects,
           );
         }
       }
@@ -345,6 +394,23 @@ class ReviewSession {
             comment: userChild.comment,
           ),
         );
+
+        // Auto-traversal exposure credit for nextDecision (Invariant §2.4, Architecture §B.2)
+        if (mode != ReviewMode.practice && nextDecision != null) {
+          final expNode = GraphNode(
+            decisionId: nextDecision.canonicalId,
+            parentId: prompt.decision.canonicalId,
+            fen4: opponentChild.fenKey,
+            expectedMoveUci: userMove.uci,
+          );
+          final exposedState = _coordinator.recordAutoTraversalExposure(node: expNode, now: now);
+          if (exposedState != null) {
+            _reviewStates[nextDecision.canonicalId] = exposedState;
+            _reviewStates[nextDecision.id] = exposedState;
+            sideEffects.add(exposedState);
+          }
+        }
+
         activeNode = userChild;
       } else {
         activeNode = null;
@@ -363,6 +429,7 @@ class ReviewSession {
       autoPlayedMoves: autoPlayed,
       nextPrompt: _currentPrompt,
       sessionComplete: isComplete,
+      sideEffectStates: sideEffects,
     );
   }
 
@@ -530,4 +597,70 @@ class ReviewSession {
     }
     return candidates.first;
   }
+
+  List<String> _childDecisionIdsOf(String decisionId) {
+    final decision =
+        _decisionsById[decisionId] ??
+        _decisionForNode.values.where((d) => d.canonicalId == decisionId).firstOrNull;
+    if (decision == null) return const [];
+    final node = _nodesById[decision.nodeId];
+    if (node == null) return const [];
+
+    final childDecisionIds = <String>{};
+    for (final exp in decision.expectedMoves) {
+      final userChild = node.childForMove(exp);
+      if (userChild == null) continue;
+      for (final oppChild in userChild.children) {
+        final childDec = _decisionForNode[oppChild.id];
+        if (childDec != null) {
+          childDecisionIds.add(childDec.canonicalId);
+        }
+      }
+    }
+    return childDecisionIds.toList(growable: false);
+  }
+
+  List<GraphNode> _findSiblingGraphNodes(RepertoireDecision decision) {
+    final node = _nodesById[decision.nodeId];
+    if (node == null) return const [];
+
+    final siblings = <GraphNode>[];
+    for (final other in _decisionForNode.values) {
+      if (other.id == decision.id || other.canonicalId == decision.canonicalId) continue;
+      final otherNode = _nodesById[other.nodeId];
+      if (otherNode != null && otherNode.fenKey == node.fenKey) {
+        for (final m in other.expectedMoves) {
+          siblings.add(
+            GraphNode(
+              decisionId: other.canonicalId,
+              parentId: null,
+              fen4: otherNode.fenKey,
+              expectedMoveUci: m.uci,
+            ),
+          );
+        }
+      }
+    }
+    return siblings;
+  }
+}
+
+class _SessionReviewStateRepository implements ReviewStateRepository {
+  _SessionReviewStateRepository(this._session);
+  final ReviewSession _session;
+
+  @override
+  ReviewState? get(String decisionId) => _session._reviewStates[decisionId];
+
+  @override
+  void put(String decisionId, ReviewState state) {
+    _session._reviewStates[decisionId] = state;
+  }
+
+  @override
+  List<String> childrenOf(String decisionId) => _session._childDecisionIdsOf(decisionId);
+
+  @override
+  String? canonicalIdFor(String fen4, String expectedMoveUci) =>
+      _session._canonicalByFenMove['$fen4|$expectedMoveUci'];
 }

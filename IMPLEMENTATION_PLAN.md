@@ -205,6 +205,12 @@ remains a later option — never a redesign.
       2. Domain kernel: `ChessFsrsScheduler` implementing continuous Difficulty-Stability-Retrievability (DSR) power-law forgetting curves ($R = (1 + F \cdot t/S)^C$) with explicit target retention interval solving ($R_{\text{target}}$).
       3. UI & Settings: added `ChessFSRS` to `SchedulerType` with user-tunable `Target recall retention` picker in `SettingsScreen` (80% to 95% tournament prep).
       4. Engine binding: `ReviewService.schedulerProvider` dynamically provisions `ChessFsrsScheduler`. *(done: 2026-09-18)*
+- [x] **R4: Graph-Aware Review Coordinator (DSR Architecture Step 3)**
+      1. Domain coordinator: `GraphAwareReviewCoordinator` implementing chess-specific graph propagation wrapping `ChessFsrsScheduler` or any `Scheduler`.
+      2. Upstream lapse contagion (§B.1): soft exponential stability reduction ($S_{\text{child}}' = S_{\text{child}} \times (1 - \lambda_0 \cdot e^{-\text{depth}/\tau})$) for learned descendants along the line, preventing catastrophic full-subtree resets.
+      3. Auto-traversal exposure credit (§B.2): bounded micro-stability bump ($\varepsilon = 0.08$) for non-due moves passed over during review traversal, throttled to 1/calendar day and refused for already-due items.
+      4. Confusable sibling coupling (§B.4): dynamically couples sibling difficulty ($\Delta D = 0.35$) when an incorrect move matches an alternative repertoire continuation.
+      5. Incremental side-effect persistence: `ReviewSession` reports `sideEffectStates` in `ReviewStepResult`, incrementally persisted to `position_knowledge_state` in SQLite by `ReviewService`. *(done: 2026-09-18)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only
