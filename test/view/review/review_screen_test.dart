@@ -70,7 +70,7 @@ void main() {
       );
 
       await tester.pumpWidget(app);
-      await pumpAsync(tester);
+      await pumpAsync(tester, 200);
 
       expect(find.text('Welcome to ChessSRS'), findsOneWidget);
       expect(find.text('Import Repertoire PGN'), findsWidgets);
