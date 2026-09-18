@@ -4,12 +4,16 @@
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/model/common/service/sound_service.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
+import 'package:chess_srs/src/model/study/study_repository.dart' as lichess_study;
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/review/review_service.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../binding.dart';
@@ -41,7 +45,7 @@ void main() {
       await db.close();
     });
 
-    ProviderContainer createContainer() {
+    ProviderContainer createContainer({List<Override> extraOverrides = const []}) {
       final container = ProviderContainer(
         overrides: [
           srsStudyRepositoryProvider.overrideWith((ref) => repo),
@@ -54,6 +58,7 @@ void main() {
               clock: clock,
             ),
           ),
+          ...extraOverrides,
         ],
       );
       addTearDown(container.dispose);
@@ -648,5 +653,82 @@ void main() {
         expect((session.scheduler as EaseScalingScheduler).ease, 3.0);
       },
     );
+
+    group('importLichessStudy', () {
+      test('fetches PGN from Lichess and derives title from headers', () async {
+        final mockClient = MockClient((request) async {
+          if (request.url.path == '/api/study/t3St1234.pgn') {
+            return http.Response(
+              '''
+[Event "Catalan Opening: Closed Variation"]
+[Site "https://lichess.org/study/t3St1234"]
+1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 *
+''',
+              200,
+              headers: {'content-type': 'application/x-chess-pgn'},
+            );
+          }
+          return http.Response('Not Found', 404);
+        });
+
+        final container = createContainer(
+          extraOverrides: [
+            lichess_study.studyRepositoryProvider.overrideWith(
+              (ref) => lichess_study.StudyRepository(ref, mockClient),
+            ),
+          ],
+        );
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        final result = await controller.importLichessStudy(
+          studyIdOrUrl: 'https://lichess.org/study/t3St1234',
+          repertoireSide: Side.white,
+        );
+
+        expect(result.study.title, 'Catalan Opening');
+        expect(result.decisions.length, greaterThan(0));
+
+        final state = container.read(reviewControllerProvider).requireValue;
+        expect(state.studies.length, 1);
+        expect(state.studies.first.title, 'Catalan Opening');
+        expect(state.scope, ReviewScope.study(result.study.id));
+      });
+
+      test('throws FormatException on malformed URL or invalid ID', () {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        expect(
+          () => controller.importLichessStudy(studyIdOrUrl: 'not_a_valid_id'),
+          throwsA(isA<FormatException>()),
+        );
+      });
+
+      test('throws friendly FormatException on 404 response', () {
+        final mockClient = MockClient((request) async {
+          return http.Response('Study not found', 404);
+        });
+
+        final container = createContainer(
+          extraOverrides: [
+            lichess_study.studyRepositoryProvider.overrideWith(
+              (ref) => lichess_study.StudyRepository(ref, mockClient),
+            ),
+          ],
+        );
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        expect(
+          () => controller.importLichessStudy(studyIdOrUrl: 'm1AbCd2E'),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              contains('Study not found on Lichess'),
+            ),
+          ),
+        );
+      });
+    });
   });
 }

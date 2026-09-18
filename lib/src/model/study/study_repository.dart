@@ -89,9 +89,9 @@ class StudyRepository {
     return (study, readAnalysisSummaryFromHeader(response), utf8.decode(response.bodyBytes));
   }
 
-  Future<String> getStudyPgn(StudyId id) async {
+  Future<String> getStudyPgn(StudyId id, {String host = 'lichess.org'}) async {
     final pgnBytes = await client.readBytes(
-      Uri(path: '/api/study/$id.pgn'),
+      Uri.https(host, '/api/study/$id.pgn'),
       headers: {'Accept': 'application/x-chess-pgn'},
     );
 

@@ -220,6 +220,10 @@ remains a later option — never a redesign.
       1. Consolidation: unified all SRS and review-related settings (algorithm selector, FSRS target retention, parametric scaling controls, interval progression previews, board feedback/animation switches, and SRS diagnostics) into a dedicated `SrsSettingsScreen`.
       2. Clean Information Architecture: replaced 10 loose controls in the root `SettingsScreen` list with a single `Spaced repetition (SRS)` row reflecting current algorithm state, mirroring Sound, Background, and Board settings.
       3. In-Session Quick Access: added a direct SRS settings shortcut action to `ReviewScreen`'s AppBar for tuning parameters during active practice. *(done: 2026-09-18)*
+- [x] **R7: Lichess Study URL & ID Direct Import Pipeline**
+      1. Parsing & Extraction: added `extractLichessStudyId` and `extractStudyTitleFromPgn` to parse full URLs (`https://lichess.org/study/...`), chapter links, and raw 8-character study IDs.
+      2. HTTP Import API: connected `ReviewController.importLichessStudy` to `StudyRepository.getStudyPgn` (`/api/study/$id.pgn`) to download entire multi-chapter studies across public, unlisted, and private (authenticated) studies with error translation (friendly 404 and network guards).
+      3. Import Dialog UX: updated `RepertoireImportDialog` with segmented import source selection (`Lichess Study` vs `PGN Text / File`), quick clipboard paste button, auto-detection if a Lichess link is pasted into the PGN text area, and title derivation from PGN headers. *(done: 2026-09-18)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

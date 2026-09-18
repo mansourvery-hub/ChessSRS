@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/import/lichess_study_importer.dart';
 import 'package:chess_srs/src/import/pgn_exporter.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
+import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/service/move_feedback.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
+import 'package:chess_srs/src/model/study/study_repository.dart' show studyRepositoryProvider;
+import 'package:chess_srs/src/network/http.dart' show ServerException;
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_service.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' show ClientException;
 
 enum ReviewFeedback { none, correct, incorrect }
 
@@ -862,7 +867,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     if (existingStudy == null && title != null && title.trim().isNotEmpty) {
       final allStudies = await _repository.getAllStudies();
       final matchByTitle = allStudies
-          .where((s) => s.title.trim().toLowerCase() == title.trim().toLowerCase())
+          .where((Study s) => s.title.trim().toLowerCase() == title.trim().toLowerCase())
           .firstOrNull;
       if (matchByTitle != null) {
         final chapters = await _repository.getChaptersByStudy(matchByTitle.id);
@@ -893,6 +898,59 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     await _repository.saveImportResult(result);
     await changeScope(ReviewScope.study(result.study.id));
     return result;
+  }
+
+  /// Imports a study directly from Lichess given its URL or 8-character study ID.
+  Future<ImportResult> importLichessStudy({
+    required String studyIdOrUrl,
+    String? title,
+    Side? repertoireSide,
+  }) async {
+    final studyRef = parseLichessStudyReference(studyIdOrUrl);
+    if (studyRef == null) {
+      throw const FormatException('Invalid Lichess study URL or 8-character study ID');
+    }
+
+    final studyRepo = ref.read(studyRepositoryProvider);
+    final String pgnText;
+    try {
+      pgnText = await studyRepo.getStudyPgn(StudyId(studyRef.id), host: studyRef.host);
+    } on ServerException catch (e) {
+      if (e.statusCode == 404) {
+        throw const FormatException(
+          'Study not found on Lichess. Ensure the study is public or unlisted.',
+        );
+      }
+      throw FormatException('Failed to load study from Lichess (${e.statusCode}): ${e.message}');
+    } on ClientException catch (e) {
+      if (e.message.contains('404')) {
+        throw const FormatException(
+          'Study not found on Lichess. Ensure the study is public or unlisted.',
+        );
+      }
+      rethrow;
+    } catch (e) {
+      if (e.toString().contains('404')) {
+        throw const FormatException(
+          'Study not found on Lichess. Ensure the study is public or unlisted.',
+        );
+      }
+      rethrow;
+    }
+
+    if (pgnText.trim().isEmpty) {
+      throw const FormatException('The study contains no games or moves');
+    }
+
+    final effectiveTitle = title?.trim().isNotEmpty == true
+        ? title!.trim()
+        : extractStudyTitleFromPgn(pgnText) ?? 'Lichess Study ${studyRef.id}';
+
+    return await importPgnText(
+      pgnText: pgnText,
+      title: effectiveTitle,
+      repertoireSide: repertoireSide,
+    );
   }
 
   String? _resolveComment(ReviewPrompt? prompt, RepertoireMove? expectedMove) {

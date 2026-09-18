@@ -4,6 +4,7 @@
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_service.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
@@ -14,6 +15,8 @@ import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -897,6 +900,10 @@ void main() {
 
       expect(find.byType(RepertoireImportDialog), findsOneWidget);
 
+      // Switch to PGN Text / File tab
+      await tester.tap(find.text('PGN Text / File'));
+      await pumpAsync(tester);
+
       // Enter same PGN into PGN text field
       await tester.enterText(find.widgetWithText(TextField, 'PGN text'), pgn);
       await tester.tap(find.text('Import and Start Review'));
@@ -908,6 +915,62 @@ void main() {
         find.text('Repertoire "King Pawn Repertoire" is already imported and up to date'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('RepertoireImportDialog imports study from Lichess URL', (tester) async {
+      final mockClient = MockClient((request) async {
+        if (request.url.path == '/api/study/m1AbCd2E.pgn') {
+          return http.Response(
+            '''
+[Event "French Defense: Winawer Variation"]
+[Site "https://lichess.org/study/m1AbCd2E"]
+1. e4 e6 2. d4 d5 3. Nc3 Bb4 *
+''',
+            200,
+            headers: {'content-type': 'application/x-chess-pgn'},
+          );
+        }
+        return http.Response('Not Found', 404);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+          lichessClientProvider: lichessClientProvider.overrideWith(
+            (ref) => LichessClient(mockClient, ref),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer and click Import PGN
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      await tester.tap(find.text('Import PGN'));
+      await pumpAsync(tester);
+
+      expect(find.byType(RepertoireImportDialog), findsOneWidget);
+
+      // Enter Lichess study URL
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Lichess Study URL or ID'),
+        'https://lichess.org/study/m1AbCd2E',
+      );
+      await tester.tap(find.text('Fetch & Import from Lichess'));
+      await pumpAsync(tester, 600);
+
+      // Dialog is dismissed and success snackbar is shown
+      expect(find.byType(RepertoireImportDialog), findsNothing);
+      expect(find.textContaining('Imported "French Defense"'), findsOneWidget);
     });
 
     testWidgets('SRS Diagnostics HUD is hidden by default and displayed when toggled', (
