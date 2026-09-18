@@ -11,13 +11,15 @@ final clockProvider = Provider<Clock>((ref) => const SystemClock());
 
 /// Provider for the application's [Scheduler].
 final schedulerProvider = Provider<Scheduler>((ref) {
-  final prefs = ref.watch(studyPreferencesProvider);
-  return switch (prefs.schedulerType) {
+  final type = ref.watch(studyPreferencesProvider.select((p) => p.schedulerType));
+  final retention = ref.watch(studyPreferencesProvider.select((p) => p.targetRetention));
+  final ease = ref.watch(studyPreferencesProvider.select((p) => p.schedulerEase));
+  final scaling = ref.watch(studyPreferencesProvider.select((p) => p.schedulerScaling));
+
+  return switch (type) {
+    SchedulerType.fsrs => ChessFsrsScheduler(targetRetention: retention),
     SchedulerType.simple => const SimpleScheduler(),
-    SchedulerType.easeScaling => EaseScalingScheduler(
-      ease: prefs.schedulerEase,
-      scaling: prefs.schedulerScaling,
-    ),
+    SchedulerType.easeScaling => EaseScalingScheduler(ease: ease, scaling: scaling),
   };
 });
 

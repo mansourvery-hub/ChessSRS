@@ -164,6 +164,36 @@ class SettingsScreen extends ConsumerWidget {
                 },
               ),
               if (ref.watch(
+                studyPreferencesProvider.select((p) => p.schedulerType == SchedulerType.fsrs),
+              )) ...[
+                SettingsListTile(
+                  icon: const Icon(Symbols.target),
+                  settingsLabel: const Text('Target recall retention'),
+                  settingsValue:
+                      '${(ref.watch(studyPreferencesProvider.select((p) => p.targetRetention)) * 100).round()}%',
+                  onTap: () {
+                    final current = ref.read(studyPreferencesProvider).targetRetention;
+                    showChoicePicker<double>(
+                      context,
+                      choices: const [0.80, 0.85, 0.88, 0.90, 0.95],
+                      selectedItem: current,
+                      labelBuilder: (v) => Text(
+                        '${(v * 100).round()}% ${v >= 0.95
+                            ? "(Tournament mode)"
+                            : v == 0.88
+                            ? "(Default)"
+                            : ""}',
+                      ),
+                      onSelectedItemChanged: (double? value) {
+                        if (value != null) {
+                          ref.read(studyPreferencesProvider.notifier).setTargetRetention(value);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ],
+              if (ref.watch(
                 studyPreferencesProvider.select(
                   (p) => p.schedulerType == SchedulerType.easeScaling,
                 ),

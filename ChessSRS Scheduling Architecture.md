@@ -18,21 +18,23 @@ This separation is deliberate: the DSR core is empirically the strongest general
 | **Half-Life Regression (HLR/Duolingo)** | $p = 2^{-\Delta/h}$, $h = 2^{\theta\cdot x}$, features regressed via logistic/linear regression over large corpora | Needs a trained feature vector (lexeme features in Duolingo); we have no chess-specific corpus yet, and it doesn't model difficulty separately from stability — architecturally it *is* FSRS's ancestor with a weaker (exponential, not power-law) decay | **Reject as core model**, but its *methodology* (log-loss regression to fit decay-rate weights against real review outcomes) is exactly how we should later refit FSRS's $w_i$ chess-specific weights once ChessSRS accumulates review logs. |
 | **Hierarchical / Graph-aware (tree credit assignment, Bayesian Knowledge Tracing)** | BKT: latent binary "known" state per skill, HMM transition (learn/forget/guess/slip probabilities), naturally supports prerequisite graphs | Correctly models "prerequisite" structure but BKT is *trial-indexed*, not *time-indexed* — it has no native concept of "14 real days elapsed," which is the entire point of SRS. Also binary latent state loses the difficulty/stability separation. | **Do not replace FSRS with BKT.** Instead, borrow BKT's prerequisite-propagation idea (§B.1, §B.4) purely for **cold-start priors** (new/child-node difficulty seeded from ancestor mastery) — a genuine hybrid, not a swap. |
 
-### On binary ratings vs. FSRS's 4-button model
+### On binary ratings vs. FSRS's 4-button model (Decision D015: Pure Binary FSRS)
 
-FSRS's $D$/$S$ update equations are parameterized on rating $g \in \{1{=}\text{Again},2{=}\text{Hard},3{=}\text{Good},4{=}\text{Easy}\}$. ChessSRS only has a binary board signal (legal move played == expected move, or not). We reconstruct the missing granularity from **response latency and hint usage**, which is a well-established proxy for confidence in retrieval-practice literature (and is exactly the raw signal Duolingo's HLR uses instead of explicit buttons):
+FSRS's canonical equations are parameterized on $g \in \{1{=}\text{Again},2{=}\text{Hard},3{=}\text{Good},4{=}\text{Easy}\}$. In vocabulary flashcards, latency approximates confidence. In chess, however, **latency is dominated by calculation and verification overhead**, which is disciplined tournament play, not weak memory. 
+
+Penalizing think time creates timer anxiety and trains reflexive blitzing. Furthermore, FSRS maintains full mathematical predictive accuracy in binary mode ($g \in \{1{=}\text{Again}, 3{=}\text{Good}\}$).
+
+Therefore, ChessSRS strictly uses **Pure Binary FSRS**:
 
 $$
 g =
 \begin{cases}
-\text{Again} & \text{incorrect, or corrected after a second attempt}\\
-\text{Hard} & \text{correct, but hint used, or } t_{\text{latency}} > 1.6\,\bar t_{\text{decision}}\\
-\text{Easy} & \text{correct, no hint, } t_{\text{latency}} < 0.5\,\bar t_{\text{decision}}\\
-\text{Good} & \text{otherwise}
+\text{Again (1)} & \text{incorrect move, hint used, or corrected false start}\\
+\text{Good (3)} & \text{first committed move is correct (unlimited think time)}
 \end{cases}
 $$
 
-where $\bar t_{\text{decision}}$ is a per-decision rolling median latency (cold-started from a global per-ply-depth median, e.g. 4s for ply ≤6, 8s for deeper novelty-heavy plies). This gives FSRS its required 4-way signal without requiring the user to self-report a subjective button, which is inappropriate for chess anyway (players are bad at judging "how easy" a *tactical* recall was compared to Anki's semantic recall).
+Latency (`latencyEmaMs`) is preserved as optional post-hoc telemetry only, strictly firewalled from interval grading. Dead parameters (`w1`, `w3`, `w15`, `w16`) are eliminated from the kernel.
 
 ---
 

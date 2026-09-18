@@ -191,6 +191,18 @@ class EaseScalingScheduler implements Scheduler {
         );
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EaseScalingScheduler &&
+          firstInterval == other.firstInterval &&
+          ease == other.ease &&
+          scaling == other.scaling &&
+          maximumInterval == other.maximumInterval;
+
+  @override
+  int get hashCode => Object.hash(firstInterval, ease, scaling, maximumInterval);
 }
 
 /// Convenience: returns only items that are currently due.

@@ -110,3 +110,14 @@ Links:
 
 - `docs/INTEGRATION_MAP.md`
 - `CUT_PROPOSALS.md`
+
+## D015 — Pure Binary FSRS over Latency Grading
+
+Decision: Grade move recall strictly as binary Pass/Fail (`Rating.good` vs `Rating.again`), completely excluding response latency from interval calculations.
+
+Reason: Chess recall is fundamentally different from vocabulary flashcards. In chess, stopping to verify candidate moves, calculate tactical variations, and check piece safety is disciplined play. Penalizing thinking time builds toxic habits (reflexive blitzing, clock panic) and penalizes deep verification. FSRS maintains its full mathematical predictive power in binary mode ($R = (1 + F \cdot t/S)^C$, $R_{\text{target}}$ solving), while keeping move input 100% natural chess without clock anxiety.
+
+Rules:
+1. `Rating.good`: First committed move on the board is correct, regardless of thinking duration.
+2. `Rating.again`: Incorrect move, hint used, or a corrected false-start attempt.
+3. Latency is demoted from a scheduling input to an optional analytics metric (`latencyEmaMs`), strictly firewalled from interval computation.

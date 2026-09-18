@@ -200,6 +200,11 @@ remains a later option — never a redesign.
       2. Decision pointers: added `canonicalStateId` to `RepertoireDecision` derived automatically during PGN import.
       3. SQLite schema v10: added `canonicalStateId` to `srs_decision` and created `position_knowledge_state` table with schema migration.
       4. Transposition memory sharing: reviewing a transposed move in Study A automatically upgrades the shared canonical state in Study B; deduplicated in all-study review queues. *(done: 2026-09-18)*
+- [x] **R3: Pure Binary ChessFSRS Core Kernel (DSR Architecture Step 2 — Decision D015)**
+      1. Domain decision D015: completely dropped latency grading from the scheduler. Thinking time reflects tactical verification and calculation, not weak memory. Ratings strictly collapse to binary Pass/Fail (`Rating.good` vs `Rating.again`).
+      2. Domain kernel: `ChessFsrsScheduler` implementing continuous Difficulty-Stability-Retrievability (DSR) power-law forgetting curves ($R = (1 + F \cdot t/S)^C$) with explicit target retention interval solving ($R_{\text{target}}$).
+      3. UI & Settings: added `ChessFSRS` to `SchedulerType` with user-tunable `Target recall retention` picker in `SettingsScreen` (80% to 95% tournament prep).
+      4. Engine binding: `ReviewService.schedulerProvider` dynamically provisions `ChessFsrsScheduler`. *(done: 2026-09-18)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

@@ -8,6 +8,7 @@
 library;
 
 export 'chapter.dart';
+export 'chess_fsrs_scheduler.dart';
 export 'clock.dart';
 export 'ids.dart';
 export 'position_knowledge_state.dart';

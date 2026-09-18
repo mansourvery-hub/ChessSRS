@@ -8,17 +8,22 @@ part 'study_preferences.freezed.dart';
 part 'study_preferences.g.dart';
 
 enum SchedulerType {
+  @JsonValue('fsrs')
+  fsrs,
   @JsonValue('simple')
   simple,
   @JsonValue('easeScaling')
   easeScaling;
 
   String get label => switch (this) {
+    SchedulerType.fsrs => 'ChessFSRS (DSR Power-Law)',
     SchedulerType.simple => 'Simple Doubling (2x)',
     SchedulerType.easeScaling => 'Parametric Scaling (chessrs)',
   };
 
   String get description => switch (this) {
+    SchedulerType.fsrs =>
+      'Domain-adapted FSRS-5 continuous DSR model with target retention and binary grading',
     SchedulerType.simple => 'Exponential doubling interval ladder (1d, 2d, 4d, 8d...)',
     SchedulerType.easeScaling =>
       'chessrs formula with tunable ease multiplier and geometric scaling factor',
@@ -98,6 +103,10 @@ class StudyPreferencesNotifier extends Notifier<StudyPrefs> with PreferencesStor
   Future<void> setSchedulerScaling(double scaling) {
     return save(state.copyWith(schedulerScaling: scaling));
   }
+
+  Future<void> setTargetRetention(double retention) {
+    return save(state.copyWith(targetRetention: retention));
+  }
 }
 
 @Freezed(fromJson: true, toJson: true)
@@ -116,6 +125,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     @JsonKey(defaultValue: false) required bool smallBoard,
     @JsonKey(defaultValue: StudyListOrder.hot) required StudyListOrder listOrder,
     @JsonKey(defaultValue: SchedulerType.simple) required SchedulerType schedulerType,
+    @JsonKey(defaultValue: 0.88) required double targetRetention,
     @JsonKey(defaultValue: 2.5) required double schedulerEase,
     @JsonKey(defaultValue: 1.5) required double schedulerScaling,
   }) = _StudyPrefs;
@@ -132,6 +142,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     smallBoard: false,
     listOrder: StudyListOrder.hot,
     schedulerType: SchedulerType.simple,
+    targetRetention: 0.88,
     schedulerEase: 2.5,
     schedulerScaling: 1.5,
   );

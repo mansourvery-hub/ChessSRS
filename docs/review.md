@@ -148,3 +148,19 @@ for extraction rules and licensing):
 ## Review state durability
 
 After a move result, persist the state locally before the item can be lost due to app closure where practical. Do not block the visible move interaction on network sync.
+
+## ChessFSRS Memory Kernel (Binary DSR Model)
+
+ChessSRS uses a domain-adapted FSRS-5 (Difficulty-Stability-Retrievability) power-law forgetting curve for move scheduling:
+
+$$R(t, S) = \left(1 + F \cdot \frac{t}{S}\right)^C, \qquad C = -0.5, \quad F \approx 0.2345$$
+
+### Pure Binary Grading (Decision D015)
+
+Unlike generic flashcards where response speed approximates confidence, chess is a domain of deliberate calculation, candidate move evaluation, and tactical verification:
+- Thinking for 15–20 seconds to double-check candidate moves before playing the prepared line is disciplined, tournament-ready chess.
+- Penalizing calculation latency creates timer panic and trains destructive reflexive blitzing habits.
+- Therefore, ChessSRS strictly uses **Pure Binary FSRS**:
+  - `Rating.good`: First committed move on the board is correct, regardless of think time. Interval advances using target retention ($R_{\text{target}}$).
+  - `Rating.again`: Incorrect move, hint used, or a corrected false start. Lapse recorded; stability regresses.
+- Move latency is preserved purely as optional telemetry (`latencyEmaMs`), firewalled from interval calculations.
