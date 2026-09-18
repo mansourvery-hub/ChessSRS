@@ -7,6 +7,24 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'study_preferences.freezed.dart';
 part 'study_preferences.g.dart';
 
+enum SchedulerType {
+  @JsonValue('simple')
+  simple,
+  @JsonValue('easeScaling')
+  easeScaling;
+
+  String get label => switch (this) {
+    SchedulerType.simple => 'Simple Doubling (2x)',
+    SchedulerType.easeScaling => 'Parametric Scaling (chessrs)',
+  };
+
+  String get description => switch (this) {
+    SchedulerType.simple => 'Exponential doubling interval ladder (1d, 2d, 4d, 8d...)',
+    SchedulerType.easeScaling =>
+      'chessrs formula with tunable ease multiplier and geometric scaling factor',
+  };
+}
+
 final studyPreferencesProvider = NotifierProvider<StudyPreferencesNotifier, StudyPrefs>(
   StudyPreferencesNotifier.new,
   name: 'StudyPreferencesProvider',
@@ -68,6 +86,18 @@ class StudyPreferencesNotifier extends Notifier<StudyPrefs> with PreferencesStor
   Future<void> toggleAnimateOpponentPreMove() {
     return save(state.copyWith(animateOpponentPreMove: !state.animateOpponentPreMove));
   }
+
+  Future<void> setSchedulerType(SchedulerType type) {
+    return save(state.copyWith(schedulerType: type));
+  }
+
+  Future<void> setSchedulerEase(double ease) {
+    return save(state.copyWith(schedulerEase: ease));
+  }
+
+  Future<void> setSchedulerScaling(double scaling) {
+    return save(state.copyWith(schedulerScaling: scaling));
+  }
 }
 
 @Freezed(fromJson: true, toJson: true)
@@ -85,6 +115,9 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     @JsonKey(defaultValue: false) required bool inlineNotation,
     @JsonKey(defaultValue: false) required bool smallBoard,
     @JsonKey(defaultValue: StudyListOrder.hot) required StudyListOrder listOrder,
+    @JsonKey(defaultValue: SchedulerType.simple) required SchedulerType schedulerType,
+    @JsonKey(defaultValue: 2.5) required double schedulerEase,
+    @JsonKey(defaultValue: 1.5) required double schedulerScaling,
   }) = _StudyPrefs;
 
   static const defaults = StudyPrefs(
@@ -98,6 +131,9 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     inlineNotation: false,
     smallBoard: false,
     listOrder: StudyListOrder.hot,
+    schedulerType: SchedulerType.simple,
+    schedulerEase: 2.5,
+    schedulerScaling: 1.5,
   );
 
   factory StudyPrefs.fromJson(Map<String, dynamic> json) {

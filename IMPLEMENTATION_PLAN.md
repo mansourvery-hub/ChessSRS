@@ -172,8 +172,13 @@ beta-feedback justification.
 
 ## Phase 5 — chessrs integration (isolated modules)
 
-Per `docs/INTEGRATION_MAP.md`: ease/scaling scheduler as second `Scheduler`
-implementation (user-tunable), queue prefetch behavior, opening grouping
+- [x] **S1: Parametric Ease/Scaling Scheduler (`EaseScalingScheduler`)**
+      1. Domain contract: `EaseScalingScheduler` implementing `Scheduler`, adapted from chessrs `SpacedRepetitionService` (`ease × scaling^n`).
+      2. Configurable factors: initial interval (1d), ease multiplier (default 2.5x), and geometric growth rate scaling (default 1.5x) with lapse recovery and maximum interval clamping.
+      3. User preferences & settings: `SchedulerType` picker in `SettingsScreen` backed by `StudyPrefs`, exposing ease and scaling factor controls when parametric scheduler is active.
+      4. Dynamic engine binding: `ReviewService.schedulerProvider` automatically provisions the selected scheduling algorithm. *(done: 2026-09-18)*
+
+Per `docs/INTEGRATION_MAP.md`: queue prefetch behavior, opening grouping
 cross-study. FSRS remains a later option — never a redesign.
 
 ## Phase 6 — Refinement

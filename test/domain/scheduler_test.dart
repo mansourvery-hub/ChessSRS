@@ -26,10 +26,7 @@ void main() {
     });
 
     test('isDueAt returns false when nextDueAt is in the future', () {
-      final s = ReviewState(
-        decisionId: 'd1',
-        nextDueAt: t0.add(const Duration(days: 1)),
-      );
+      final s = ReviewState(decisionId: 'd1', nextDueAt: t0.add(const Duration(days: 1)));
       expect(s.isDueAt(t0), isFalse);
     });
 
@@ -39,10 +36,7 @@ void main() {
     });
 
     test('isDueAt returns true when nextDueAt is in the past', () {
-      final s = ReviewState(
-        decisionId: 'd1',
-        nextDueAt: t0.subtract(const Duration(hours: 1)),
-      );
+      final s = ReviewState(decisionId: 'd1', nextDueAt: t0.subtract(const Duration(hours: 1)));
       expect(s.isDueAt(t0), isTrue);
     });
   });
@@ -174,6 +168,110 @@ void main() {
       final due = dueItems(states, clock);
       expect(due.map((s) => s.decisionId).toList(), containsAll(['d1', 'd3']));
       expect(due.map((s) => s.decisionId).toList(), isNot(contains('d2')));
+    });
+  });
+
+  group('EaseScalingScheduler', () {
+    const scheduler = EaseScalingScheduler(
+      firstInterval: Duration(days: 1),
+      ease: 2.5,
+      scaling: 1.5,
+    );
+
+    test('first correct recall sets nextDueAt to firstInterval (1 day)', () {
+      final s0 = ReviewState.initial(decisionId: 'd1');
+      final s1 = scheduler.schedule(previous: s0, result: ReviewResult.correct, now: t0);
+      expect(s1.repetitionCount, 1);
+      expect(s1.lapseCount, 0);
+      expect(s1.firstReviewedAt, t0);
+      expect(s1.lastReviewedAt, t0);
+      expect(s1.nextDueAt, t0.add(const Duration(days: 1)));
+      expect(s1.stability, const Duration(days: 1).inMilliseconds.toDouble());
+    });
+
+    test('second correct recall scales by ease factor (2.5 days)', () {
+      final s0 = ReviewState.initial(decisionId: 'd1');
+      final s1 = scheduler.schedule(previous: s0, result: ReviewResult.correct, now: t0);
+      final t1 = t0.add(const Duration(days: 1));
+      final s2 = scheduler.schedule(previous: s1, result: ReviewResult.correct, now: t1);
+      expect(s2.repetitionCount, 2);
+      expect(s2.lapseCount, 0);
+      final intervalMs = (const Duration(days: 1).inMilliseconds * 2.5).round();
+      expect(s2.nextDueAt, t1.add(Duration(milliseconds: intervalMs)));
+    });
+
+    test('subsequent recalls grow geometrically by scaling factor (1.5x)', () {
+      var state = ReviewState.initial(decisionId: 'd1');
+      var now = t0;
+      // Rep 1: 1 day
+      state = scheduler.schedule(previous: state, result: ReviewResult.correct, now: now);
+      now = state.nextDueAt!;
+      // Rep 2: 1 day * 2.5 = 2.5 days (60 hours)
+      state = scheduler.schedule(previous: state, result: ReviewResult.correct, now: now);
+      now = state.nextDueAt!;
+      expect(state.repetitionCount, 2);
+      // Rep 3: 2.5 days * 1.5 = 3.75 days (90 hours)
+      state = scheduler.schedule(previous: state, result: ReviewResult.correct, now: now);
+      now = state.nextDueAt!;
+      expect(state.repetitionCount, 3);
+      final expectedRep3Ms = (const Duration(hours: 60).inMilliseconds * 1.5).round();
+      expect(state.stability, expectedRep3Ms.toDouble());
+
+      // Rep 4: 3.75 days * 1.5 = 5.625 days (135 hours)
+      state = scheduler.schedule(previous: state, result: ReviewResult.correct, now: now);
+      expect(state.repetitionCount, 4);
+      final expectedRep4Ms = (expectedRep3Ms * 1.5).round();
+      expect(state.stability, expectedRep4Ms.toDouble());
+    });
+
+    test('incorrect recall resets repetitions and records a lapse', () {
+      final s0 = ReviewState.initial(decisionId: 'd1');
+      final s1 = scheduler.schedule(previous: s0, result: ReviewResult.correct, now: t0);
+      final t1 = t0.add(const Duration(days: 1));
+      final s2 = scheduler.schedule(previous: s1, result: ReviewResult.incorrect, now: t1);
+      expect(s2.repetitionCount, 0);
+      expect(s2.lapseCount, 1);
+      expect(s2.nextDueAt, t1.add(const Duration(days: 1)));
+    });
+
+    test('lapsed item recovers correctly after subsequent correct recall', () {
+      var state = ReviewState.initial(decisionId: 'd1');
+      var now = t0;
+      state = scheduler.schedule(previous: state, result: ReviewResult.correct, now: now);
+      now = state.nextDueAt!;
+      state = scheduler.schedule(previous: state, result: ReviewResult.incorrect, now: now);
+      expect(state.repetitionCount, 0);
+      expect(state.lapseCount, 1);
+
+      // Recovery
+      now = state.nextDueAt!;
+      state = scheduler.schedule(previous: state, result: ReviewResult.correct, now: now);
+      expect(state.repetitionCount, 1);
+      expect(state.nextDueAt, now.add(const Duration(days: 1)));
+    });
+
+    test('interval is clamped at maximumInterval', () {
+      const capped = EaseScalingScheduler(
+        firstInterval: Duration(days: 1),
+        ease: 10.0,
+        scaling: 10.0,
+        maximumInterval: Duration(days: 14),
+      );
+      var state = ReviewState.initial(decisionId: 'd1');
+      var now = t0;
+      for (var i = 0; i < 5; i++) {
+        state = capped.schedule(previous: state, result: ReviewResult.correct, now: now);
+        now = state.nextDueAt!;
+      }
+      final interval = state.nextDueAt!.difference(state.lastReviewedAt!);
+      expect(interval.inDays, lessThanOrEqualTo(14));
+    });
+
+    test('isDue delegates to state.isDueAt', () {
+      final sDue = ReviewState(decisionId: 'd1', nextDueAt: t0.subtract(const Duration(hours: 1)));
+      final sFuture = ReviewState(decisionId: 'd2', nextDueAt: t0.add(const Duration(hours: 1)));
+      expect(scheduler.isDue(sDue, t0), isTrue);
+      expect(scheduler.isDue(sFuture, t0), isFalse);
     });
   });
 }

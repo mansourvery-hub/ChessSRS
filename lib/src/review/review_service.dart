@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'package:chess_srs/src/domain/domain.dart';
+import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,7 +10,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final clockProvider = Provider<Clock>((ref) => const SystemClock());
 
 /// Provider for the application's [Scheduler].
-final schedulerProvider = Provider<Scheduler>((ref) => const SimpleScheduler());
+final schedulerProvider = Provider<Scheduler>((ref) {
+  final prefs = ref.watch(studyPreferencesProvider);
+  return switch (prefs.schedulerType) {
+    SchedulerType.simple => const SimpleScheduler(),
+    SchedulerType.easeScaling => EaseScalingScheduler(
+      ease: prefs.schedulerEase,
+      scaling: prefs.schedulerScaling,
+    ),
+  };
+});
 
 /// Provider for [ReviewService].
 final reviewServiceProvider = Provider<ReviewService>((ref) {

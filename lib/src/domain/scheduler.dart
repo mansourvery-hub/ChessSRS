@@ -105,6 +105,89 @@ class SimpleScheduler implements Scheduler {
   }
 }
 
+/// Parametric spaced repetition scheduler adapted from chessrs SpacedRepetitionService.
+///
+/// Computes intervals using an initial [ease] multiplier and geometric
+/// [scaling] factor:
+/// - First correct recall (repetition 0 -> 1): [firstInterval] (default 1 day)
+/// - Second correct recall (repetition 1 -> 2): [firstInterval] * [ease] (default 2.5 days)
+/// - Subsequent successes (repetition n >= 2): previous_interval * [scaling] (default 1.5x)
+///
+/// Upon a lapse (incorrect answer):
+/// - [repetitionCount] resets to 0.
+/// - [lapseCount] increments by 1.
+/// - Interval resets to [firstInterval].
+///
+/// Attribution: Adapted from ZackMurry/chessrs (GPL-3.0), SpacedRepetitionService.kt.
+class EaseScalingScheduler implements Scheduler {
+  const EaseScalingScheduler({
+    this.firstInterval = const Duration(days: 1),
+    this.ease = 2.5,
+    this.scaling = 1.5,
+    this.maximumInterval = const Duration(days: 3650),
+  }) : assert(ease >= 1.0, 'ease must be >= 1.0'),
+       assert(scaling >= 1.0, 'scaling must be >= 1.0');
+
+  /// The interval assigned after the very first successful recall.
+  final Duration firstInterval;
+
+  /// The multiplier applied to [firstInterval] for the second successful recall.
+  final double ease;
+
+  /// The geometric growth multiplier applied on each subsequent successful recall.
+  final double scaling;
+
+  /// Hard cap on any single interval.
+  final Duration maximumInterval;
+
+  Duration _clamp(Duration d) =>
+      d.inMilliseconds > maximumInterval.inMilliseconds ? maximumInterval : d;
+
+  @override
+  bool isDue(ReviewState state, DateTime now) => state.isDueAt(now);
+
+  @override
+  ReviewState schedule({
+    required ReviewState previous,
+    required ReviewResult result,
+    required DateTime now,
+  }) {
+    final firstSeen = previous.firstReviewedAt ?? now;
+
+    switch (result) {
+      case ReviewResult.correct:
+        final Duration nextInterval;
+        if (previous.repetitionCount == 0) {
+          nextInterval = _clamp(firstInterval);
+        } else if (previous.repetitionCount == 1) {
+          nextInterval = _clamp(
+            Duration(milliseconds: (firstInterval.inMilliseconds * ease).round()),
+          );
+        } else {
+          final current = Duration(milliseconds: previous.stability.round());
+          nextInterval = _clamp(Duration(milliseconds: (current.inMilliseconds * scaling).round()));
+        }
+        return previous.copyWith(
+          firstReviewedAt: firstSeen,
+          lastReviewedAt: now,
+          nextDueAt: now.add(nextInterval),
+          repetitionCount: previous.repetitionCount + 1,
+          stability: nextInterval.inMilliseconds.toDouble(),
+        );
+
+      case ReviewResult.incorrect:
+        return previous.copyWith(
+          firstReviewedAt: firstSeen,
+          lastReviewedAt: now,
+          nextDueAt: now.add(firstInterval),
+          repetitionCount: 0,
+          lapseCount: previous.lapseCount + 1,
+          stability: firstInterval.inMilliseconds.toDouble(),
+        );
+    }
+  }
+}
+
 /// Convenience: returns only items that are currently due.
 List<ReviewState> dueItems(List<ReviewState> states, Clock clock) =>
     states.where((s) => s.isDueAt(clock.now())).toList(growable: false);

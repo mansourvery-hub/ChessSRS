@@ -142,6 +142,73 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (_) =>
                     ref.read(studyPreferencesProvider.notifier).toggleAnimateOpponentPreMove(),
               ),
+              SettingsListTile(
+                icon: const Icon(Symbols.schedule_rounded),
+                settingsLabel: const Text('SRS scheduling algorithm'),
+                settingsValue: ref.watch(
+                  studyPreferencesProvider.select((p) => p.schedulerType.label),
+                ),
+                onTap: () {
+                  final currentType = ref.read(studyPreferencesProvider).schedulerType;
+                  showChoicePicker<SchedulerType>(
+                    context,
+                    choices: SchedulerType.values,
+                    selectedItem: currentType,
+                    labelBuilder: (t) => Text(t.label),
+                    onSelectedItemChanged: (SchedulerType? value) {
+                      if (value != null) {
+                        ref.read(studyPreferencesProvider.notifier).setSchedulerType(value);
+                      }
+                    },
+                  );
+                },
+              ),
+              if (ref.watch(
+                studyPreferencesProvider.select(
+                  (p) => p.schedulerType == SchedulerType.easeScaling,
+                ),
+              )) ...[
+                SettingsListTile(
+                  icon: const Icon(Symbols.tune_rounded),
+                  settingsLabel: const Text('Initial ease factor'),
+                  settingsValue:
+                      '${ref.watch(studyPreferencesProvider.select((p) => p.schedulerEase))}x',
+                  onTap: () {
+                    final current = ref.read(studyPreferencesProvider).schedulerEase;
+                    showChoicePicker<double>(
+                      context,
+                      choices: const [1.5, 2.0, 2.5, 3.0, 3.5],
+                      selectedItem: current,
+                      labelBuilder: (v) => Text('${v}x (interval after first success)'),
+                      onSelectedItemChanged: (double? value) {
+                        if (value != null) {
+                          ref.read(studyPreferencesProvider.notifier).setSchedulerEase(value);
+                        }
+                      },
+                    );
+                  },
+                ),
+                SettingsListTile(
+                  icon: const Icon(Symbols.trending_up_rounded),
+                  settingsLabel: const Text('Growth rate scaling'),
+                  settingsValue:
+                      '${ref.watch(studyPreferencesProvider.select((p) => p.schedulerScaling))}x',
+                  onTap: () {
+                    final current = ref.read(studyPreferencesProvider).schedulerScaling;
+                    showChoicePicker<double>(
+                      context,
+                      choices: const [1.2, 1.3, 1.5, 1.8, 2.0],
+                      selectedItem: current,
+                      labelBuilder: (v) => Text('${v}x (multiplier on subsequent reviews)'),
+                      onSelectedItemChanged: (double? value) {
+                        if (value != null) {
+                          ref.read(studyPreferencesProvider.notifier).setSchedulerScaling(value);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ],
               ListTile(
                 leading: const Icon(Icons.memory_outlined),
                 title: const Text('Chess engine'),

@@ -339,5 +339,59 @@ void main() {
         await db.close();
       }
     });
+
+    test(
+      'ReviewService with EaseScalingScheduler schedules intervals via ease and scaling',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+        const customScheduler = EaseScalingScheduler(
+          firstInterval: Duration(days: 1),
+          ease: 3.0,
+          scaling: 1.8,
+        );
+        final service = ReviewService(
+          repository: repo,
+          scheduler: customScheduler,
+          clock: clock,
+        );
+
+        try {
+          const study = Study(id: 's_ease', title: 'Ease Study');
+          await repo.saveStudy(study);
+          final ch = Chapter.create(studyId: 's_ease', sourceOrder: 0);
+          await repo.saveChapter(ch);
+          final d = RepertoireDecision.create(
+            studyId: 's_ease',
+            chapterId: ch.id,
+            nodeId: 'n1',
+            expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+          );
+          await repo.saveDecision(d);
+
+          await service.startSession();
+          final res1 = await service.submitMove(from: 'e2', to: 'e4');
+          expect(res1.isCorrect, isTrue);
+
+          // Rep 1: 1 day
+          var state = await repo.getReviewState(d.id);
+          expect(state?.repetitionCount, 1);
+          expect(state?.nextDueAt, now.add(const Duration(days: 1)));
+
+          // Advance clock by 1 day and submit again
+          clock.advance(const Duration(days: 1));
+          await service.startSession();
+          final res2 = await service.submitMove(from: 'e2', to: 'e4');
+          expect(res2.isCorrect, isTrue);
+
+          // Rep 2: 1 day * 3.0 = 3 days
+          state = await repo.getReviewState(d.id);
+          expect(state?.repetitionCount, 2);
+          expect(state?.nextDueAt, clock.now().add(const Duration(days: 3)));
+        } finally {
+          await db.close();
+        }
+      },
+    );
   });
 }
