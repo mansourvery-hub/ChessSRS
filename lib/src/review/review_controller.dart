@@ -655,6 +655,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         clearLastMove: shouldAnimateBranchPreMove,
         revealedComment: null,
         clearRevealedComment: true,
+        clearLastStepResult: true,
       ),
     );
 
@@ -769,6 +770,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         isAwaitingAdvance: false,
         clearLastMove: true,
         clearRevealedComment: true,
+        clearLastStepResult: true,
       ),
     );
 
@@ -810,6 +812,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         isAwaitingAdvance: false,
         clearLastMove: true,
         clearRevealedComment: true,
+        clearLastStepResult: true,
       ),
     );
 

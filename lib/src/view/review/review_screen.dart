@@ -637,7 +637,7 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
         ? (stabilityDays >= 10
               ? '${stabilityDays.round()}d'
               : '${stabilityDays.toStringAsFixed(1)}d')
-        : '0d';
+        : 'Cold';
 
     final double retrievability;
     if (isNew) {
@@ -651,13 +651,18 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
     final rPercent = (retrievability * 100).round();
 
     final isTransposed = dec.canonicalStateId != null && dec.canonicalStateId != dec.id;
+    final isPractice = state.isPracticeMode;
     final lastResult = state.lastStepResult;
+    final expectedMovesStr = prompt.expectedMoves
+        .map((m) => m.san ?? '${m.from}${m.to}')
+        .join(' / ');
+    final shortNodeId = prompt.nodeId.length > 8 ? prompt.nodeId.substring(0, 8) : prompt.nodeId;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(
           color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4),
@@ -680,6 +685,23 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
+              const SizedBox(width: 6.0),
+              if (isPractice)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.0),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: const Text(
+                    'Practice (No SRS Writes)',
+                    style: TextStyle(
+                      fontSize: 9.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple,
+                    ),
+                  ),
+                ),
               const Spacer(),
               if (isTransposed)
                 Container(
@@ -695,7 +717,16 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 4.0),
+          const SizedBox(height: 3.0),
+          Text(
+            'Target: $expectedMovesStr  ·  Node: $shortNodeId',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 3.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -728,16 +759,43 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
           ),
           if (lastResult != null) ...[
             const SizedBox(height: 3.0),
-            Text(
-              lastResult.isCorrect
-                  ? 'Last: Pass → Next due in ${(lastResult.updatedState.stability / 86400000).toStringAsFixed(1)}d'
-                        '${lastResult.sideEffectStates.isNotEmpty ? " (+${lastResult.sideEffectStates.length} auto-exp)" : ""}'
-                  : 'Last: Lapse! Contagion applied to ${lastResult.sideEffectStates.length} descendant(s)',
-              style: TextStyle(
-                fontSize: 10.0,
-                color: lastResult.isCorrect ? Colors.green : Colors.redAccent,
-                fontWeight: FontWeight.w500,
-              ),
+            Builder(
+              builder: (context) {
+                if (isPractice) {
+                  // Simulate what the scheduler WOULD produce
+                  final simulated = session?.scheduler.schedule(
+                    previous: reviewState ?? ReviewState.initial(decisionId: dec.canonicalId),
+                    result: lastResult.isCorrect ? ReviewResult.correct : ReviewResult.incorrect,
+                    now: now,
+                  );
+                  final simDays = (simulated?.stability ?? 0) / 86400000;
+                  final simStr = simDays >= 10
+                      ? '${simDays.round()}d'
+                      : '${simDays.toStringAsFixed(1)}d';
+                  return Text(
+                    lastResult.isCorrect
+                        ? 'Practice Pass → Simulated next interval: $simStr (No DB write)'
+                        : 'Practice Lapse → Simulated reset to 0.35d (No DB write)',
+                    style: TextStyle(
+                      fontSize: 10.0,
+                      color: lastResult.isCorrect ? Colors.purple : Colors.redAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                }
+
+                return Text(
+                  lastResult.isCorrect
+                      ? 'Last: Pass → Next due in ${(lastResult.updatedState.stability / 86400000).toStringAsFixed(1)}d'
+                            '${lastResult.sideEffectStates.isNotEmpty ? " (+${lastResult.sideEffectStates.length} auto-exp)" : ""}'
+                      : 'Last: Lapse! Contagion applied to ${lastResult.sideEffectStates.length} descendant(s)',
+                  style: TextStyle(
+                    fontSize: 10.0,
+                    color: lastResult.isCorrect ? Colors.green : Colors.redAccent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
+              },
             ),
           ],
         ],
