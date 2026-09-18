@@ -8,6 +8,7 @@ const kTableSrsChapter = 'srs_chapter';
 const kTableSrsDecision = 'srs_decision';
 const kTableSrsReviewState = 'srs_review_state';
 const kTableSrsReviewEvent = 'srs_review_event';
+const kTablePositionKnowledgeState = 'position_knowledge_state';
 
 void createSrsTables(Batch batch) {
   batch.execute('''
@@ -50,6 +51,7 @@ void createSrsTables(Batch batch) {
       chapterId TEXT NOT NULL,
       nodeId TEXT NOT NULL,
       expectedMoves TEXT NOT NULL,
+      canonicalStateId TEXT,
       FOREIGN KEY (studyId) REFERENCES $kTableSrsStudy(id) ON DELETE CASCADE,
       FOREIGN KEY (chapterId) REFERENCES $kTableSrsChapter(id) ON DELETE CASCADE
     );
@@ -61,6 +63,29 @@ void createSrsTables(Batch batch) {
   batch.execute('''
     CREATE INDEX IF NOT EXISTS idx_srs_decision_chapterId
     ON $kTableSrsDecision(chapterId);
+  ''');
+  batch.execute('''
+    CREATE INDEX IF NOT EXISTS idx_srs_decision_canonicalStateId
+    ON $kTableSrsDecision(canonicalStateId);
+  ''');
+
+  batch.execute('''
+    CREATE TABLE IF NOT EXISTS $kTablePositionKnowledgeState (
+      canonicalId TEXT PRIMARY KEY,
+      firstReviewedAt TEXT,
+      lastReviewedAt TEXT,
+      nextDueAt TEXT,
+      repetitionCount INTEGER NOT NULL DEFAULT 0,
+      lapseCount INTEGER NOT NULL DEFAULT 0,
+      stability REAL NOT NULL DEFAULT 0.0,
+      difficulty REAL NOT NULL DEFAULT 0.0,
+      latencyEmaMs REAL,
+      latencySampleCount INTEGER NOT NULL DEFAULT 0
+    );
+  ''');
+  batch.execute('''
+    CREATE INDEX IF NOT EXISTS idx_position_knowledge_state_nextDueAt
+    ON $kTablePositionKnowledgeState(nextDueAt);
   ''');
 
   batch.execute('''

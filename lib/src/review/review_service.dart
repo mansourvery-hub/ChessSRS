@@ -124,8 +124,14 @@ class ReviewService {
     }
 
     final decisionIds = decisions.map((d) => d.id).toList();
-    final reviewStatesList = await repository.getReviewStatesByDecisions(decisionIds);
+    final canonicalIds = decisions.map((d) => d.canonicalId).toSet().toList();
+    final allQueryIds = {...decisionIds, ...canonicalIds}.toList();
+    final reviewStatesList = await repository.getReviewStatesByDecisions(allQueryIds);
     final reviewStates = {for (final s in reviewStatesList) s.decisionId: s};
+    final kStates = await repository.getKnowledgeStatesByCanonicalIds(canonicalIds);
+    for (final k in kStates) {
+      reviewStates[k.canonicalId] = k.toReviewState();
+    }
 
     final engine = ReviewEngine(scheduler: scheduler, clock: clock);
 
@@ -158,12 +164,26 @@ class ReviewService {
       throw StateError('No active review session');
     }
 
+    final currentDecision = session.currentPrompt?.decision;
     final result = session.submitMove(from: from, to: to, promotion: promotion);
 
-    // Incremental persistence (Invariant §1.5)
-    await repository.saveReviewState(result.updatedState);
-    if (result.event != null) {
-      await repository.saveReviewEvent(result.event!);
+    // Incremental persistence to canonical knowledge state and review event (SRS mode only)
+    if (session.mode != ReviewMode.practice) {
+      final canonicalId = currentDecision?.canonicalId ?? result.updatedState.decisionId;
+      final kState = PositionKnowledgeState(
+        canonicalId: canonicalId,
+        firstReviewedAt: result.updatedState.firstReviewedAt,
+        lastReviewedAt: result.updatedState.lastReviewedAt,
+        nextDueAt: result.updatedState.nextDueAt,
+        repetitionCount: result.updatedState.repetitionCount,
+        lapseCount: result.updatedState.lapseCount,
+        stability: result.updatedState.stability,
+        difficulty: result.updatedState.difficulty,
+      );
+      await repository.savePositionKnowledgeState(kState);
+      if (result.event != null) {
+        await repository.saveReviewEvent(result.event!);
+      }
     }
 
     return result;
@@ -228,9 +248,10 @@ class ReviewService {
     final openingDueCounts = <String, int>{for (final op in openingFamilies) op: 0};
 
     var totalDueCount = 0;
+    final accountedDueCanonicalIds = <String>{};
 
     for (final d in allDecisions) {
-      final state = reviewStates[d.id];
+      final state = reviewStates[d.canonicalId] ?? reviewStates[d.id];
       final isDue = state == null || state.isDueAt(now);
       final isLearned = state != null && state.repetitionCount > 0;
 
@@ -265,12 +286,16 @@ class ReviewService {
       }
 
       if (scope.matches(studyId: d.studyId, chapterId: d.chapterId, openingFamily: opening)) {
-        if (scope.studyId != null) {
+        if (scope.studyId != null || scope.chapterId != null) {
           totalDueCount++;
         } else if (scope.openingFamily != null) {
-          if (isActiveStudy) totalDueCount++;
+          if (isActiveStudy && accountedDueCanonicalIds.add(d.canonicalId)) {
+            totalDueCount++;
+          }
         } else {
-          if (isActiveStudy) totalDueCount++;
+          if (isActiveStudy && accountedDueCanonicalIds.add(d.canonicalId)) {
+            totalDueCount++;
+          }
         }
       }
     }

@@ -10,6 +10,7 @@ library;
 export 'chapter.dart';
 export 'clock.dart';
 export 'ids.dart';
+export 'position_knowledge_state.dart';
 export 'repertoire_decision.dart';
 export 'repertoire_move.dart';
 export 'repertoire_node.dart';

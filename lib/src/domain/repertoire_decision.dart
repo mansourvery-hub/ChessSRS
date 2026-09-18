@@ -21,6 +21,7 @@ class RepertoireDecision {
     required this.chapterId,
     required this.nodeId,
     required this.expectedMoves,
+    this.canonicalStateId,
   });
 
   /// Creates a new [RepertoireDecision] with a freshly-generated UUID.
@@ -29,6 +30,7 @@ class RepertoireDecision {
     required String chapterId,
     required String nodeId,
     required List<RepertoireMove> expectedMoves,
+    String? canonicalStateId,
   }) {
     return RepertoireDecision(
       id: newId(),
@@ -36,6 +38,7 @@ class RepertoireDecision {
       chapterId: chapterId,
       nodeId: nodeId,
       expectedMoves: List.unmodifiable(expectedMoves),
+      canonicalStateId: canonicalStateId,
     );
   }
 
@@ -49,6 +52,13 @@ class RepertoireDecision {
   /// Accepted repertoire continuations. Any matching move is considered correct.
   final List<RepertoireMove> expectedMoves;
 
+  /// Pointer to the shared [PositionKnowledgeState.canonicalId].
+  /// Nullable for backwards compatibility with pre-v10 databases.
+  final String? canonicalStateId;
+
+  /// Effective canonical knowledge identifier: [canonicalStateId] if set, else [id].
+  String get canonicalId => canonicalStateId ?? id;
+
   /// Returns true if [move] is one of the accepted continuations.
   bool accepts(RepertoireMove move) => expectedMoves.any((m) => m.matches(move));
 
@@ -59,11 +69,12 @@ class RepertoireDecision {
           other.id == id &&
           other.studyId == studyId &&
           other.chapterId == chapterId &&
-          other.nodeId == nodeId;
+          other.nodeId == nodeId &&
+          other.canonicalStateId == canonicalStateId;
 
   @override
-  int get hashCode => Object.hash(id, studyId, chapterId, nodeId);
+  int get hashCode => Object.hash(id, studyId, chapterId, nodeId, canonicalStateId);
 
   @override
-  String toString() => 'RepertoireDecision(id: $id, nodeId: $nodeId)';
+  String toString() => 'RepertoireDecision(id: $id, nodeId: $nodeId, canonical: $canonicalId)';
 }

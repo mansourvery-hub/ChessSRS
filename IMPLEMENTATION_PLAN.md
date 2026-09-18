@@ -195,6 +195,11 @@ remains a later option — never a redesign.
       1. Desktop choice picker: fixed `showChoicePicker` crashing on Linux desktop (`Unexpected platform TargetPlatform.linux`) by using Material dialog fallback for non-iOS platforms.
       2. Scheduler reactivity & observability: connected `ReviewController` to `schedulerProvider` changes to reload active sessions in real time when settings change, added interval progression preview in `SettingsScreen`, and displayed scheduled next review interval post-guess in `ReviewScreen`.
       3. Move-tree canonical hashing: `computePgnHash` now hashes starting positions and move variation trees rather than volatile PGN metadata headers (`Event`, `Date`, etc.), preventing study renaming from breaking duplicate detection. Added auto-backfill of `pgnHash` for pre-v9 studies in SQLite. *(done: 2026-09-18)*
+- [x] **R2: Canonical Position Knowledge State & Transposition Mapping (DSR Architecture Step 1)**
+      1. Domain entity & key: `PositionKnowledgeState` and `canonicalKey(fenKey, expectedMoveUci)` (`sha1(fen4 + uci)`) representing single canonical source of truth for recall memory across transpositions.
+      2. Decision pointers: added `canonicalStateId` to `RepertoireDecision` derived automatically during PGN import.
+      3. SQLite schema v10: added `canonicalStateId` to `srs_decision` and created `position_knowledge_state` table with schema migration.
+      4. Transposition memory sharing: reviewing a transposed move in Study A automatically upgrades the shared canonical state in Study B; deduplicated in all-study review queues. *(done: 2026-09-18)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

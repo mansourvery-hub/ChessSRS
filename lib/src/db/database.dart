@@ -64,7 +64,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
   return dbFactory.openDatabase(
     path,
     options: OpenDatabaseOptions(
-      version: 9,
+      version: 10,
       onConfigure: (db) async {
         final version = await _getDatabaseVersion(db);
         _logger.info('SQLite version: $version');
@@ -126,6 +126,29 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
             batch.execute('ALTER TABLE $kTableSrsStudy ADD COLUMN pgnHash TEXT');
             batch.execute(
               'CREATE INDEX IF NOT EXISTS idx_srs_study_pgnHash ON $kTableSrsStudy(pgnHash)',
+            );
+          }
+          if (oldVersion < 10) {
+            batch.execute('ALTER TABLE $kTableSrsDecision ADD COLUMN canonicalStateId TEXT');
+            batch.execute(
+              'CREATE INDEX IF NOT EXISTS idx_srs_decision_canonicalStateId ON $kTableSrsDecision(canonicalStateId)',
+            );
+            batch.execute('''
+              CREATE TABLE IF NOT EXISTS $kTablePositionKnowledgeState (
+                canonicalId TEXT PRIMARY KEY,
+                firstReviewedAt TEXT,
+                lastReviewedAt TEXT,
+                nextDueAt TEXT,
+                repetitionCount INTEGER NOT NULL DEFAULT 0,
+                lapseCount INTEGER NOT NULL DEFAULT 0,
+                stability REAL NOT NULL DEFAULT 0.0,
+                difficulty REAL NOT NULL DEFAULT 0.0,
+                latencyEmaMs REAL,
+                latencySampleCount INTEGER NOT NULL DEFAULT 0
+              );
+            ''');
+            batch.execute(
+              'CREATE INDEX IF NOT EXISTS idx_position_knowledge_state_nextDueAt ON $kTablePositionKnowledgeState(nextDueAt)',
             );
           }
         }

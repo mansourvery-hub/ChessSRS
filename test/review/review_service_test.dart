@@ -434,5 +434,78 @@ void main() {
         }
       },
     );
+
+    test(
+      'transposition sharing: reviewing move in Study A updates shared canonical state in Study B',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+        final service = ReviewService(repository: repo, clock: clock);
+
+        try {
+          const studyA = Study(id: 'study_a', title: 'Study A');
+          const studyB = Study(id: 'study_b', title: 'Study B');
+          await repo.saveStudy(studyA);
+          await repo.saveStudy(studyB);
+
+          final chA = Chapter.create(studyId: 'study_a', sourceOrder: 0);
+          final chB = Chapter.create(studyId: 'study_b', sourceOrder: 0);
+          await repo.saveChapter(chA);
+          await repo.saveChapter(chB);
+
+          // Same position (startpos), same move (1. e4)
+          final cKey = canonicalKey('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -', 'e2e4');
+
+          final decA = RepertoireDecision.create(
+            studyId: 'study_a',
+            chapterId: chA.id,
+            nodeId: 'node_a_1',
+            expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+            canonicalStateId: cKey,
+          );
+          final decB = RepertoireDecision.create(
+            studyId: 'study_b',
+            chapterId: chB.id,
+            nodeId: 'node_b_1',
+            expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+            canonicalStateId: cKey,
+          );
+          await repo.saveDecisions([decA, decB]);
+
+          // In All Studies, the shared transposition is counted ONCE, not twice!
+          final dueSummary = await service.getDueSummary(
+            studies: [studyA, studyB],
+            scope: const ReviewScope.all(),
+          );
+          expect(dueSummary.totalDueCount, 1);
+
+          // Start session in Study A and answer the move correctly
+          final session = await service.startSession(scope: const ReviewScope.study('study_a'));
+          expect(session.remainingDueCount, 1);
+          final stepResult = await service.submitMove(from: 'e2', to: 'e4');
+          expect(stepResult.isCorrect, isTrue);
+
+          // Canonical position knowledge state in DB is now learned and scheduled for tomorrow
+          final kState = await repo.getPositionKnowledgeState(cKey);
+          expect(kState, isNotNull);
+          expect(kState!.repetitionCount, 1);
+          expect(kState.nextDueAt, now.add(const Duration(days: 1)));
+
+          // Study B's decision now also reflects that the shared position is learned!
+          final dueSummaryAfter = await service.getDueSummary(
+            studies: [studyA, studyB],
+            scope: const ReviewScope.all(),
+          );
+          expect(dueSummaryAfter.totalDueCount, 0);
+
+          // Session for Study B now has 0 due items
+          final sessionB = await service.startSession(scope: const ReviewScope.study('study_b'));
+          expect(sessionB.remainingDueCount, 0);
+          expect(sessionB.isComplete, isTrue);
+        } finally {
+          await db.close();
+        }
+      },
+    );
   });
 }

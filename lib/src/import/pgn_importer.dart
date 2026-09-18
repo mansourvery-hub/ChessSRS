@@ -4,6 +4,7 @@
 import 'dart:convert';
 
 import 'package:chess_srs/src/domain/chapter.dart';
+import 'package:chess_srs/src/domain/position_knowledge_state.dart';
 import 'package:chess_srs/src/domain/repertoire_decision.dart';
 import 'package:chess_srs/src/domain/repertoire_move.dart';
 import 'package:chess_srs/src/domain/repertoire_node.dart';
@@ -380,12 +381,15 @@ void _deriveDecisions(
     final isRepertoireSide = repertoireSide == null || nodeSideToMove == repertoireSide;
 
     if (isRepertoireSide) {
+      final primaryMove = node.childMoves.firstOrNull;
+      final cKey = primaryMove != null ? canonicalKey(node.fenKey, primaryMove.uci) : null;
       out.add(
         RepertoireDecision.create(
           studyId: studyId,
           chapterId: chapterId,
           nodeId: node.id,
           expectedMoves: node.childMoves,
+          canonicalStateId: cKey,
         ),
       );
     }

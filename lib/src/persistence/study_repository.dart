@@ -50,7 +50,14 @@ abstract class StudyRepository {
   Future<List<RepertoireDecision>> getAllDecisions();
   Future<void> deleteDecisionsByStudy(String studyId);
 
-  // Review states (SRS)
+  // Position Knowledge States (canonical SRS memory layer)
+  Future<void> savePositionKnowledgeState(PositionKnowledgeState state);
+  Future<void> savePositionKnowledgeStates(List<PositionKnowledgeState> states);
+  Future<PositionKnowledgeState?> getPositionKnowledgeState(String canonicalId);
+  Future<List<PositionKnowledgeState>> getKnowledgeStatesByCanonicalIds(List<String> canonicalIds);
+  Future<List<PositionKnowledgeState>> getAllKnowledgeStates();
+
+  // Review states (SRS legacy/compatibility)
   Future<void> saveReviewState(ReviewState state);
   Future<void> saveReviewStates(List<ReviewState> states);
   Future<ReviewState?> getReviewState(String decisionId);

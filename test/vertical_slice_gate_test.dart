@@ -15,11 +15,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'binding.dart';
 import 'test_helpers.dart';
 import 'test_provider_scope.dart';
 
 void main() {
   setUpAll(() {
+    TestLichessBinding.ensureInitialized();
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   });
@@ -30,6 +32,7 @@ void main() {
     late FixedClock clock;
 
     setUp(() async {
+      await TestLichessBinding.instance.sharedPreferences.clear();
       final tempDir = await io.Directory.systemTemp.createTemp('srs_gate_test_');
       dbPath = '${tempDir.path}/gate_test.db';
       db = await databaseFactory.openDatabase(dbPath);
@@ -80,7 +83,7 @@ void main() {
         );
 
         await tester.pumpWidget(app);
-        await pumpAsync(tester);
+        await pumpAsync(tester, 200);
 
         expect(find.text('Welcome to ChessSRS'), findsOneWidget);
         expect(find.text('Import Repertoire PGN'), findsWidgets);

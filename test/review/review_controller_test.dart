@@ -625,25 +625,28 @@ void main() {
       },
     );
 
-    test('changing scheduler preference automatically reloads session with new scheduler', () async {
-      final container = createContainer();
-      final controller = container.read(reviewControllerProvider.notifier);
+    test(
+      'changing scheduler preference automatically reloads session with new scheduler',
+      () async {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
 
-      const pgn = '1. e4 e5 2. Nf3 *';
-      await controller.importPgnText(pgnText: pgn, repertoireSide: Side.white);
+        const pgn = '1. e4 e5 2. Nf3 *';
+        await controller.importPgnText(pgnText: pgn, repertoireSide: Side.white);
 
-      var session = container.read(reviewControllerProvider).requireValue.session!;
-      expect(session.scheduler, isA<SimpleScheduler>());
+        var session = container.read(reviewControllerProvider).requireValue.session!;
+        expect(session.scheduler, isA<SimpleScheduler>());
 
-      // Switch to EaseScalingScheduler in preferences
-      final prefsNotifier = container.read(studyPreferencesProvider.notifier);
-      await prefsNotifier.setSchedulerType(SchedulerType.easeScaling);
-      await prefsNotifier.setSchedulerEase(3.0);
-      await controller.reload();
+        // Switch to EaseScalingScheduler in preferences
+        final prefsNotifier = container.read(studyPreferencesProvider.notifier);
+        await prefsNotifier.setSchedulerType(SchedulerType.easeScaling);
+        await prefsNotifier.setSchedulerEase(3.0);
+        await controller.reload();
 
-      session = container.read(reviewControllerProvider).requireValue.session!;
-      expect(session.scheduler, isA<EaseScalingScheduler>());
-      expect((session.scheduler as EaseScalingScheduler).ease, 3.0);
-    });
+        session = container.read(reviewControllerProvider).requireValue.session!;
+        expect(session.scheduler, isA<EaseScalingScheduler>());
+        expect((session.scheduler as EaseScalingScheduler).ease, 3.0);
+      },
+    );
   });
 }

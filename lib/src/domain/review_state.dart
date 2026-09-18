@@ -23,6 +23,7 @@ class ReviewState {
     this.repetitionCount = 0,
     this.lapseCount = 0,
     this.stability = 0.0,
+    this.difficulty = 0.0,
   });
 
   /// Creates an initial (never-reviewed) state for [decisionId].
@@ -49,6 +50,9 @@ class ReviewState {
   /// Scheduler-internal interval growth factor.
   final double stability;
 
+  /// Intrinsic difficulty rating on the FSRS scale (1.0 to 10.0).
+  final double difficulty;
+
   /// True when this item has never been reviewed.
   bool get isNew => repetitionCount == 0 && nextDueAt == null;
 
@@ -67,6 +71,7 @@ class ReviewState {
     int? repetitionCount,
     int? lapseCount,
     double? stability,
+    double? difficulty,
   }) {
     return ReviewState(
       decisionId: decisionId,
@@ -76,6 +81,7 @@ class ReviewState {
       repetitionCount: repetitionCount ?? this.repetitionCount,
       lapseCount: lapseCount ?? this.lapseCount,
       stability: stability ?? this.stability,
+      difficulty: difficulty ?? this.difficulty,
     );
   }
 
@@ -89,7 +95,8 @@ class ReviewState {
           other.nextDueAt == nextDueAt &&
           other.repetitionCount == repetitionCount &&
           other.lapseCount == lapseCount &&
-          other.stability == stability;
+          other.stability == stability &&
+          other.difficulty == difficulty;
 
   @override
   int get hashCode => Object.hash(
@@ -100,6 +107,7 @@ class ReviewState {
     repetitionCount,
     lapseCount,
     stability,
+    difficulty,
   );
 
   @override

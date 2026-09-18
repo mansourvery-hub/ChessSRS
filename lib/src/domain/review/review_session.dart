@@ -51,6 +51,7 @@ class ReviewSession {
 
     // Build initial due queue
     final now = clock.now();
+    final queuedCanonicalIds = <String>{};
     for (final d in decisions) {
       final chapter = _chapters[d.chapterId];
       if (!scope.matches(
@@ -60,8 +61,14 @@ class ReviewSession {
       )) {
         continue;
       }
-      final state = _reviewStates[d.id];
+      final state = _reviewStates[d.canonicalId] ?? _reviewStates[d.id];
       if (mode == ReviewMode.practice || state == null || state.isDueAt(now)) {
+        // In multi-study scope, deduplicate shared canonical transpositions
+        if (scope.studyId == null && scope.chapterId == null) {
+          if (!queuedCanonicalIds.add(d.canonicalId)) {
+            continue;
+          }
+        }
         _unbufferedQueue.add(d);
       }
     }
@@ -135,7 +142,10 @@ class ReviewSession {
     }
 
     final decision = prompt.decision;
-    final prevState = _reviewStates[decision.id] ?? ReviewState.initial(decisionId: decision.id);
+    final prevState =
+        _reviewStates[decision.canonicalId] ??
+        _reviewStates[decision.id] ??
+        ReviewState.initial(decisionId: decision.canonicalId);
 
     // Validate move against expected repertoire moves (Invariant §2.1)
     final movePlayed = RepertoireMove(from: from, to: to, promotion: promotion);
@@ -155,10 +165,11 @@ class ReviewSession {
         event = null;
       } else {
         nextState = scheduler.schedule(previous: prevState, result: ReviewResult.correct, now: now);
+        _reviewStates[decision.canonicalId] = nextState;
         _reviewStates[decision.id] = nextState;
 
         event = ReviewEvent(
-          decisionId: decision.id,
+          decisionId: decision.canonicalId,
           when: now,
           result: ReviewResult.correct,
           oldState: prevState,
@@ -192,10 +203,11 @@ class ReviewSession {
           result: ReviewResult.incorrect,
           now: now,
         );
+        _reviewStates[decision.canonicalId] = nextState;
         _reviewStates[decision.id] = nextState;
 
         event = ReviewEvent(
-          decisionId: decision.id,
+          decisionId: decision.canonicalId,
           when: now,
           result: ReviewResult.incorrect,
           oldState: prevState,
@@ -296,12 +308,16 @@ class ReviewSession {
       // Now at opponentChild, which is user's turn
       final nextDecision = _decisionForNode[opponentChild.id];
       if (nextDecision != null) {
-        final decState = _reviewStates[nextDecision.id];
+        final decState = _reviewStates[nextDecision.canonicalId] ?? _reviewStates[nextDecision.id];
         final isDue = mode == ReviewMode.practice || decState == null || decState.isDueAt(now);
         if (isDue) {
           // Found next due decision along this branch!
-          _dueQueue.removeWhere((d) => d.id == nextDecision.id);
-          _unbufferedQueue.removeWhere((d) => d.id == nextDecision.id);
+          _dueQueue.removeWhere(
+            (d) => d.id == nextDecision.id || d.canonicalId == nextDecision.canonicalId,
+          );
+          _unbufferedQueue.removeWhere(
+            (d) => d.id == nextDecision.id || d.canonicalId == nextDecision.canonicalId,
+          );
           _currentPrompt = _buildPrompt(decision: nextDecision, node: opponentChild);
           return ReviewStepResult(
             isCorrect: true,

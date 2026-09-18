@@ -25,9 +25,11 @@ void main() {
     });
 
     tearDown(() {
-      if (tempDir.existsSync()) {
-        tempDir.deleteSync(recursive: true);
-      }
+      try {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      } catch (_) {}
     });
 
     test('durability across restart (close and reopen)', () async {
@@ -497,6 +499,78 @@ void main() {
 
         final emptyQuery = await repo.getReviewStatesByDecisions([]);
         expect(emptyQuery, isEmpty);
+      } finally {
+        await db.close();
+      }
+    });
+
+    test(
+      'savePositionKnowledgeState and getPositionKnowledgeState roundtrips canonical state',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+
+        try {
+          final now = DateTime.utc(2026, 9, 18, 12);
+          final kState = PositionKnowledgeState(
+            canonicalId: 'canonical_test_1',
+            firstReviewedAt: now,
+            lastReviewedAt: now,
+            nextDueAt: now.add(const Duration(days: 3)),
+            repetitionCount: 4,
+            lapseCount: 1,
+            stability: 259200000.0,
+            difficulty: 4.8,
+            latencyEmaMs: 1420.5,
+            latencySampleCount: 5,
+          );
+
+          await repo.savePositionKnowledgeState(kState);
+
+          final loaded = await repo.getPositionKnowledgeState('canonical_test_1');
+          expect(loaded, isNotNull);
+          expect(loaded!.canonicalId, 'canonical_test_1');
+          expect(loaded.repetitionCount, 4);
+          expect(loaded.lapseCount, 1);
+          expect(loaded.stability, 259200000.0);
+          expect(loaded.difficulty, 4.8);
+          expect(loaded.latencyEmaMs, 1420.5);
+          expect(loaded.latencySampleCount, 5);
+
+          // Also synchronized to legacy review_state
+          final legacy = await repo.getReviewState('canonical_test_1');
+          expect(legacy, isNotNull);
+          expect(legacy!.repetitionCount, 4);
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
+    test('decision canonicalStateId is persisted and retrieved', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+
+      try {
+        const study = Study(id: 's_canon', title: 'Canonical Study');
+        await repo.saveStudy(study);
+        final ch = Chapter.create(studyId: 's_canon', sourceOrder: 0);
+        await repo.saveChapter(ch);
+
+        const dec = RepertoireDecision(
+          id: 'dec_canon_1',
+          studyId: 's_canon',
+          chapterId: 'ch_canon_1',
+          nodeId: 'n1',
+          expectedMoves: [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+          canonicalStateId: 'sha1_canon_hash_123',
+        );
+        await repo.saveDecision(dec);
+
+        final loaded = await repo.getDecision('dec_canon_1');
+        expect(loaded, isNotNull);
+        expect(loaded!.canonicalStateId, 'sha1_canon_hash_123');
+        expect(loaded.canonicalId, 'sha1_canon_hash_123');
       } finally {
         await db.close();
       }
