@@ -1,5 +1,4 @@
 import 'package:chess_srs/src/model/game/exported_game.dart';
-import 'package:chess_srs/src/model/message/message.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/aggregator.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -12,6 +11,8 @@ import '../test_container.dart';
 import '../test_helpers.dart';
 import 'fake_http_client_factory.dart';
 import 'http_test.dart';
+
+typedef _UnreadCount = ({int unread, bool lichess});
 
 void main() {
   setUp(() {
@@ -108,7 +109,7 @@ void main() {
 
       expect(requestsCount, 2);
       expect(account, isA<User>());
-      expect(inbox, isA<UnreadMessages>());
+      expect(inbox, isA<_UnreadCount>());
     });
 
     test('aggregates home endpoint', () async {
@@ -146,7 +147,7 @@ void main() {
       expect(requestsCount, 1);
       expect(account, isA<User>());
       expect(recentGames, isA<IList<LightExportedGame>>());
-      expect(inbox, isA<UnreadMessages>());
+      expect(inbox, isA<_UnreadCount>());
     });
   });
 }

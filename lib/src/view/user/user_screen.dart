@@ -1,4 +1,3 @@
-import 'package:chess_srs/src/model/account/account_repository.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/game/game_filter.dart';
@@ -11,7 +10,6 @@ import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/l10n_context.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/utils/share.dart';
-import 'package:chess_srs/src/view/message/conversation_screen.dart';
 import 'package:chess_srs/src/view/user/game_history_screen.dart';
 import 'package:chess_srs/src/view/user/perf_cards.dart';
 import 'package:chess_srs/src/view/user/recent_games.dart';
@@ -140,7 +138,6 @@ class _UserProfileListView extends ConsumerWidget {
     final isOnline = ref.watch(isDeviceOnlineProvider);
     final nbOfGames = user.count?.all ?? 0;
     final authUser = ref.watch(authControllerProvider);
-    final kidMode = ref.watch(kidModeProvider);
 
     if (user.disabled == true) {
       return Center(child: Text(context.l10n.settingsThisAccountIsClosed, style: Styles.bold));
@@ -193,17 +190,6 @@ class _UserProfileListView extends ConsumerWidget {
                 }(),
               ],
               if (authUser != null) ...[
-                if (user.blocking != true && !user.isBot && kidMode.value == false)
-                  ListTile(
-                    leading: const Icon(Icons.chat_bubble_outline),
-                    title: Text(context.l10n.composeMessage),
-                    onTap: () {
-                      Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      ).push(ConversationScreen.buildRoute(user: user.lightUser));
-                    },
-                  ),
                 if (user.followable == true && user.following != true)
                   ListTile(
                     leading: const Icon(Icons.person_add_outlined),
