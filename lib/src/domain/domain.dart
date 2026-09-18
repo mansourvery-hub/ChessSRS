@@ -13,6 +13,7 @@ export 'ids.dart';
 export 'repertoire_decision.dart';
 export 'repertoire_move.dart';
 export 'repertoire_node.dart';
+export 'repertoire_progress.dart';
 export 'review/review_engine.dart';
 export 'review/review_mode.dart';
 export 'review/review_prompt.dart';

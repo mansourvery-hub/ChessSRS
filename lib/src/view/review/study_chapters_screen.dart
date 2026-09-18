@@ -136,6 +136,10 @@ class StudyChaptersScreen extends ConsumerWidget {
           final chapterTitle = chapter.title?.trim().isNotEmpty == true
               ? chapter.title!.trim()
               : 'Chapter ${index + 1}';
+          final reviewState = ref.watch(reviewControllerProvider).value;
+          final progress = reviewState?.chapterProgress[chapter.id];
+          final hasOpening = chapter.opening != null && chapter.opening!.trim().isNotEmpty;
+          final hasProgress = progress != null && progress.totalDecisions > 0;
 
           return ListTile(
             leading: CircleAvatar(
@@ -151,10 +155,29 @@ class StudyChaptersScreen extends ConsumerWidget {
               ),
             ),
             title: Text(chapterTitle, style: Styles.subtitle),
-            subtitle: chapter.opening != null && chapter.opening!.trim().isNotEmpty
-                ? Text(
-                    chapter.opening!.trim(),
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12.0),
+            subtitle: hasOpening || hasProgress
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (hasOpening)
+                        Text(
+                          chapter.opening!.trim(),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 12.0,
+                          ),
+                        ),
+                      if (hasProgress)
+                        Text(
+                          '${progress.learnedDecisions}/${progress.totalDecisions} learned (${progress.progressPercentage}%)'
+                          '${progress.dueDecisions > 0 ? " • ${progress.dueDecisions} due" : ""}',
+                          style: TextStyle(
+                            fontSize: 11.0,
+                            color: textShade(context, Styles.subtitleOpacity),
+                          ),
+                        ),
+                    ],
                   )
                 : null,
             trailing: Row(

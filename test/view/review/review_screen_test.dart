@@ -801,5 +801,62 @@ void main() {
         expect(find.text('Attacks the center'), findsOneWidget);
       },
     );
+
+    testWidgets('ReviewScopeDrawer and All Caught Up view display progress metrics', (
+      tester,
+    ) async {
+      final importResult = importPgn(
+        '1. e4 e5 2. Nf3 *',
+        studyTitle: 'Progress Test Study',
+        repertoireSide: Side.white,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(importResult);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer: before any reviews, 0/2 learned (0%)
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      expect(find.text('0/2 learned (0%)'), findsNWidgets(2)); // All Studies & Study tile
+
+      // Close drawer by tapping the All Studies tile
+      await tester.tap(find.widgetWithText(ListTile, 'All Studies'));
+      await pumpAsync(tester);
+
+      // Play 1. e4 (first move)
+      await playMove(tester, 'e2', 'e4');
+      await pumpAsync(tester, 700);
+
+      // Play 2. Nf3 (second move)
+      await playMove(tester, 'g1', 'f3');
+      await pumpAsync(tester, 700);
+
+      // All Caught Up view: shows 2/2 positions mastered (100%) and progress bar
+      expect(find.text('All Caught Up!'), findsOneWidget);
+      expect(find.text('2/2 positions mastered (100%)'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+
+      // Open drawer again: shows 2/2 learned (100%)
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      expect(find.text('2/2 learned (100%)'), findsNWidgets(2));
+    });
   });
 }

@@ -231,5 +231,113 @@ void main() {
         }
       },
     );
+
+    test('getDueSummary computes accurate study and chapter progress metrics', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+      final service = ReviewService(repository: repo, clock: clock);
+
+      try {
+        const study = Study(id: 's_prog', title: 'Progress Study');
+        await repo.saveStudy(study);
+
+        final ch1 = Chapter.create(studyId: 's_prog', sourceOrder: 0, title: 'Chapter 1');
+        final ch2 = Chapter.create(studyId: 's_prog', sourceOrder: 1, title: 'Chapter 2');
+        await repo.saveChapter(ch1);
+        await repo.saveChapter(ch2);
+
+        // 3 decisions in ch1, 2 decisions in ch2
+        final d1 = RepertoireDecision.create(
+          studyId: 's_prog',
+          chapterId: ch1.id,
+          nodeId: 'n1',
+          expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+        );
+        final d2 = RepertoireDecision.create(
+          studyId: 's_prog',
+          chapterId: ch1.id,
+          nodeId: 'n2',
+          expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        );
+        final d3 = RepertoireDecision.create(
+          studyId: 's_prog',
+          chapterId: ch1.id,
+          nodeId: 'n3',
+          expectedMoves: const [RepertoireMove(from: 'f1', to: 'c4', san: 'Bc4')],
+        );
+        final d4 = RepertoireDecision.create(
+          studyId: 's_prog',
+          chapterId: ch2.id,
+          nodeId: 'n4',
+          expectedMoves: const [RepertoireMove(from: 'd2', to: 'd4', san: 'd4')],
+        );
+        final d5 = RepertoireDecision.create(
+          studyId: 's_prog',
+          chapterId: ch2.id,
+          nodeId: 'n5',
+          expectedMoves: const [RepertoireMove(from: 'c2', to: 'c4', san: 'c4')],
+        );
+
+        await repo.saveDecisions([d1, d2, d3, d4, d5]);
+
+        // d1 is learned and not due (due tomorrow)
+        await repo.saveReviewState(
+          ReviewState(
+            decisionId: d1.id,
+            repetitionCount: 2,
+            nextDueAt: now.add(const Duration(days: 1)),
+          ),
+        );
+        // d2 is learned but due now
+        await repo.saveReviewState(
+          ReviewState(
+            decisionId: d2.id,
+            repetitionCount: 1,
+            nextDueAt: now.subtract(const Duration(hours: 1)),
+          ),
+        );
+        // d3 is unlearned (repetitionCount 0) and due
+        await repo.saveReviewState(
+          ReviewState(decisionId: d3.id, repetitionCount: 0, nextDueAt: now),
+        );
+        // d4 is unlearned (no state record => due)
+        // d5 is learned and not due
+        await repo.saveReviewState(
+          ReviewState(
+            decisionId: d5.id,
+            repetitionCount: 3,
+            nextDueAt: now.add(const Duration(days: 5)),
+          ),
+        );
+
+        final summary = await service.getDueSummary(studies: [study]);
+
+        // Study progress: 5 total, 3 learned (d1, d2, d5), 3 due (d2, d3, d4)
+        final studyProg = summary.studyProgress['s_prog'];
+        expect(studyProg, isNotNull);
+        expect(studyProg!.totalDecisions, 5);
+        expect(studyProg.learnedDecisions, 3);
+        expect(studyProg.dueDecisions, 3);
+        expect(studyProg.progressPercentage, 60);
+
+        // Chapter 1: 3 total, 2 learned (d1, d2), 2 due (d2, d3)
+        final ch1Prog = summary.chapterProgress[ch1.id];
+        expect(ch1Prog, isNotNull);
+        expect(ch1Prog!.totalDecisions, 3);
+        expect(ch1Prog.learnedDecisions, 2);
+        expect(ch1Prog.dueDecisions, 2);
+        expect(ch1Prog.progressPercentage, 67);
+
+        // Chapter 2: 2 total, 1 learned (d5), 1 due (d4)
+        final ch2Prog = summary.chapterProgress[ch2.id];
+        expect(ch2Prog, isNotNull);
+        expect(ch2Prog!.totalDecisions, 2);
+        expect(ch2Prog.learnedDecisions, 1);
+        expect(ch2Prog.dueDecisions, 1);
+        expect(ch2Prog.progressPercentage, 50);
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

@@ -57,6 +57,15 @@ class ReviewScopeDrawer extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Symbols.all_inclusive_rounded),
                     title: const Text('All Studies', style: Styles.subtitle),
+                    subtitle: reviewState.totalProgress.totalDecisions > 0
+                        ? Text(
+                            '${reviewState.totalProgress.learnedDecisions}/${reviewState.totalProgress.totalDecisions} learned (${reviewState.totalProgress.progressPercentage}%)',
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              color: textShade(context, Styles.subtitleOpacity),
+                            ),
+                          )
+                        : null,
                     selected: isAllSelected,
                     trailing: _DueChip(count: reviewState.totalDueCount),
                     onTap: () {
@@ -94,51 +103,65 @@ class ReviewScopeDrawer extends ConsumerWidget {
                     ),
                   ],
                   for (final study in reviewState.studies)
-                    ListTile(
-                      leading: IconButton(
-                        icon: Icon(
-                          study.isActive
-                              ? Symbols.check_circle_rounded
-                              : Symbols.pause_circle_outline_rounded,
-                          color: study.isActive
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).disabledColor,
-                          size: 22,
-                        ),
-                        tooltip: study.isActive
-                            ? 'Active in review pool (tap to suspend)'
-                            : 'Suspended from review pool (tap to activate)',
-                        onPressed: () {
-                          ref
-                              .read(reviewControllerProvider.notifier)
-                              .toggleStudyActive(study.id, !study.isActive);
-                        },
-                      ),
-                      title: Text(
-                        study.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: study.isActive
-                            ? null
-                            : TextStyle(color: Theme.of(context).disabledColor),
-                      ),
-                      selected: reviewState.scope.studyId == study.id,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
-                          IconButton(
-                            icon: const Icon(Symbols.more_vert_rounded),
-                            tooltip: 'Study options',
-                            onPressed: () => _showStudyActionsSheet(context, ref, study),
+                    Builder(
+                      builder: (context) {
+                        final progress = reviewState.studyProgress[study.id];
+                        return ListTile(
+                          leading: IconButton(
+                            icon: Icon(
+                              study.isActive
+                                  ? Symbols.check_circle_rounded
+                                  : Symbols.pause_circle_outline_rounded,
+                              color: study.isActive
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Theme.of(context).disabledColor,
+                              size: 22,
+                            ),
+                            tooltip: study.isActive
+                                ? 'Active in review pool (tap to suspend)'
+                                : 'Suspended from review pool (tap to activate)',
+                            onPressed: () {
+                              ref
+                                  .read(reviewControllerProvider.notifier)
+                                  .toggleStudyActive(study.id, !study.isActive);
+                            },
                           ),
-                        ],
-                      ),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        ref
-                            .read(reviewControllerProvider.notifier)
-                            .changeScope(ReviewScope.study(study.id));
+                          title: Text(
+                            study.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: study.isActive
+                                ? null
+                                : TextStyle(color: Theme.of(context).disabledColor),
+                          ),
+                          subtitle: progress != null && progress.totalDecisions > 0
+                              ? Text(
+                                  '${progress.learnedDecisions}/${progress.totalDecisions} learned (${progress.progressPercentage}%)',
+                                  style: TextStyle(
+                                    fontSize: 12.0,
+                                    color: textShade(context, Styles.subtitleOpacity),
+                                  ),
+                                )
+                              : null,
+                          selected: reviewState.scope.studyId == study.id,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
+                              IconButton(
+                                icon: const Icon(Symbols.more_vert_rounded),
+                                tooltip: 'Study options',
+                                onPressed: () => _showStudyActionsSheet(context, ref, study),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            ref
+                                .read(reviewControllerProvider.notifier)
+                                .changeScope(ReviewScope.study(study.id));
+                          },
+                        );
                       },
                     ),
                 ],

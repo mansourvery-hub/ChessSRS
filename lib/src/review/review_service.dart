@@ -32,11 +32,15 @@ class DueCountsSummary {
     required this.totalDueCount,
     required this.studyDueCounts,
     required this.openingDueCounts,
+    this.studyProgress = const {},
+    this.chapterProgress = const {},
   });
 
   final int totalDueCount;
   final Map<String, int> studyDueCounts;
   final Map<String, int> openingDueCounts;
+  final Map<String, RepertoireProgress> studyProgress;
+  final Map<String, RepertoireProgress> chapterProgress;
 }
 
 class ReviewService {
@@ -159,6 +163,13 @@ class ReviewService {
     final now = clock.now();
 
     final studyDueCounts = <String, int>{for (final s in studies) s.id: 0};
+    final studyTotals = <String, int>{for (final s in studies) s.id: 0};
+    final studyLearned = <String, int>{for (final s in studies) s.id: 0};
+
+    final chapterTotals = <String, int>{};
+    final chapterLearned = <String, int>{};
+    final chapterDue = <String, int>{};
+
     final openingFamilies = <String>{};
     for (final op in chapterOpenings.values) {
       if (op != null && op.trim().isNotEmpty) {
@@ -172,6 +183,23 @@ class ReviewService {
     for (final d in allDecisions) {
       final state = reviewStates[d.id];
       final isDue = state == null || state.isDueAt(now);
+      final isLearned = state != null && state.repetitionCount > 0;
+
+      if (studyTotals.containsKey(d.studyId)) {
+        studyTotals[d.studyId] = (studyTotals[d.studyId] ?? 0) + 1;
+        if (isLearned) {
+          studyLearned[d.studyId] = (studyLearned[d.studyId] ?? 0) + 1;
+        }
+      }
+
+      chapterTotals[d.chapterId] = (chapterTotals[d.chapterId] ?? 0) + 1;
+      if (isLearned) {
+        chapterLearned[d.chapterId] = (chapterLearned[d.chapterId] ?? 0) + 1;
+      }
+      if (isDue) {
+        chapterDue[d.chapterId] = (chapterDue[d.chapterId] ?? 0) + 1;
+      }
+
       if (!isDue) continue;
 
       if (studyDueCounts.containsKey(d.studyId)) {
@@ -198,10 +226,30 @@ class ReviewService {
       }
     }
 
+    final studyProgress = <String, RepertoireProgress>{
+      for (final s in studies)
+        s.id: RepertoireProgress(
+          totalDecisions: studyTotals[s.id] ?? 0,
+          learnedDecisions: studyLearned[s.id] ?? 0,
+          dueDecisions: studyDueCounts[s.id] ?? 0,
+        ),
+    };
+
+    final chapterProgress = <String, RepertoireProgress>{
+      for (final chId in chapterTotals.keys)
+        chId: RepertoireProgress(
+          totalDecisions: chapterTotals[chId] ?? 0,
+          learnedDecisions: chapterLearned[chId] ?? 0,
+          dueDecisions: chapterDue[chId] ?? 0,
+        ),
+    };
+
     return DueCountsSummary(
       totalDueCount: totalDueCount,
       studyDueCounts: studyDueCounts,
       openingDueCounts: openingDueCounts,
+      studyProgress: studyProgress,
+      chapterProgress: chapterProgress,
     );
   }
 

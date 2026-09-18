@@ -31,6 +31,8 @@ class ReviewScreenState {
     this.mode = ReviewMode.srs,
     this.openingDueCounts = const {},
     this.isAwaitingAdvance = false,
+    this.studyProgress = const {},
+    this.chapterProgress = const {},
   });
 
   final List<Study> studies;
@@ -38,6 +40,8 @@ class ReviewScreenState {
   final int totalDueCount;
   final Map<String, int> studyDueCounts;
   final Map<String, int> openingDueCounts;
+  final Map<String, RepertoireProgress> studyProgress;
+  final Map<String, RepertoireProgress> chapterProgress;
   final ReviewSession? session;
   final ReviewPrompt? currentPrompt;
   final Position? boardPosition;
@@ -58,12 +62,39 @@ class ReviewScreenState {
       ((totalDueCount == 0 && !isPracticeMode) || currentPrompt == null);
   bool get isPracticeMode => mode == ReviewMode.practice;
 
+  /// Aggregated progress across all active studies in the review pool.
+  RepertoireProgress get totalProgress {
+    var combined = RepertoireProgress.zero;
+    for (final study in studies) {
+      if (study.isActive) {
+        final prog = studyProgress[study.id];
+        if (prog != null) {
+          combined += prog;
+        }
+      }
+    }
+    return combined;
+  }
+
+  /// Progress for the current review scope (study, chapter, or all).
+  RepertoireProgress? get activeScopeProgress {
+    if (scope.chapterId != null) {
+      return chapterProgress[scope.chapterId!];
+    }
+    if (scope.studyId != null) {
+      return studyProgress[scope.studyId!];
+    }
+    return totalProgress;
+  }
+
   ReviewScreenState copyWith({
     List<Study>? studies,
     ReviewScope? scope,
     int? totalDueCount,
     Map<String, int>? studyDueCounts,
     Map<String, int>? openingDueCounts,
+    Map<String, RepertoireProgress>? studyProgress,
+    Map<String, RepertoireProgress>? chapterProgress,
     ReviewSession? session,
     ReviewPrompt? currentPrompt,
     bool clearPrompt = false,
@@ -86,6 +117,8 @@ class ReviewScreenState {
       totalDueCount: totalDueCount ?? this.totalDueCount,
       studyDueCounts: studyDueCounts ?? this.studyDueCounts,
       openingDueCounts: openingDueCounts ?? this.openingDueCounts,
+      studyProgress: studyProgress ?? this.studyProgress,
+      chapterProgress: chapterProgress ?? this.chapterProgress,
       session: session ?? this.session,
       currentPrompt: clearPrompt ? null : (currentPrompt ?? this.currentPrompt),
       boardPosition: boardPosition ?? this.boardPosition,
@@ -177,6 +210,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         totalDueCount: 0,
         studyDueCounts: summary.studyDueCounts,
         openingDueCounts: summary.openingDueCounts,
+        studyProgress: summary.studyProgress,
+        chapterProgress: summary.chapterProgress,
       );
     }
 
@@ -209,6 +244,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       totalDueCount: summary.totalDueCount,
       studyDueCounts: summary.studyDueCounts,
       openingDueCounts: summary.openingDueCounts,
+      studyProgress: summary.studyProgress,
+      chapterProgress: summary.chapterProgress,
       session: session,
       currentPrompt: prompt,
       boardPosition: position,
@@ -298,6 +335,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         totalDueCount: summary.totalDueCount,
         studyDueCounts: summary.studyDueCounts,
         openingDueCounts: summary.openingDueCounts,
+        studyProgress: summary.studyProgress,
+        chapterProgress: summary.chapterProgress,
         session: newSession,
         currentPrompt: newPrompt,
         clearPrompt: newPrompt == null,
@@ -345,6 +384,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
             totalDueCount: summary.totalDueCount,
             studyDueCounts: summary.studyDueCounts,
             openingDueCounts: summary.openingDueCounts,
+            studyProgress: summary.studyProgress,
+            chapterProgress: summary.chapterProgress,
             session: newSession,
             currentPrompt: prompt,
             clearPrompt: prompt == null,
@@ -514,11 +555,35 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       openingCounts[currentOpening] = openingCounts[currentOpening]! - 1;
     }
 
+    final studyProgressMap = Map<String, RepertoireProgress>.from(currentState.studyProgress);
+    final chapterProgressMap = Map<String, RepertoireProgress>.from(currentState.chapterProgress);
+    final currentChapterId = currentState.currentPrompt!.chapterId;
+    if (isFirstAttempt) {
+      final stProg = studyProgressMap[currentStudyId];
+      if (stProg != null) {
+        studyProgressMap[currentStudyId] = RepertoireProgress(
+          totalDecisions: stProg.totalDecisions,
+          learnedDecisions: (stProg.learnedDecisions + 1).clamp(0, stProg.totalDecisions),
+          dueDecisions: (stProg.dueDecisions - 1).clamp(0, stProg.totalDecisions),
+        );
+      }
+      final chProg = chapterProgressMap[currentChapterId];
+      if (chProg != null) {
+        chapterProgressMap[currentChapterId] = RepertoireProgress(
+          totalDecisions: chProg.totalDecisions,
+          learnedDecisions: (chProg.learnedDecisions + 1).clamp(0, chProg.totalDecisions),
+          dueDecisions: (chProg.dueDecisions - 1).clamp(0, chProg.totalDecisions),
+        );
+      }
+    }
+
     state = AsyncData(
       state.value!.copyWith(
         totalDueCount: newTotalDue,
         studyDueCounts: studyCounts,
         openingDueCounts: openingCounts,
+        studyProgress: studyProgressMap,
+        chapterProgress: chapterProgressMap,
         session: session,
         currentPrompt: nextPrompt,
         clearPrompt: nextPrompt == null,

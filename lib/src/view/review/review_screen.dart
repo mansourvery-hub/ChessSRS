@@ -233,6 +233,25 @@ class _AllCaughtUpView extends ConsumerWidget {
               style: Styles.subtitle,
               textAlign: TextAlign.center,
             ),
+            if (state.activeScopeProgress != null &&
+                state.activeScopeProgress!.totalDecisions > 0) ...[
+              const SizedBox(height: 16.0),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4.0),
+                child: LinearProgressIndicator(
+                  value: state.activeScopeProgress!.progressFraction,
+                  minHeight: 6.0,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              Text(
+                '${state.activeScopeProgress!.learnedDecisions}/${state.activeScopeProgress!.totalDecisions} positions mastered (${state.activeScopeProgress!.progressPercentage}%)',
+                style: TextStyle(fontSize: 13.0, color: textShade(context, Styles.subtitleOpacity)),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 28.0),
             Wrap(
               spacing: 12.0,

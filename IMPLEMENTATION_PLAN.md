@@ -157,6 +157,13 @@ before the core review loop is in the owner's hands.
       1. Explanation pause: when move comments or board annotations exist, auto-advancement pauses post-guess so the user can study arrows and read explanations without rushing.
       2. Advance controls: tactile advancement via a prominent "Continue" button or tapping anywhere on the board overlay.
       3. Quick toggle: instant visibility toggle in the `ReviewScreen` AppBar allowing immediate hiding/showing of annotations on the fly. *(done: 2026-09-18)*
+- [x] **L5: Chapter & Study Training Progress Metrics (`tree_progress`)**
+      1. Domain entity: `RepertoireProgress` pure value type tracking total scheduled decisions, learned decisions (repetition count > 0), due count, and mastery percentage calculations.
+      2. Batched zero-overhead computation: single-pass in-memory aggregation inside `ReviewService.getDueSummary` and `ReviewController` without N+1 queries.
+      3. UI visibility:
+         - `ReviewScopeDrawer`: displays learned/total counts and percentage per study and for All Studies.
+         - `StudyChaptersScreen`: displays chapter learned/total moves, percentage, and due status.
+         - `ReviewScreen`: All Caught Up state displays mastered positions count and linear progress bar. *(done: 2026-09-18)*
 
 Per `docs/INTEGRATION_MAP.md`: remaining training-loop semantics (sibling reset on
 error, weighted-random opponent replies), chapter/FEN behaviors, tree caching
