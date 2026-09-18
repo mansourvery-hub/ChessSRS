@@ -22,7 +22,7 @@ before the core review loop is in the owner's hands.
 
 ---
 
-## Phase 0 — Repository archaeology (current)
+## Phase 0 — Repository archaeology (done)
 
 - [x] Inspect old repository (docs + lib + tests); classify documentation
 - [x] Inspect Lichess Mobile architecture (model/view/network/db, CLAUDE.md,
@@ -189,7 +189,7 @@ beta-feedback justification.
 Per `docs/INTEGRATION_MAP.md`: remaining chessrs behaviors integrated. FSRS
 remains a later option — never a redesign.
 
-## Phase 6 — Refinement
+## Phase 6 — Refinement (current)
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only
