@@ -15,11 +15,25 @@ import 'package:material_ui/material_ui.dart';
 
 /// Drawer allowing the user to select the review scope (all studies vs one study)
 /// or trigger a new PGN import.
-class ReviewScopeDrawer extends ConsumerWidget {
+class ReviewScopeDrawer extends ConsumerStatefulWidget {
   const ReviewScopeDrawer({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReviewScopeDrawer> createState() => _ReviewScopeDrawerState();
+}
+
+class _ReviewScopeDrawerState extends ConsumerState<ReviewScopeDrawer> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final reviewStateAsync = ref.watch(reviewControllerProvider);
     final reviewState = reviewStateAsync.value;
 
@@ -30,13 +44,32 @@ class ReviewScopeDrawer extends ConsumerWidget {
     final isAllSelected =
         reviewState.scope.studyId == null && reviewState.scope.openingFamily == null;
 
+    final query = _searchQuery.trim().toLowerCase();
+    final showAllStudies = query.isEmpty || 'all studies'.contains(query);
+
+    final filteredOpeningHubs = query.isEmpty
+        ? reviewState.openingDueCounts.entries.toList()
+        : reviewState.openingDueCounts.entries
+              .where((entry) => entry.key.toLowerCase().contains(query))
+              .toList();
+
+    final filteredStudies = query.isEmpty
+        ? reviewState.studies
+        : reviewState.studies.where((study) => study.title.toLowerCase().contains(query)).toList();
+
+    final hasNoResults =
+        query.isNotEmpty &&
+        !showAllStudies &&
+        filteredOpeningHubs.isEmpty &&
+        filteredStudies.isEmpty;
+
     return Drawer(
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
               child: Row(
                 children: [
                   Icon(
@@ -49,123 +82,170 @@ class ReviewScopeDrawer extends ConsumerWidget {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search repertoires & hubs...',
+                  prefixIcon: const Icon(Symbols.search_rounded, size: 20),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Symbols.close_rounded, size: 18),
+                          tooltip: 'Clear search',
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                ),
+                onChanged: (value) => setState(() => _searchQuery = value.trim()),
+              ),
+            ),
             const Divider(height: 1),
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  ListTile(
-                    leading: const Icon(Symbols.all_inclusive_rounded),
-                    title: const Text('All Studies', style: Styles.subtitle),
-                    subtitle: reviewState.totalProgress.totalDecisions > 0
-                        ? Text(
-                            '${reviewState.totalProgress.learnedDecisions}/${reviewState.totalProgress.totalDecisions} learned (${reviewState.totalProgress.progressPercentage}%)',
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              color: textShade(context, Styles.subtitleOpacity),
+              child: hasNoResults
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Symbols.search_off_rounded,
+                              size: 40,
+                              color: Theme.of(context).disabledColor,
                             ),
-                          )
-                        : null,
-                    selected: isAllSelected,
-                    trailing: _DueChip(count: reviewState.totalDueCount),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      ref
-                          .read(reviewControllerProvider.notifier)
-                          .changeScope(const ReviewScope.all());
-                    },
-                  ),
-                  if (reviewState.openingDueCounts.isNotEmpty) ...[
-                    const Divider(),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Text('Opening Hubs', style: Styles.sectionTitle),
-                    ),
-                    for (final entry in reviewState.openingDueCounts.entries)
-                      ListTile(
-                        leading: const Icon(Symbols.hub_rounded),
-                        title: Text(entry.key, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        selected: reviewState.scope.openingFamily == entry.key,
-                        trailing: _DueChip(count: entry.value),
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          ref
-                              .read(reviewControllerProvider.notifier)
-                              .changeScope(ReviewScope.opening(entry.key));
-                        },
+                            const SizedBox(height: 8.0),
+                            Text(
+                              'No repertoires matching "$_searchQuery"',
+                              style: Styles.subtitle,
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                  ],
-                  if (reviewState.studies.isNotEmpty) ...[
-                    const Divider(),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: Text('Repertoires', style: Styles.sectionTitle),
-                    ),
-                  ],
-                  for (final study in reviewState.studies)
-                    Builder(
-                      builder: (context) {
-                        final progress = reviewState.studyProgress[study.id];
-                        return ListTile(
-                          leading: IconButton(
-                            icon: Icon(
-                              study.isActive
-                                  ? Symbols.check_circle_rounded
-                                  : Symbols.pause_circle_outline_rounded,
-                              color: study.isActive
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).disabledColor,
-                              size: 22,
-                            ),
-                            tooltip: study.isActive
-                                ? 'Active in review pool (tap to suspend)'
-                                : 'Suspended from review pool (tap to activate)',
-                            onPressed: () {
+                    )
+                  : ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        if (showAllStudies)
+                          ListTile(
+                            leading: const Icon(Symbols.all_inclusive_rounded),
+                            title: const Text('All Studies', style: Styles.subtitle),
+                            subtitle: reviewState.totalProgress.totalDecisions > 0
+                                ? Text(
+                                    '${reviewState.totalProgress.learnedDecisions}/${reviewState.totalProgress.totalDecisions} learned (${reviewState.totalProgress.progressPercentage}%)',
+                                    style: TextStyle(
+                                      fontSize: 12.0,
+                                      color: textShade(context, Styles.subtitleOpacity),
+                                    ),
+                                  )
+                                : null,
+                            selected: isAllSelected,
+                            trailing: _DueChip(count: reviewState.totalDueCount),
+                            onTap: () {
+                              Navigator.of(context).pop();
                               ref
                                   .read(reviewControllerProvider.notifier)
-                                  .toggleStudyActive(study.id, !study.isActive);
+                                  .changeScope(const ReviewScope.all());
                             },
                           ),
-                          title: Text(
-                            study.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: study.isActive
-                                ? null
-                                : TextStyle(color: Theme.of(context).disabledColor),
+                        if (filteredOpeningHubs.isNotEmpty) ...[
+                          const Divider(),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            child: Text('Opening Hubs', style: Styles.sectionTitle),
                           ),
-                          subtitle: progress != null && progress.totalDecisions > 0
-                              ? Text(
-                                  '${progress.learnedDecisions}/${progress.totalDecisions} learned (${progress.progressPercentage}%)',
-                                  style: TextStyle(
-                                    fontSize: 12.0,
-                                    color: textShade(context, Styles.subtitleOpacity),
+                          for (final entry in filteredOpeningHubs)
+                            ListTile(
+                              leading: const Icon(Symbols.hub_rounded),
+                              title: Text(entry.key, maxLines: 1, overflow: TextOverflow.ellipsis),
+                              selected: reviewState.scope.openingFamily == entry.key,
+                              trailing: _DueChip(count: entry.value),
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                ref
+                                    .read(reviewControllerProvider.notifier)
+                                    .changeScope(ReviewScope.opening(entry.key));
+                              },
+                            ),
+                        ],
+                        if (filteredStudies.isNotEmpty) ...[
+                          const Divider(),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            child: Text('Repertoires', style: Styles.sectionTitle),
+                          ),
+                        ],
+                        for (final study in filteredStudies)
+                          Builder(
+                            builder: (context) {
+                              final progress = reviewState.studyProgress[study.id];
+                              return ListTile(
+                                leading: IconButton(
+                                  icon: Icon(
+                                    study.isActive
+                                        ? Symbols.check_circle_rounded
+                                        : Symbols.pause_circle_outline_rounded,
+                                    color: study.isActive
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).disabledColor,
+                                    size: 22,
                                   ),
-                                )
-                              : null,
-                          selected: reviewState.scope.studyId == study.id,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
-                              IconButton(
-                                icon: const Icon(Symbols.more_vert_rounded),
-                                tooltip: 'Study options',
-                                onPressed: () => _showStudyActionsSheet(context, ref, study),
-                              ),
-                            ],
+                                  tooltip: study.isActive
+                                      ? 'Active in review pool (tap to suspend)'
+                                      : 'Suspended from review pool (tap to activate)',
+                                  onPressed: () {
+                                    ref
+                                        .read(reviewControllerProvider.notifier)
+                                        .toggleStudyActive(study.id, !study.isActive);
+                                  },
+                                ),
+                                title: Text(
+                                  study.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: study.isActive
+                                      ? null
+                                      : TextStyle(color: Theme.of(context).disabledColor),
+                                ),
+                                subtitle: progress != null && progress.totalDecisions > 0
+                                    ? Text(
+                                        '${progress.learnedDecisions}/${progress.totalDecisions} learned (${progress.progressPercentage}%)',
+                                        style: TextStyle(
+                                          fontSize: 12.0,
+                                          color: textShade(context, Styles.subtitleOpacity),
+                                        ),
+                                      )
+                                    : null,
+                                selected: reviewState.scope.studyId == study.id,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _DueChip(count: reviewState.studyDueCounts[study.id] ?? 0),
+                                    IconButton(
+                                      icon: const Icon(Symbols.more_vert_rounded),
+                                      tooltip: 'Study options',
+                                      onPressed: () => _showStudyActionsSheet(context, ref, study),
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  ref
+                                      .read(reviewControllerProvider.notifier)
+                                      .changeScope(ReviewScope.study(study.id));
+                                },
+                              );
+                            },
                           ),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            ref
-                                .read(reviewControllerProvider.notifier)
-                                .changeScope(ReviewScope.study(study.id));
-                          },
-                        );
-                      },
+                      ],
                     ),
-                ],
-              ),
             ),
             const Divider(height: 1),
             Padding(

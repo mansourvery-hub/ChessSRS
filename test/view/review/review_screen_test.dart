@@ -619,8 +619,11 @@ void main() {
       await tester.tap(find.text('Rename Study'));
       await pumpAsync(tester);
 
-      // Enter new title
-      await tester.enterText(find.byType(TextField), 'Renamed Repertoire');
+      // Enter new title in dialog
+      await tester.enterText(
+        find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)),
+        'Renamed Repertoire',
+      );
       await tester.tap(find.text('Rename'));
       await pumpAsync(tester);
 
@@ -1027,6 +1030,81 @@ void main() {
 
       expect(find.text('Spaced Repetition (SRS)'), findsOneWidget);
       expect(find.text('Algorithm & Intervals'), findsOneWidget);
+    });
+
+    testWidgets('ReviewScopeDrawer search filters repertoires and opening hubs by query', (
+      tester,
+    ) async {
+      final study1 = importPgn(
+        '1. e4 e6 *',
+        studyTitle: 'French Defense Repertoire',
+        repertoireSide: Side.black,
+      );
+      final study2 = importPgn(
+        '1. e4 c5 *',
+        studyTitle: 'Sicilian Dragon Repertoire',
+        repertoireSide: Side.black,
+      );
+      await tester.runAsync(() async {
+        await repo.saveImportResult(study1);
+        await repo.saveImportResult(study2);
+      });
+
+      final app = await makeTestProviderScopeApp(
+        tester,
+        home: const ReviewScreen(),
+        overrides: {
+          srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+          clockProvider: clockProvider.overrideWithValue(clock),
+          reviewServiceProvider: reviewServiceProvider.overrideWith(
+            (ref) => ReviewService(repository: repo, clock: clock),
+          ),
+        },
+      );
+
+      await tester.pumpWidget(app);
+      await pumpAsync(tester);
+
+      // Open drawer
+      await tester.tap(find.byTooltip('Studies & Scope'));
+      await pumpAsync(tester);
+
+      // Both studies and All Studies tile are visible initially
+      expect(find.text('French Defense Repertoire'), findsOneWidget);
+      expect(find.text('Sicilian Dragon Repertoire'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'All Studies'), findsOneWidget);
+
+      // Type "French" into the search field
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search repertoires & hubs...'),
+        'French',
+      );
+      await tester.pumpAndSettle();
+
+      // "French Defense Repertoire" is visible, "Sicilian" and "All Studies" are hidden
+      expect(find.text('French Defense Repertoire'), findsOneWidget);
+      expect(find.text('Sicilian Dragon Repertoire'), findsNothing);
+      expect(find.widgetWithText(ListTile, 'All Studies'), findsNothing);
+
+      // Type a query that matches nothing
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search repertoires & hubs...'),
+        'Nonexistent',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('No repertoires matching "Nonexistent"'), findsOneWidget);
+      expect(find.text('French Defense Repertoire'), findsNothing);
+      expect(find.text('Sicilian Dragon Repertoire'), findsNothing);
+
+      // Tap clear search button
+      await tester.tap(find.byTooltip('Clear search'));
+      await tester.pumpAndSettle();
+
+      // Both studies and All Studies reappear
+      expect(find.text('French Defense Repertoire'), findsOneWidget);
+      expect(find.text('Sicilian Dragon Repertoire'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'All Studies'), findsOneWidget);
     });
   });
 }

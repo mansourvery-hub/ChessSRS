@@ -229,6 +229,10 @@ remains a later option — never a redesign.
       2. Orientation Heuristic (`resolveChapterOrientation`): automatic derivation respecting explicit PGN `[Orientation "white"|"black"]` headers, title/event keyword tags ("for Black", "[Black]", "as Black", etc.), and player tags with placeholder opponents (`?` or `*`).
       3. Import Dialog & Pipeline: `RepertoireImportDialog` defaults side selection to "Auto" so multi-chapter studies containing both White and Black lines automatically derive decisions and board orientations per chapter without user manual intervention.
       4. Study Explorer & Review Consistency: `StudyChaptersScreen` passes chapter orientation into `AnalysisScreen`, ensuring chapters for Black open from Black's perspective; `ReviewController` falls back gracefully to chapter/study orientation when cards are all caught up. *(done: 2026-09-18)*
+- [x] **R9: Scope Drawer Repertoire & Opening Hub Search Filter**
+      1. Live Filtering: added search `TextField` to `ReviewScopeDrawer` filtering both repertoires (by title) and opening hubs (by opening family name) in real time.
+      2. Clear & Empty States: added instant clear button (`X`) when query is present, and informative empty state feedback when no repertoires match query.
+      3. UI Polish & Test Coverage: added comprehensive widget tests for search filtering and clear behavior; all 220 review/domain/persistence tests pass. *(done: 2026-09-18)*
 
 ### Future Horizon Tasks & Backlog
 - [ ] **F-LOGS: In-App Logs & Diagnostics Audit**: Review in-app logs (`HttpLogScreen`, `AppLogSettingsScreen`, and runtime logger output) — rich diagnostic data for edge cases, performance timings, and review patterns.
