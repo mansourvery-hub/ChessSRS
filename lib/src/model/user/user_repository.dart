@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
 import 'package:chess_srs/src/model/game/exported_game.dart';
-import 'package:chess_srs/src/model/user/leaderboard.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/network/aggregator.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -82,13 +81,6 @@ class UserRepository {
     );
   }
 
-  Future<IList<User>> getOnlineBots() {
-    return client.readNdJsonList(
-      Uri(path: '/api/bot/online', queryParameters: {'nb': '500'}),
-      mapper: User.fromServerJson,
-    );
-  }
-
   Future<UserPerfStats> getPerfStats(UserId id, Perf perf) {
     return client.readJson(
       Uri(path: '/api/user/$id/perf/${perf.name}'),
@@ -121,14 +113,6 @@ class UserRepository {
 
   Future<IList<UserActivity>> getActivity(UserId id) {
     return client.readJsonList(Uri(path: '/api/user/$id/activity'), mapper: _userActivityFromJson);
-  }
-
-  Future<IMap<Perf, LeaderboardUser>> getTop1() {
-    return client.readJson(Uri(path: '/api/player/top/1/standard'), mapper: _top1FromJson);
-  }
-
-  Future<Leaderboard> getLeaderboard() {
-    return client.readJson(Uri(path: '/api/player'), mapper: _leaderboardFromJson);
   }
 
   Future<IList<LightUser>> autocompleteUser(String term) {
@@ -334,69 +318,5 @@ UserPerfGame _userPerfGameFromPick(RequiredPick pick) {
     opponentId: opId('id').asStringOrNull(),
     opponentName: opId('name').asStringOrNull(),
     opponentTitle: opId('title').asStringOrNull(),
-  );
-}
-
-Leaderboard _leaderboardFromJson(Map<String, dynamic> json) =>
-    _leaderBoardFromPick(pick(json).required());
-
-Leaderboard _leaderBoardFromPick(RequiredPick pick) {
-  return Leaderboard(
-    bullet: pick('bullet').asListOrEmpty(_leaderboardUserFromPick),
-    blitz: pick('blitz').asListOrEmpty(_leaderboardUserFromPick),
-    rapid: pick('rapid').asListOrEmpty(_leaderboardUserFromPick),
-    classical: pick('classical').asListOrEmpty(_leaderboardUserFromPick),
-    ultrabullet: pick('ultraBullet').asListOrEmpty(_leaderboardUserFromPick),
-    crazyhouse: pick('crazyhouse').asListOrEmpty(_leaderboardUserFromPick),
-    chess960: pick('chess960').asListOrEmpty(_leaderboardUserFromPick),
-    kingOfThehill: pick('kingOfTheHill').asListOrEmpty(_leaderboardUserFromPick),
-    threeCheck: pick('threeCheck').asListOrEmpty(_leaderboardUserFromPick),
-    antichess: pick('antichess').asListOrEmpty(_leaderboardUserFromPick),
-    atomic: pick('atomic').asListOrEmpty(_leaderboardUserFromPick),
-    horde: pick('horde').asListOrEmpty(_leaderboardUserFromPick),
-    racingKings: pick('racingKings').asListOrEmpty(_leaderboardUserFromPick),
-  );
-}
-
-LeaderboardUser _leaderboardUserFromPick(RequiredPick pick) {
-  final prefMap = pick('perfs').asMapOrThrow<String, Map<String, dynamic>>();
-
-  return LeaderboardUser(
-    id: pick('id').asUserIdOrThrow(),
-    username: pick('username').asStringOrThrow(),
-    title: pick('title').asStringOrNull(),
-    flair: pick('flair').asStringOrNull(),
-    patronColor: pick('patronColor').asIntOrNull(),
-    online: pick('online').asBoolOrNull(),
-    rating: pick(
-      'perfs',
-    ).letOrThrow((perfsPick) => perfsPick(prefMap.keys.first, 'rating')).asIntOrThrow(),
-    progress: pick(
-      'perfs',
-    ).letOrThrow((prefsPick) => prefsPick(prefMap.keys.first, 'progress')).asIntOrThrow(),
-  );
-}
-
-IMap<Perf, LeaderboardUser> _top1FromJson(Map<String, dynamic> json) {
-  final map = pick(json).asMapOrEmpty<String, Map<String, dynamic>>();
-  return IMap({
-    for (final entry in map.entries)
-      if (Perf.nameMap.containsKey(entry.key))
-        Perf.nameMap.get(entry.key)!: _top1userFromPick(
-          pick(map[entry.key]).required(),
-          Perf.nameMap.get(entry.key)!,
-        ),
-  });
-}
-
-LeaderboardUser _top1userFromPick(RequiredPick pick, Perf perf) {
-  return LeaderboardUser(
-    id: pick('id').asUserIdOrThrow(),
-    username: pick('username').asStringOrThrow(),
-    title: pick('title').asStringOrNull(),
-    flair: pick('flair').asStringOrNull(),
-    patronColor: pick('patronColor').asIntOrNull(),
-    rating: pick('perfs', perf.name, 'rating').asIntOrThrow(),
-    progress: pick('perfs', perf.name, 'progress').asIntOrThrow(),
   );
 }

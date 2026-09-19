@@ -1,6 +1,5 @@
 import 'package:chess_srs/src/model/common/id.dart';
 import 'package:chess_srs/src/model/common/perf.dart';
-import 'package:chess_srs/src/model/user/leaderboard.dart';
 import 'package:chess_srs/src/model/user/user.dart';
 import 'package:chess_srs/src/model/user/user_repository.dart';
 import 'package:chess_srs/src/network/http.dart';
@@ -19,28 +18,6 @@ final userPerfStatsProvider = FutureProvider.autoDispose.family<UserPerfStats, (
 ) {
   return ref.read(userRepositoryProvider).getPerfStats(params.$1, params.$2);
 }, name: 'UserPerfStatsProvider');
-
-final top1Provider = FutureProvider.autoDispose<Top1Leaderboard>((Ref ref) {
-  return ref.withAggregatorCacheFor(
-    (client, aggregator) => UserRepository(client, aggregator).getTop1(),
-    const Duration(hours: 12),
-  );
-}, name: 'Top1Provider');
-
-final leaderboardProvider = FutureProvider.autoDispose<Leaderboard>((Ref ref) {
-  return ref.withAggregatorCacheFor(
-    (client, aggregator) => UserRepository(client, aggregator).getLeaderboard(),
-    const Duration(hours: 2),
-  );
-}, name: 'LeaderboardProvider');
-
-final onlineBotsProvider = FutureProvider.autoDispose<IList<User>>((Ref ref) {
-  return ref.withAggregatorCacheFor(
-    (client, aggregator) =>
-        UserRepository(client, aggregator).getOnlineBots().then((bots) => bots.toIList()),
-    const Duration(hours: 5),
-  );
-}, name: 'OnlineBotsProvider');
 
 final autoCompleteUserProvider = FutureProvider.autoDispose.family<IList<LightUser>, String>((
   Ref ref,
