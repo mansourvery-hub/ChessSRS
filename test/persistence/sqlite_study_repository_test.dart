@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:chess_srs/src/db/database.dart';
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
+import 'package:dartchess/dartchess.dart' show Side;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -571,6 +572,44 @@ void main() {
         expect(loaded, isNotNull);
         expect(loaded!.canonicalStateId, 'sha1_canon_hash_123');
         expect(loaded.canonicalId, 'sha1_canon_hash_123');
+      } finally {
+        await db.close();
+      }
+    });
+
+    test('chapter orientation round-trips for both White and Black', () async {
+      var db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      var repo = SqliteStudyRepository(db);
+
+      try {
+        const study = Study(id: 'study-orient', title: 'Orientation Test');
+        final chWhite = Chapter(
+          id: 'ch-w',
+          studyId: study.id,
+          sourceOrder: 0,
+          title: 'White Line',
+          orientation: Side.white,
+        );
+        final chBlack = Chapter(
+          id: 'ch-b',
+          studyId: study.id,
+          sourceOrder: 1,
+          title: 'Black Line',
+          orientation: Side.black,
+        );
+
+        await repo.saveStudy(study);
+        await repo.saveChapters([chWhite, chBlack]);
+
+        await db.close();
+        db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        repo = SqliteStudyRepository(db);
+
+        final loadedW = await repo.getChapter('ch-w');
+        final loadedB = await repo.getChapter('ch-b');
+
+        expect(loadedW?.orientation, Side.white);
+        expect(loadedB?.orientation, Side.black);
       } finally {
         await db.close();
       }

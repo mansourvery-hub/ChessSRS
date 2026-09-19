@@ -224,6 +224,14 @@ remains a later option — never a redesign.
       1. Parsing & Extraction: added `extractLichessStudyId` and `extractStudyTitleFromPgn` to parse full URLs (`https://lichess.org/study/...`), chapter links, and raw 8-character study IDs.
       2. HTTP Import API: connected `ReviewController.importLichessStudy` to `StudyRepository.getStudyPgn` (`/api/study/$id.pgn`) to download entire multi-chapter studies across public, unlisted, and private (authenticated) studies with error translation (friendly 404 and network guards).
       3. Import Dialog UX: updated `RepertoireImportDialog` with segmented import source selection (`Lichess Study` vs `PGN Text / File`), quick clipboard paste button, auto-detection if a Lichess link is pasted into the PGN text area, and title derivation from PGN headers. *(done: 2026-09-18)*
+- [x] **R8: Per-Chapter Board Orientation & Auto-Detection Heuristic**
+      1. Domain Model: added `orientation: Side` property to `Chapter` entity, persisted in SQLite schema v11 (`srs_chapter.orientation`).
+      2. Orientation Heuristic (`resolveChapterOrientation`): automatic derivation respecting explicit PGN `[Orientation "white"|"black"]` headers, title/event keyword tags ("for Black", "[Black]", "as Black", etc.), and player tags with placeholder opponents (`?` or `*`).
+      3. Import Dialog & Pipeline: `RepertoireImportDialog` defaults side selection to "Auto" so multi-chapter studies containing both White and Black lines automatically derive decisions and board orientations per chapter without user manual intervention.
+      4. Study Explorer & Review Consistency: `StudyChaptersScreen` passes chapter orientation into `AnalysisScreen`, ensuring chapters for Black open from Black's perspective; `ReviewController` falls back gracefully to chapter/study orientation when cards are all caught up. *(done: 2026-09-18)*
+
+### Future Horizon Tasks & Backlog
+- [ ] **F-LOGS: In-App Logs & Diagnostics Audit**: Review in-app logs (`HttpLogScreen`, `AppLogSettingsScreen`, and runtime logger output) — rich diagnostic data for edge cases, performance timings, and review patterns.
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

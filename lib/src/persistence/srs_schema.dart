@@ -36,6 +36,7 @@ void createSrsTables(Batch batch) {
       createdAt TEXT NOT NULL,
       treeJson TEXT,
       opening TEXT,
+      orientation TEXT NOT NULL DEFAULT 'white',
       FOREIGN KEY (studyId) REFERENCES $kTableSrsStudy(id) ON DELETE CASCADE
     );
   ''');

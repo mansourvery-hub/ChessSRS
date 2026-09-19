@@ -13,7 +13,6 @@ import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/misc.dart';
-import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -90,7 +89,7 @@ Future<void> openChapterAnalysis(
     AnalysisScreen.buildRoute(
       AnalysisOptions.pgn(
         id: StringId('study_${study.id}_${chapter.id}'),
-        orientation: Side.white,
+        orientation: chapter.orientation,
         pgn: pgn,
         isComputerAnalysisAllowed: true,
         variant: Variant.standard,

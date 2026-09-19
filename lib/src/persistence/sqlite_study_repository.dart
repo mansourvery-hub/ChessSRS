@@ -8,6 +8,7 @@ import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/persistence/json_adapters.dart';
 import 'package:chess_srs/src/persistence/srs_schema.dart';
 import 'package:chess_srs/src/persistence/study_repository.dart';
+import 'package:dartchess/dartchess.dart' show Side;
 import 'package:sqflite/sqflite.dart';
 
 /// Concrete SQLite implementation of [StudyRepository].
@@ -47,6 +48,7 @@ class SqliteStudyRepository implements StudyRepository {
           'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
           'treeJson': treeJson,
           'opening': chapter.opening,
+          'orientation': chapter.orientation.name,
         }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       await chapterBatch.commit(noResult: true);
@@ -226,6 +228,7 @@ class SqliteStudyRepository implements StudyRepository {
       'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
       'treeJson': treeJson,
       'opening': chapter.opening,
+      'orientation': chapter.orientation.name,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -246,6 +249,7 @@ class SqliteStudyRepository implements StudyRepository {
         'createdAt': (chapter.createdAt ?? DateTime.now()).toIso8601String(),
         'treeJson': treeJson,
         'opening': chapter.opening,
+        'orientation': chapter.orientation.name,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await batch.commit(noResult: true);
@@ -727,6 +731,9 @@ class SqliteStudyRepository implements StudyRepository {
         ? repertoireNodeFromJson(jsonDecode(treeJson) as Map<String, dynamic>)
         : null;
 
+    final orientationStr = row['orientation'] as String?;
+    final orientation = orientationStr == 'black' ? Side.black : Side.white;
+
     return Chapter(
       id: row['id']! as String,
       studyId: row['studyId']! as String,
@@ -736,6 +743,7 @@ class SqliteStudyRepository implements StudyRepository {
       root: root,
       createdAt: DateTime.parse(row['createdAt']! as String),
       opening: row['opening'] as String?,
+      orientation: orientation,
     );
   }
 

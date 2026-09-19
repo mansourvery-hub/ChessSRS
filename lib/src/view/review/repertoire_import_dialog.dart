@@ -37,7 +37,7 @@ class _RepertoireImportDialogState extends ConsumerState<RepertoireImportDialog>
   final _lichessUrlController = TextEditingController();
   final _pgnController = TextEditingController();
   final _titleController = TextEditingController();
-  Side? _repertoireSide = Side.white;
+  Side? _repertoireSide;
   bool _isImporting = false;
 
   @override
@@ -245,9 +245,9 @@ class _RepertoireImportDialogState extends ConsumerState<RepertoireImportDialog>
                   const SizedBox(width: 12.0),
                   SegmentedButton<Side?>(
                     segments: const [
+                      ButtonSegment(value: null, label: Text('Auto')),
                       ButtonSegment(value: Side.white, label: Text('White')),
                       ButtonSegment(value: Side.black, label: Text('Black')),
-                      ButtonSegment(value: null, label: Text('Both')),
                     ],
                     selected: {_repertoireSide},
                     onSelectionChanged: (selected) {
@@ -295,9 +295,9 @@ class _RepertoireImportDialogState extends ConsumerState<RepertoireImportDialog>
                   const SizedBox(width: 12.0),
                   SegmentedButton<Side?>(
                     segments: const [
+                      ButtonSegment(value: null, label: Text('Auto')),
                       ButtonSegment(value: Side.white, label: Text('White')),
                       ButtonSegment(value: Side.black, label: Text('Black')),
-                      ButtonSegment(value: null, label: Text('Both')),
                     ],
                     selected: {_repertoireSide},
                     onSelectionChanged: (selected) {

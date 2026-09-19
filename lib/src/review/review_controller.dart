@@ -287,6 +287,16 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     if (prompt != null) {
       position = shouldAnimate ? _parseFen(prompt.parentFen!) : _parseFen(prompt.fen);
       orientation = prompt.sideToMove;
+    } else if (scope.chapterId != null) {
+      final chapter = await _repository.getChapter(scope.chapterId!);
+      if (chapter != null && chapter.orientation == Side.black) {
+        orientation = Side.black;
+      }
+    } else if (scope.studyId != null) {
+      final chapters = await _repository.getChaptersByStudy(scope.studyId!);
+      if (chapters.isNotEmpty && chapters.first.orientation == Side.black) {
+        orientation = Side.black;
+      }
     }
 
     if (shouldAnimate) {

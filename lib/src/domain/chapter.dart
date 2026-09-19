@@ -3,6 +3,7 @@
 
 import 'package:chess_srs/src/domain/ids.dart';
 import 'package:chess_srs/src/domain/repertoire_node.dart';
+import 'package:dartchess/dartchess.dart' show Side;
 
 /// A single chapter within a [Study], corresponding to one PGN game.
 ///
@@ -19,6 +20,7 @@ class Chapter {
     this.root,
     this.createdAt,
     this.opening,
+    this.orientation = Side.white,
   });
 
   /// Creates a new [Chapter] with a freshly-generated UUID.
@@ -30,6 +32,7 @@ class Chapter {
     RepertoireNode? root,
     DateTime? createdAt,
     String? opening,
+    Side orientation = Side.white,
   }) {
     return Chapter(
       id: newId(),
@@ -40,6 +43,7 @@ class Chapter {
       root: root,
       createdAt: createdAt ?? DateTime.now(),
       opening: opening,
+      orientation: orientation,
     );
   }
 
@@ -63,7 +67,16 @@ class Chapter {
   /// Classified opening family name (e.g. "Sicilian Defense", "French Defense").
   final String? opening;
 
-  Chapter copyWith({String? title, String? startingFen, RepertoireNode? root, String? opening}) {
+  /// The player perspective / board orientation for this chapter (White or Black).
+  final Side orientation;
+
+  Chapter copyWith({
+    String? title,
+    String? startingFen,
+    RepertoireNode? root,
+    String? opening,
+    Side? orientation,
+  }) {
     return Chapter(
       id: id,
       studyId: studyId,
@@ -73,6 +86,7 @@ class Chapter {
       root: root ?? this.root,
       createdAt: createdAt,
       opening: opening ?? this.opening,
+      orientation: orientation ?? this.orientation,
     );
   }
 
@@ -86,11 +100,14 @@ class Chapter {
           other.title == title &&
           other.startingFen == startingFen &&
           other.root == root &&
-          other.opening == opening;
+          other.opening == opening &&
+          other.orientation == orientation;
 
   @override
-  int get hashCode => Object.hash(id, studyId, sourceOrder, title, startingFen, root, opening);
+  int get hashCode =>
+      Object.hash(id, studyId, sourceOrder, title, startingFen, root, opening, orientation);
 
   @override
-  String toString() => 'Chapter(id: $id, studyId: $studyId, title: $title, opening: $opening)';
+  String toString() =>
+      'Chapter(id: $id, studyId: $studyId, title: $title, opening: $opening, orientation: $orientation)';
 }

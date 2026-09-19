@@ -229,6 +229,11 @@ ImportResult importPgn(
     errors.addAll(chapterErrors);
 
     final opening = extractOpeningFamily(headers);
+    final chapterOrientation = resolveChapterOrientation(
+      headers,
+      explicitSide: repertoireSide,
+      startTurn: startPosition.turn,
+    );
 
     final chapter = Chapter.create(
       studyId: study.id,
@@ -237,12 +242,28 @@ ImportResult importPgn(
       startingFen: headers.containsKey('FEN') ? startingFen : null,
       root: root,
       opening: opening,
+      orientation: chapterOrientation,
     );
     chapters.add(chapter);
 
     // Derive decisions for this chapter.
     if (root != null) {
-      _deriveDecisions(root, study.id, chapter.id, startPosition.turn, repertoireSide, decisions);
+      final explicitTag = headers['Orientation']?.trim().toLowerCase();
+      final effectiveDecisionSide = repertoireSide ??
+          (explicitTag == 'black'
+              ? Side.black
+              : explicitTag == 'white'
+                  ? Side.white
+                  : null);
+
+      _deriveDecisions(
+        root,
+        study.id,
+        chapter.id,
+        startPosition.turn,
+        effectiveDecisionSide,
+        decisions,
+      );
     }
   }
 
@@ -250,8 +271,75 @@ ImportResult importPgn(
 }
 
 // ---------------------------------------------------------------------------
-// Private helpers
+// Orientation & Title resolution
 // ---------------------------------------------------------------------------
+
+/// Derives the intended player perspective / repertoire side for a chapter from PGN headers.
+///
+/// Priority:
+/// 1. Explicit override: if [explicitSide] is provided (e.g. user selected 'White' or 'Black'), honor it.
+/// 2. Explicit PGN header tag `[Orientation "black"]` / `[Orientation "white"]` (case-insensitive).
+/// 3. Title / Event / ChapterName / StudyName keyword heuristics:
+///    - "for Black", "(Black)", "[Black]", "as Black", "vs White" -> Black
+///    - "for White", "(White)", "[White]", "as White", "vs Black" -> White
+/// 4. Player tags: e.g. White "?" vs Black "Sicilian", or player containing "Repertoire"
+/// 5. Start position turn: if custom FEN has Black to move and first move is black
+/// 6. Default: White.
+Side resolveChapterOrientation(
+  PgnHeaders headers, {
+  Side? explicitSide,
+  Side startTurn = Side.white,
+}) {
+  if (explicitSide != null) return explicitSide;
+
+  // 1. Explicit Orientation tag
+  final orientationTag = headers['Orientation']?.trim().toLowerCase();
+  if (orientationTag == 'black') return Side.black;
+  if (orientationTag == 'white') return Side.white;
+
+  // 2. Event / ChapterName / StudyName keyword heuristics
+  final titleCandidates = [headers['ChapterName'], headers['Event'], headers['StudyName']];
+  final blackKeywords = RegExp(
+    r'(\bfor black\b|\bas black\b|\[black\]|\(black\)|\bblack repertoire\b|\bvs white\b)',
+    caseSensitive: false,
+  );
+  final whiteKeywords = RegExp(
+    r'(\bfor white\b|\bas white\b|\[white\]|\(white\)|\bwhite repertoire\b|\bvs black\b)',
+    caseSensitive: false,
+  );
+
+  for (final candidate in titleCandidates) {
+    if (candidate == null || candidate.trim().isEmpty) continue;
+    if (blackKeywords.hasMatch(candidate)) {
+      return Side.black;
+    }
+    if (whiteKeywords.hasMatch(candidate)) {
+      return Side.white;
+    }
+  }
+
+  // 3. Player tags heuristic
+  final white = headers['White']?.trim();
+  final black = headers['Black']?.trim();
+  final whiteIsPlaceholder = white == null || white == '?' || white == '*' || white.isEmpty;
+  final blackIsPlaceholder = black == null || black == '?' || black == '*' || black.isEmpty;
+
+  if (whiteIsPlaceholder && !blackIsPlaceholder) {
+    return Side.black;
+  }
+  if (blackIsPlaceholder && !whiteIsPlaceholder) {
+    return Side.white;
+  }
+
+  if (black != null && black.toLowerCase().contains('repertoire')) {
+    return Side.black;
+  }
+  if (white != null && white.toLowerCase().contains('repertoire')) {
+    return Side.white;
+  }
+
+  return Side.white;
+}
 
 String _chapterTitle(PgnHeaders headers, int index) {
   // Prefer a meaningful player matchup, but only when both names are real.
