@@ -1,6 +1,8 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math' as math;
+
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/persistence/persistence.dart';
@@ -79,6 +81,7 @@ class ReviewService {
     ReviewMode mode = ReviewMode.srs,
     int? prefetchBatchSize = 25,
     int prefetchRefillThreshold = 3,
+    int? remainingDailyQuota,
   }) async {
     final List<Study> targetStudies;
     final List<Chapter> targetChapters;
@@ -146,6 +149,7 @@ class ReviewService {
       mode: mode,
       prefetchBatchSize: prefetchBatchSize,
       prefetchRefillThreshold: prefetchRefillThreshold,
+      remainingDailyQuota: remainingDailyQuota,
     );
 
     _activeSession = session;
@@ -240,6 +244,7 @@ class ReviewService {
   Future<DueCountsSummary> getDueSummary({
     required List<Study> studies,
     ReviewScope scope = const ReviewScope.all(),
+    int? remainingDailyQuota,
   }) async {
     final activeStudyIds = studies.where((s) => s.isActive).map((s) => s.id).toSet();
     final chapterOpenings = await repository.getChapterOpenings();
@@ -335,8 +340,12 @@ class ReviewService {
         ),
     };
 
+    final effectiveTotalDue = remainingDailyQuota != null && remainingDailyQuota >= 0
+        ? math.min(totalDueCount, remainingDailyQuota)
+        : totalDueCount;
+
     return DueCountsSummary(
-      totalDueCount: totalDueCount,
+      totalDueCount: effectiveTotalDue,
       studyDueCounts: studyDueCounts,
       openingDueCounts: openingDueCounts,
       studyProgress: studyProgress,

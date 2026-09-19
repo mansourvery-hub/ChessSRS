@@ -614,5 +614,54 @@ void main() {
         await db.close();
       }
     });
+
+    test('getTodayReviewedPositionsCount counts distinct decisions reviewed today', () async {
+      final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+      final repo = SqliteStudyRepository(db);
+
+      try {
+        final now = DateTime.utc(2026, 9, 18, 14, 30);
+        final yesterday = DateTime.utc(2026, 9, 17, 20, 0);
+
+        final ev1 = ReviewEvent(
+          decisionId: 'dec-1',
+          when: now.subtract(const Duration(hours: 2)),
+          result: ReviewResult.incorrect,
+          oldState: const ReviewState(decisionId: 'dec-1'),
+          newState: const ReviewState(decisionId: 'dec-1', repetitionCount: 0, lapseCount: 1),
+        );
+        final ev2 = ReviewEvent(
+          decisionId: 'dec-1', // same decision reviewed again today (reguess)
+          when: now.subtract(const Duration(hours: 1)),
+          result: ReviewResult.correct,
+          oldState: const ReviewState(decisionId: 'dec-1', repetitionCount: 0, lapseCount: 1),
+          newState: const ReviewState(decisionId: 'dec-1', repetitionCount: 1, lapseCount: 1),
+        );
+        final ev3 = ReviewEvent(
+          decisionId: 'dec-2', // second distinct decision reviewed today
+          when: now,
+          result: ReviewResult.correct,
+          oldState: const ReviewState(decisionId: 'dec-2'),
+          newState: const ReviewState(decisionId: 'dec-2', repetitionCount: 1),
+        );
+        final evYesterday = ReviewEvent(
+          decisionId: 'dec-3', // reviewed yesterday
+          when: yesterday,
+          result: ReviewResult.correct,
+          oldState: const ReviewState(decisionId: 'dec-3'),
+          newState: const ReviewState(decisionId: 'dec-3', repetitionCount: 1),
+        );
+
+        await repo.saveReviewEvent(ev1);
+        await repo.saveReviewEvent(ev2);
+        await repo.saveReviewEvent(ev3);
+        await repo.saveReviewEvent(evYesterday);
+
+        final count = await repo.getTodayReviewedPositionsCount(now);
+        expect(count, 2); // exactly 2 distinct positions reviewed today
+      } finally {
+        await db.close();
+      }
+    });
   });
 }

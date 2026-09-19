@@ -42,6 +42,19 @@ void main() {
     await tester.scrollUntilVisible(find.text('Algorithm & Intervals'), -100);
     await tester.pumpAndSettle();
 
+    // Verify Daily review limit tile
+    expect(find.text('Daily review limit'), findsOneWidget);
+    expect(find.text('100 positions / day'), findsOneWidget);
+
+    // Switch Daily review limit to 50
+    await tester.tap(find.text('Daily review limit'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('50 positions / day'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('50 positions / day'), findsOneWidget);
+
     // Switch to ChessFSRS algorithm
     await tester.tap(find.text('SRS scheduling algorithm'));
     await tester.pumpAndSettle();

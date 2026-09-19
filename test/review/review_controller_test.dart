@@ -730,5 +730,42 @@ void main() {
         );
       });
     });
+
+    test('maxDailyReviews limit caps session and marks isDailyLimitReached', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      const pgn = '1. e4 e5 2. Nf3 Nc6 *';
+      await controller.importPgnText(pgnText: pgn, repertoireSide: Side.white);
+
+      // Set daily review limit to 1 and reload
+      final prefsNotifier = container.read(studyPreferencesProvider.notifier);
+      await prefsNotifier.setMaxDailyReviews(1);
+      await controller.reload();
+
+      var state = container.read(reviewControllerProvider).requireValue;
+      expect(state.maxDailyReviews, 1);
+      expect(state.dailyReviewedCount, 0);
+      expect(state.isDailyLimitReached, isFalse);
+      expect(state.currentPrompt, isNotNull);
+
+      // Play 1. e4 (first position)
+      final step = await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+      expect(step?.isCorrect, isTrue);
+
+      // Session completes because limit of 1 position was reached!
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.dailyReviewedCount, 1);
+      expect(state.isDailyLimitReached, isTrue);
+      expect(state.isComplete, isTrue);
+      expect(state.currentPrompt, isNull);
+
+      // Starting Free Practice allows training even when daily limit is reached
+      await controller.startPracticeMode();
+      state = container.read(reviewControllerProvider).requireValue;
+      expect(state.isPracticeMode, isTrue);
+      expect(state.isDailyLimitReached, isFalse);
+      expect(state.currentPrompt, isNotNull);
+    });
   });
 }

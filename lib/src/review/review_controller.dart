@@ -39,6 +39,8 @@ class ReviewScreenState {
     this.studyProgress = const {},
     this.chapterProgress = const {},
     this.lastStepResult,
+    this.dailyReviewedCount = 0,
+    this.maxDailyReviews = 100,
   });
 
   final List<Study> studies;
@@ -60,6 +62,11 @@ class ReviewScreenState {
   final ReviewMode mode;
   final bool isAwaitingAdvance;
   final ReviewStepResult? lastStepResult;
+  final int dailyReviewedCount;
+  final int maxDailyReviews;
+
+  bool get isDailyLimitReached =>
+      maxDailyReviews > 0 && dailyReviewedCount >= maxDailyReviews && !isPracticeMode;
 
   bool get hasStudies => studies.isNotEmpty;
   bool get hasDuePositions => (totalDueCount > 0 || isPracticeMode) && currentPrompt != null;
@@ -159,6 +166,8 @@ class ReviewScreenState {
     bool? isAwaitingAdvance,
     ReviewStepResult? lastStepResult,
     bool clearLastStepResult = false,
+    int? dailyReviewedCount,
+    int? maxDailyReviews,
   }) {
     return ReviewScreenState(
       studies: studies ?? this.studies,
@@ -180,6 +189,8 @@ class ReviewScreenState {
       mode: mode ?? this.mode,
       isAwaitingAdvance: isAwaitingAdvance ?? this.isAwaitingAdvance,
       lastStepResult: clearLastStepResult ? null : (lastStepResult ?? this.lastStepResult),
+      dailyReviewedCount: dailyReviewedCount ?? this.dailyReviewedCount,
+      maxDailyReviews: maxDailyReviews ?? this.maxDailyReviews,
     );
   }
 }
@@ -236,6 +247,12 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       }
     });
 
+    ref.listen(studyPreferencesProvider.select((p) => p.maxDailyReviews), (previous, next) {
+      if (previous != null && previous != next) {
+        reload();
+      }
+    });
+
     // Wait for repository provider to be ready if needed
     final repoAsync = ref.watch(srsStudyRepositoryProvider);
     final repo = repoAsync.asData?.value;
@@ -255,8 +272,20 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     ReviewScope scope, [
     ReviewMode mode = ReviewMode.srs,
   ]) async {
+    final maxDailyReviews = ref.read(studyPreferencesProvider).maxDailyReviews;
+    final now = ref.read(clockProvider).now();
+    final dailyReviewedCount = await _repository.getTodayReviewedPositionsCount(now);
+
+    final remainingQuota = (mode == ReviewMode.srs && maxDailyReviews > 0)
+        ? (maxDailyReviews - dailyReviewedCount).clamp(0, maxDailyReviews)
+        : null;
+
     final studies = await _repository.getAllStudies();
-    final summary = await _service.getDueSummary(studies: studies, scope: scope);
+    final summary = await _service.getDueSummary(
+      studies: studies,
+      scope: scope,
+      remainingDailyQuota: remainingQuota,
+    );
 
     if (studies.isEmpty) {
       return ReviewScreenState(
@@ -268,10 +297,16 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
         openingDueCounts: summary.openingDueCounts,
         studyProgress: summary.studyProgress,
         chapterProgress: summary.chapterProgress,
+        dailyReviewedCount: dailyReviewedCount,
+        maxDailyReviews: maxDailyReviews,
       );
     }
 
-    final session = await _service.startSession(scope: scope, mode: mode);
+    final session = await _service.startSession(
+      scope: scope,
+      mode: mode,
+      remainingDailyQuota: remainingQuota,
+    );
     final prompt = session.currentPrompt;
 
     Position? position;
@@ -312,6 +347,8 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       openingDueCounts: summary.openingDueCounts,
       studyProgress: summary.studyProgress,
       chapterProgress: summary.chapterProgress,
+      dailyReviewedCount: dailyReviewedCount,
+      maxDailyReviews: maxDailyReviews,
       session: session,
       currentPrompt: prompt,
       boardPosition: position,
@@ -648,8 +685,13 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       }
     }
 
+    final updatedDailyCount = isFirstAttempt
+        ? currentState.dailyReviewedCount + 1
+        : currentState.dailyReviewedCount;
+
     state = AsyncData(
       state.value!.copyWith(
+        dailyReviewedCount: updatedDailyCount,
         totalDueCount: newTotalDue,
         studyDueCounts: studyCounts,
         openingDueCounts: openingCounts,

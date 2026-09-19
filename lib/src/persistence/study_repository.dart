@@ -68,4 +68,5 @@ abstract class StudyRepository {
   // Review events (SRS log)
   Future<void> saveReviewEvent(ReviewEvent event);
   Future<List<ReviewEvent>> getReviewEvents(String decisionId);
+  Future<int> getTodayReviewedPositionsCount(DateTime now);
 }

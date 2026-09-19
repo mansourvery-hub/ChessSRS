@@ -35,6 +35,7 @@ class ReviewEngine {
     ReviewMode mode = ReviewMode.srs,
     int? prefetchBatchSize = 25,
     int prefetchRefillThreshold = 3,
+    int? remainingDailyQuota,
     GraphAwareReviewCoordinator? coordinator,
     Random? random,
   }) {
@@ -49,6 +50,7 @@ class ReviewEngine {
       clock: clock,
       prefetchBatchSize: prefetchBatchSize,
       prefetchRefillThreshold: prefetchRefillThreshold,
+      remainingDailyQuota: remainingDailyQuota,
       coordinator: coordinator,
       random: random ?? this.random,
     );

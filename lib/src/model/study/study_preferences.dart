@@ -108,6 +108,10 @@ class StudyPreferencesNotifier extends Notifier<StudyPrefs> with PreferencesStor
     return save(state.copyWith(targetRetention: retention));
   }
 
+  Future<void> setMaxDailyReviews(int limit) {
+    return save(state.copyWith(maxDailyReviews: limit));
+  }
+
   Future<void> toggleSrsDiagnostics() {
     return save(state.copyWith(srsDiagnostics: !state.srsDiagnostics));
   }
@@ -133,6 +137,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     @JsonKey(defaultValue: 0.88) required double targetRetention,
     @JsonKey(defaultValue: 2.5) required double schedulerEase,
     @JsonKey(defaultValue: 1.5) required double schedulerScaling,
+    @JsonKey(defaultValue: 100) required int maxDailyReviews,
   }) = _StudyPrefs;
 
   static const defaults = StudyPrefs(
@@ -151,6 +156,7 @@ sealed class StudyPrefs with _$StudyPrefs implements Serializable, CommonAnalysi
     targetRetention: 0.88,
     schedulerEase: 2.5,
     schedulerScaling: 1.5,
+    maxDailyReviews: 100,
   );
 
   factory StudyPrefs.fromJson(Map<String, dynamic> json) {

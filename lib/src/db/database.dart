@@ -64,7 +64,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
   return dbFactory.openDatabase(
     path,
     options: OpenDatabaseOptions(
-      version: 11,
+      version: 12,
       onConfigure: (db) async {
         final version = await _getDatabaseVersion(db);
         _logger.info('SQLite version: $version');
@@ -154,6 +154,11 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
           if (oldVersion < 11) {
             batch.execute(
               'ALTER TABLE $kTableSrsChapter ADD COLUMN orientation TEXT NOT NULL DEFAULT "white"',
+            );
+          }
+          if (oldVersion < 12) {
+            batch.execute(
+              'CREATE INDEX IF NOT EXISTS idx_srs_review_event_whenTimestamp ON $kTableSrsReviewEvent(whenTimestamp)',
             );
           }
         }

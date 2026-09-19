@@ -121,4 +121,8 @@ void createSrsTables(Batch batch) {
     CREATE INDEX IF NOT EXISTS idx_srs_review_event_decisionId
     ON $kTableSrsReviewEvent(decisionId);
   ''');
+  batch.execute('''
+    CREATE INDEX IF NOT EXISTS idx_srs_review_event_whenTimestamp
+    ON $kTableSrsReviewEvent(whenTimestamp);
+  ''');
 }

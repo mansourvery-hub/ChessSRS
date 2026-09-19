@@ -37,6 +37,7 @@ class ReviewSession {
     this.clock = const SystemClock(),
     this.prefetchBatchSize = 25,
     this.prefetchRefillThreshold = 3,
+    this.remainingDailyQuota,
     GraphAwareReviewCoordinator? coordinator,
     Random? random,
   }) : _random = random ?? Random(),
@@ -73,6 +74,11 @@ class ReviewSession {
     final now = clock.now();
     final queuedCanonicalIds = <String>{};
     for (final d in decisions) {
+      if (mode == ReviewMode.srs &&
+          remainingDailyQuota != null &&
+          _unbufferedQueue.length >= remainingDailyQuota!) {
+        break;
+      }
       final chapter = _chapters[d.chapterId];
       if (!scope.matches(
         studyId: d.studyId,
@@ -104,6 +110,9 @@ class ReviewSession {
   final Clock clock;
   final Random _random;
 
+  /// Optional daily quota limit for SRS reviews. When met, review completes for the day.
+  final int? remainingDailyQuota;
+
   /// Maximum batch size of due decisions to buffer in the active queue at once.
   /// Null disables batching and buffers the entire queue.
   final int? prefetchBatchSize;
@@ -123,6 +132,7 @@ class ReviewSession {
 
   final List<RepertoireDecision> _dueQueue = [];
   final List<RepertoireDecision> _unbufferedQueue = [];
+  final Set<String> _completedDecisionIds = {};
   ReviewPrompt? _currentPrompt;
   int _completedCount = 0;
   late final int _initialDueCount;
@@ -177,6 +187,7 @@ class ReviewSession {
     final now = clock.now();
 
     if (expectedMatch != null) {
+      _completedDecisionIds.add(decision.canonicalId);
       // -----------------------------------------------------------------------
       // CORRECT MOVE
       // -----------------------------------------------------------------------
@@ -358,7 +369,11 @@ class ReviewSession {
       if (nextDecision != null) {
         final decState = _reviewStates[nextDecision.canonicalId] ?? _reviewStates[nextDecision.id];
         final isDue = mode == ReviewMode.practice || decState == null || decState.isDueAt(now);
-        if (isDue) {
+        final isQuotaExhausted =
+            mode == ReviewMode.srs &&
+            remainingDailyQuota != null &&
+            _completedDecisionIds.length >= remainingDailyQuota!;
+        if (isDue && !isQuotaExhausted) {
           // Found next due decision along this branch!
           _dueQueue.removeWhere(
             (d) => d.id == nextDecision.id || d.canonicalId == nextDecision.canonicalId,
@@ -456,6 +471,14 @@ class ReviewSession {
   // ---------------------------------------------------------------------------
 
   void _advanceToNextDue() {
+    if (mode == ReviewMode.srs &&
+        remainingDailyQuota != null &&
+        _completedDecisionIds.length >= remainingDailyQuota!) {
+      _dueQueue.clear();
+      _unbufferedQueue.clear();
+      _currentPrompt = null;
+      return;
+    }
     if (_dueQueue.length <= prefetchRefillThreshold) {
       _refillPrefetchBuffer();
     }

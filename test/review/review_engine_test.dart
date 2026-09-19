@@ -878,5 +878,31 @@ void main() {
       expect(updatedDec2.difficulty, closeTo(4.35, 0.001));
       expect(stepResult.sideEffectStates, contains(updatedDec2));
     });
+
+    test('remainingDailyQuota caps the number of due decisions queued in SRS session', () {
+      final (study, chapter, decisions) = buildTestRepertoire();
+      final engine = ReviewEngine(clock: clock);
+
+      // Total 3 decisions exist. Set quota to 1.
+      final session = engine.createSession(
+        studies: [study],
+        chapters: [chapter],
+        decisions: decisions,
+        reviewStates: const {},
+        remainingDailyQuota: 1,
+      );
+
+      // Only 1 decision is queued
+      expect(session.remainingDueCount, 1);
+      expect(session.isComplete, isFalse);
+
+      // Play correct move: e2 -> e4
+      final result = session.submitMove(from: 'e2', to: 'e4');
+      expect(result.isCorrect, isTrue);
+
+      // Session completes because quota of 1 position was reached!
+      expect(session.isComplete, isTrue);
+      expect(session.currentPrompt, isNull);
+    });
   });
 }

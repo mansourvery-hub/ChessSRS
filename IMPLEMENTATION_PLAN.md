@@ -233,6 +233,11 @@ remains a later option — never a redesign.
       1. Live Filtering: added search `TextField` to `ReviewScopeDrawer` filtering both repertoires (by title) and opening hubs (by opening family name) in real time.
       2. Clear & Empty States: added instant clear button (`X`) when query is present, and informative empty state feedback when no repertoires match query.
       3. UI Polish & Test Coverage: added comprehensive widget tests for search filtering and clear behavior; all 220 review/domain/persistence tests pass. *(done: 2026-09-18)*
+- [x] **R10: Configurable Global Daily Position Review Limit**
+      1. Setting & Persistence: added `maxDailyReviews` setting in `StudyPrefs` (default 100 positions/day, tunable to 25, 50, 100, 150, 200, or Unlimited) in `SrsSettingsScreen`.
+      2. Unique Position Tracking: added `getTodayReviewedPositionsCount` to `StudyRepository` and SQLite schema v12 with index on `srs_review_event(whenTimestamp)` counting distinct positions reviewed today (not raw guesses; mistakes and reguesses count as 1 position).
+      3. Session & Queue Quota: `ReviewEngine` and `ReviewSession` enforce `remainingDailyQuota` so review stops once the daily limit is hit, while allowing in-flight lapse reguesses to conclude gracefully.
+      4. UI Feedback: updated `_AllCaughtUpView` on `ReviewScreen` to display "Daily Goal Reached!" with progress metrics and an "Adjust Limit" action, while leaving Free Practice mode unrestricted. *(done: 2026-09-18)*
 
 ### Future Horizon Tasks & Backlog
 - [ ] **F-LOGS: In-App Logs & Diagnostics Audit**: Review in-app logs (`HttpLogScreen`, `AppLogSettingsScreen`, and runtime logger output) — rich diagnostic data for edge cases, performance timings, and review patterns.

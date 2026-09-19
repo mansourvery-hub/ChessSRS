@@ -73,7 +73,7 @@ void main() {
       );
 
       await tester.pumpWidget(app);
-      await pumpAsync(tester, 200);
+      await pumpAsync(tester, 500);
 
       expect(find.text('Welcome to ChessSRS'), findsOneWidget);
       expect(find.text('Import Repertoire PGN'), findsWidgets);
@@ -1106,5 +1106,67 @@ void main() {
       expect(find.text('Sicilian Dragon Repertoire'), findsOneWidget);
       expect(find.widgetWithText(ListTile, 'All Studies'), findsOneWidget);
     });
+
+    testWidgets(
+      'displays daily limit reached view and navigates to SrsSettingsScreen on Adjust Limit',
+      (tester) async {
+        final study = importPgn(
+          '1. e4 e5 *',
+          studyTitle: 'King Pawn Repertoire',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(study);
+          // Pre-record a review event for this decision today so daily count reaches 1
+          final dec = study.decisions.first;
+          await repo.saveReviewEvent(
+            ReviewEvent(
+              decisionId: dec.id,
+              when: clock.now(),
+              result: ReviewResult.correct,
+              oldState: const ReviewState(decisionId: 'dec'),
+              newState: const ReviewState(decisionId: 'dec', repetitionCount: 1),
+            ),
+          );
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        // Set maxDailyReviews to 1 in preferences
+        final element = tester.element(find.byType(ReviewScreen));
+        final container = ProviderScope.containerOf(element);
+        await container.read(studyPreferencesProvider.notifier).setMaxDailyReviews(1);
+        await pumpAsync(tester);
+
+        // Daily limit reached view is now shown!
+        expect(find.text('Daily Goal Reached!'), findsOneWidget);
+        expect(
+          find.text('Daily review limit reached (1/1 positions reviewed today).'),
+          findsOneWidget,
+        );
+
+        // Tap Adjust Limit button
+        expect(find.text('Adjust Limit'), findsOneWidget);
+        await tester.tap(find.text('Adjust Limit'));
+        await tester.pumpAndSettle();
+
+        // Navigates to SrsSettingsScreen
+        expect(find.text('Spaced Repetition (SRS)'), findsOneWidget);
+        expect(find.text('Daily review limit'), findsOneWidget);
+      },
+    );
   });
 }

@@ -32,6 +32,32 @@ class SrsSettingsScreen extends ConsumerWidget {
             hasLeading: true,
             children: [
               SettingsListTile(
+                icon: const Icon(Symbols.calendar_today_rounded),
+                settingsLabel: const Text('Daily review limit'),
+                settingsValue: prefs.maxDailyReviews == 0
+                    ? 'Unlimited'
+                    : '${prefs.maxDailyReviews} positions / day',
+                onTap: () {
+                  showChoicePicker<int>(
+                    context,
+                    choices: const [25, 50, 100, 150, 200, 0],
+                    selectedItem: prefs.maxDailyReviews,
+                    labelBuilder: (v) => Text(
+                      v == 0
+                          ? 'Unlimited'
+                          : v == 100
+                          ? '$v positions / day (Default)'
+                          : '$v positions / day',
+                    ),
+                    onSelectedItemChanged: (int? value) {
+                      if (value != null) {
+                        ref.read(studyPreferencesProvider.notifier).setMaxDailyReviews(value);
+                      }
+                    },
+                  );
+                },
+              ),
+              SettingsListTile(
                 icon: const Icon(Symbols.schedule_rounded),
                 settingsLabel: const Text('SRS scheduling algorithm'),
                 settingsValue: prefs.schedulerType.label,

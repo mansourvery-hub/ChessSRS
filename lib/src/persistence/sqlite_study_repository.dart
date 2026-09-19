@@ -708,6 +708,20 @@ class SqliteStudyRepository implements StudyRepository {
     return rows.map(_reviewEventFromRow).toList(growable: false);
   }
 
+  @override
+  Future<int> getTodayReviewedPositionsCount(DateTime now) async {
+    final startOfDay = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+    final result = await _db.rawQuery(
+      '''
+      SELECT COUNT(DISTINCT decisionId) as count
+      FROM $kTableSrsReviewEvent
+      WHERE whenTimestamp >= ?
+      ''',
+      [startOfDay],
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
   // ---------------------------------------------------------------------------
   // Row mappers
   // ---------------------------------------------------------------------------

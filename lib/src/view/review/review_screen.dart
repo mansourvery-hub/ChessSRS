@@ -230,11 +230,23 @@ class _AllCaughtUpView extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Symbols.check_circle_rounded, size: 80, color: LichessColors.secondary),
+            Icon(
+              state.isDailyLimitReached
+                  ? Symbols.flag_circle_rounded
+                  : Symbols.check_circle_rounded,
+              size: 80,
+              color: state.isDailyLimitReached
+                  ? Theme.of(context).colorScheme.primary
+                  : LichessColors.secondary,
+            ),
             const SizedBox(height: 20.0),
-            const Text('All Caught Up!', style: Styles.title, textAlign: TextAlign.center),
+            Text(
+              state.isDailyLimitReached ? 'Daily Goal Reached!' : 'All Caught Up!',
+              style: Styles.title,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 10.0),
-            if (state.timeUntilNextReview != null) ...[
+            if (!state.isDailyLimitReached && state.timeUntilNextReview != null) ...[
               Container(
                 margin: const EdgeInsets.only(bottom: 10.0),
                 padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
@@ -263,8 +275,10 @@ class _AllCaughtUpView extends ConsumerWidget {
                 ),
               ),
             ],
-            const Text(
-              '0 positions due for review right now across this repertoire.',
+            Text(
+              state.isDailyLimitReached
+                  ? 'Daily review limit reached (${state.dailyReviewedCount}/${state.maxDailyReviews} positions reviewed today).'
+                  : '0 positions due for review right now across this repertoire.',
               style: Styles.subtitle,
               textAlign: TextAlign.center,
             ),
@@ -303,6 +317,12 @@ class _AllCaughtUpView extends ConsumerWidget {
                   label: const Text('Repertoires'),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
+                if (state.isDailyLimitReached)
+                  OutlinedButton.icon(
+                    icon: const Icon(Symbols.tune_rounded),
+                    label: const Text('Adjust Limit'),
+                    onPressed: () => Navigator.of(context).push(SrsSettingsScreen.buildRoute()),
+                  ),
               ],
             ),
           ],
