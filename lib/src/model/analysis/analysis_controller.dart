@@ -774,7 +774,7 @@ sealed class AnalysisState
   }) = _AnalysisState;
 
   @override
-  bool get alwaysRequestCloudEval => true;
+  bool get alwaysRequestCloudEval => false;
 
   /// The clock left after each mainline move, empty if the game was played without one.
   ///

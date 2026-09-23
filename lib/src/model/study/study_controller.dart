@@ -723,7 +723,7 @@ sealed class StudyState
   bool get isWriteable => canIContribute && !gamebookActive;
 
   @override
-  bool get alwaysRequestCloudEval => true;
+  bool get alwaysRequestCloudEval => false;
 
   /// Whether the engine is available for evaluation
   @override
