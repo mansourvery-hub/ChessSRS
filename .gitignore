@@ -46,3 +46,10 @@ doc/api/
 
 # Cache directory created by scripts
 .cache/
+
+# Tooling and packaging artifacts
+repomix*
+*.zip
+chesssrs-design-package/
+.agents/
+skills-lock.json

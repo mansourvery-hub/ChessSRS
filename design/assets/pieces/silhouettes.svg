@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs>
+<g id="gK"><path d="M47 6H53V14H61V20H53V28H47V20H39V14H47z"/>
+      <path d="M29 42C29 33 39 29 50 29S71 33 71 42C71 51 64 58 62 66H38C36 58 29 51 29 42z"/>
+      <path d="M31 66h38a3 3 0 0 1 0 6H31a3 3 0 0 1 0-6z"/>
+      <path d="M37 72h26l5 10H32z"/>
+      <path d="M27 88h46v-3q0-4-4-4H31q-4 0-4 4z"/></g>
+<g id="dK"><path d="M34 47C44 52 56 52 66 47" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></g>
+<g id="gQ"><path d="M26 30L32 52L38 30L44 52L50 27L56 52L62 30L68 52L74 30L70 68H30z"/>
+      <circle cx="26" cy="26" r="3.6"/><circle cx="38" cy="26" r="3.6"/><circle cx="50" cy="22" r="3.6"/><circle cx="62" cy="26" r="3.6"/><circle cx="74" cy="26" r="3.6"/>
+      <path d="M31 66h38a3 3 0 0 1 0 6H31a3 3 0 0 1 0-6z"/>
+      <path d="M37 72h26l5 10H32z"/>
+      <path d="M27 88h46v-3q0-4-4-4H31q-4 0-4 4z"/></g>
+<g id="dQ"><path d="M35 58H65" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></g>
+<g id="gR"><path d="M31 16H41V22H45V16H55V22H59V16H69V34H31z"/>
+      <path d="M33 34H67L65 41H35z"/>
+      <path d="M37 41H63L66 76H34z"/>
+      <path d="M29 76H71V82H29z"/>
+      <path d="M27 88h46v-3q0-4-4-4H31q-4 0-4 4z"/></g>
+<g id="dR"><path d="M34 35H66" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></g>
+<g id="gB"><circle cx="50" cy="15" r="4.6"/>
+      <path d="M50 20c12 8 16 20 10 30-2 3-4 5-4 7H44c0-2-2-4-4-7-6-10-2-22 10-30z"/>
+      <path d="M33 57h34a3 3 0 0 1 0 6H33a3 3 0 0 1 0-6z"/>
+      <path d="M41 63h18c0 7 3 13 9 19H32c6-6 9-12 9-19z"/>
+      <path d="M27 88h46v-3q0-4-4-4H31q-4 0-4 4z"/></g>
+<g id="dB"><path d="M55 27L47 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></g>
+<g id="gN"><path d="M27 88C27 78 31 70 38 64C42 60 46 58 44 55C38 55 30 58 26 60C22 61 20 56 22 51C24 46 30 40 33 34L35 28L38 12L47 21C56 16 68 22 74 36C80 52 76 70 73 88Z"/>
+      <path d="M26 88h48v-4q0-4-4-4H30q-4 0-4 4z"/></g>
+<g id="dN"><circle cx="46" cy="33" r="2.4" fill="currentColor"/>
+      <path d="M61 29C68 40 69 54 64 68" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></g>
+<g id="gP"><circle cx="50" cy="27" r="10.5"/>
+      <path d="M38 41h24a3 3 0 0 1 0 6H38a3 3 0 0 1 0-6z"/>
+      <path d="M40 82c1-12 5-22 6-35h8c1 13 5 23 6 35z"/>
+      <path d="M30 88v-3q0-4 4-4h32q4 0 4 4v3z"/></g>
+<g id="dP"></g>
+</defs></svg>

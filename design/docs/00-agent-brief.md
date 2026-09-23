@@ -1,0 +1,97 @@
+# 00. Agent brief
+
+## Mission
+
+Replace ChessSRS's inherited Lichess-Mobile look with the new visual identity in this package, so that a first-time
+user would not suspect the app began as a Lichess Mobile fork. The redesign must be hyper-responsive (feels instant),
+extremely minimal, beautiful, and must **never add friction to recall**: the primary goal is chess-knowledge retention.
+
+Implement **exactly** what `reference/index.html` shows. Do not "improve" the design. If something is ambiguous or
+impossible, stop and ask (see "When to stop and ask").
+
+## Non-goals (do not do these)
+
+- No scheduling / FSRS / persistence / import changes. This is a presentation-layer change.
+- No gamification: no streaks, XP, confetti, mascots, badges, celebratory animation.
+- No timers, countdowns, urgency pulses in recall (product decision D015: thinking time is not graded).
+- No new red/green "correct/incorrect" colouring. The design deliberately avoids it.
+- No glassmorphism, backdrop blur, large soft shadows, or gradients (performance and minimalism).
+- No new dependencies unless listed in `docs/05` as allowed (`flutter_svg` is the only expected one).
+
+## Authority order
+
+1. The repo's own hard constraints in `AGENTS.md` (verification rules, coding style, tests) still apply.
+2. `docs/06-repo-doc-amendments.md` changes the repo's design documents. Apply it first; after that, this package
+   supersedes `PRODUCT.md` §5 ("Lichess Professional Polish"), `design.md` visual sections, and the "styles/ and widgets/
+   are NOT cut" line in `CUT_PROPOSALS.md`.
+3. `reference/` prototype > `docs/03` component spec > `docs/02` tokens > `flutter/` reference code.
+   (If the prototype and a number in `tokens.json` differ, the CSS in `reference/styles.css` is the truth.)
+
+## What the author could NOT see (verify by reading the repo before coding)
+
+The author had a trimmed repository dump plus the GitHub landing page, not the full source. Inspect these yourself and
+record findings at the top of your first PR description:
+
+1. `lib/src/styles/` (Styles, LichessColors, text styles) and `lib/src/widgets/` (GameLayout, ListSection,
+   PlatformScaffold/AppBar, feedback widgets, SideToPlayPiece, buttons).
+2. How `ThemeData` / the app theme is built (`app.dart` or similar) and where `dynamic_system_colors` is used.
+3. The tab scaffold / bottom navigation (the app currently has a two-tab shell: Review, More) and the "More" screen
+   (currently shows a `lichess.org` logo and account icon).
+4. Board/piece/sound preferences (`board_preferences.dart` etc.) and where chessground is configured.
+5. The exact types in the installed `chessground` (`^10.1.1`) API: `ChessboardSettings`, `ChessboardColorScheme`,
+   `ChessboardBackground`, piece asset types (`PieceAssets`), `StaticChessboard`, `ChessgroundImages`. Read the package
+   source in the pub cache; do not rely on this package's assumptions about them.
+6. The Analysis, Opening explorer and Board editor screens (still Lichess-styled).
+7. Native shell: app name, bundle ids, splash (`flutter_native_splash` uses `logo-black/white.webp`), app icon, the iOS
+   widget extension named `LichessWidgets`, `home_widget`, Firebase usage.
+
+## Working protocol
+
+- Work in the phases in `docs/05-flutter-implementation.md` §9. One phase = one PR. Do not start phase N+1 until the
+  owner has approved phase N's screenshots.
+- **Screenshots are required evidence** (this matches the repo's rule that passing tests is not proof of visual
+  correctness). For every UI PR attach: each affected screen at *phone (390x844)*, *tablet portrait (~820x1180)* and
+  *desktop (1280x800)*, in *light* and *dark*, ultramarine accent, next to the matching prototype screenshot.
+  Capture the prototype the same way (open `reference/index.html`, use the toolbar).
+- Prefer deleting Lichess-derived UI over restyling it, where the owner has agreed (see open decisions below).
+- Keep diffs reviewable: tokens and primitives first, then screens, then removals.
+- Add or update golden tests for the board background, memory bar, notation line and primitives (`docs/07`).
+- Never leave two design systems side by side longer than one phase. Each phase ends with the touched screens fully
+  migrated (no half-styled screens).
+
+## Open decisions (ask the owner; do not assume)
+
+1. **Analysis board / Opening explorer / Board editor.** Keep (re-skin), fold into an "Explore" area, or cut? Until
+   decided, leave them untouched but unreachable from the new Library sheet's primary rows (the prototype shows them as
+   placeholder rows).
+2. **Quick annotation toggle.** The current app bar has an eye toggle. The design removes it from the top bar; the
+   preference lives in Settings ("Show notes after a move", "Show arrows and circles"). If the owner wants a quick
+   toggle, add it as a switch row at the top of the Library sheet, not back in the top bar.
+3. **Exiting Practice mode.** The prototype shows "Practice" in the top bar where the due count normally is. Implement it
+   as a tappable label with semantics "Exit practice" (44dp target). A trailing small close glyph is allowed. Confirm.
+4. **Platform behaviour.** The design uses one visual language on all platforms. Keep platform *behaviours* (back
+   gestures, scroll physics, haptics), not platform-specific *looks*. Confirm no iOS-native (Cupertino) look is wanted.
+5. **Bespoke art.** Piece set, wordmark, icon and sounds here are placeholders. Ask before spending effort refining them.
+6. **Fonts.** Instrument Sans + Newsreader are the design's fonts. If the owner prefers others, only `SrsText` changes.
+
+## When to stop and ask
+
+Stop, write down exactly what you found, and ask the owner if:
+- chessground cannot render a transparent-square board under our own background (see `docs/05` §4 Plan B/C).
+- A requirement here conflicts with a hard constraint in `AGENTS.md` or with the product's scheduling behaviour.
+- You need a new dependency, or you want to change anything in `lib/src/domain`, `persistence`, `import` or `review`
+  logic (other than the presentation-facing state you must expose).
+- A screen or state is not covered here or in the prototype and the extrapolation rules in `docs/03` §12 do not settle it.
+
+## Definition of done (whole project)
+
+- [ ] `docs/06` amendments merged.
+- [ ] Every screen reachable in normal use uses `Srs*` tokens and primitives; no `Colors.*`, `LichessColors.*`,
+      `Theme.of(context).colorScheme.*` or Material widgets remain in migrated screens.
+- [ ] No Lichess board, pieces, sounds, icons fonts, logos or wordmarks are bundled or reachable (`docs/07` §1).
+- [ ] The Review screen matches the prototype at all three sizes, both themes, all four accents (`docs/07` §2).
+- [ ] Feedback region never changes height; the board never moves or resizes between prompt / correction / note.
+- [ ] Reduced-motion, screen-reader and keyboard paths work (`docs/04` §6).
+- [ ] Performance budget met on a mid-range Android device and an older iPhone (`docs/07` §5).
+- [ ] Licence audit done and an About/Licences screen exists (`docs/07` §6).
+- [ ] The five-second recognition test has been run by the owner (`docs/07` §3).

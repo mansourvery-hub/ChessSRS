@@ -1,0 +1,86 @@
+/* ChessSRS design tokens. Extracted verbatim from reference/styles.css.
+   Set data-theme="light|dark" and data-accent="ultramarine|violet|verdigris|ochre" on <html>. */
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --font-ui:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-read:"Newsreader",Georgia,"Times New Roman",serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --dur:170ms;
+
+  color-scheme:light;
+  --page:#E2E6E9;
+  --bg:#F1F3F4;
+  --surface:#FAFBFB;
+  --ink:#101318;
+  --ink2:#4B5361;
+  --ink3:#868D98;
+  --hair:rgba(16,19,24,.13);
+  --hair2:rgba(16,19,24,.055);
+  --accent-l:#2A3FD9;
+  --accent-d:#8A9BFF;
+  --accent:var(--accent-l);
+  --accent-soft:color-mix(in srgb,var(--accent) 11%,transparent);
+  --accent-mid:color-mix(in srgb,var(--accent) 24%,transparent);
+  --scrim:rgba(16,19,24,.22);
+  --shadow:0 0 0 1px rgba(16,19,24,.08),0 22px 48px -14px rgba(16,19,24,.30);
+  --sq-l:#F8F9FA;
+  --sq-d:#E7EAED;
+  --hatch:rgba(16,19,24,.30);
+  --wf:#FFFFFF; --ws:#101318; --wd:#101318;
+  --bf:#101318; --bs:#101318; --bd:#F1F3F4;
+  --halo:#F8F9FA;
+}
+/* accent options: each defines a light-theme and a dark-theme value; all >= 4.5:1 on ground and surface */
+:root[data-accent="ultramarine"]{--accent-l:#2A3FD9;--accent-d:#8A9BFF}
+:root[data-accent="violet"]{--accent-l:#6B3FD4;--accent-d:#B7A0FF}
+:root[data-accent="verdigris"]{--accent-l:#0B7A83;--accent-d:#5FCBD3}
+:root[data-accent="ochre"]{--accent-l:#9A5500;--accent-d:#F2B04D}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#050608;
+    --bg:#0D0F13;
+    --surface:#151920;
+    --ink:#ECEEF1;
+    --ink2:#9BA2AE;
+    --ink3:#666D79;
+    --hair:rgba(236,238,241,.14);
+    --hair2:rgba(236,238,241,.06);
+    --accent:var(--accent-d);
+    --accent-soft:color-mix(in srgb,var(--accent) 15%,transparent);
+    --accent-mid:color-mix(in srgb,var(--accent) 30%,transparent);
+    --scrim:rgba(0,0,0,.5);
+    --shadow:0 0 0 1px rgba(236,238,241,.08),0 22px 48px -14px rgba(0,0,0,.7);
+    --sq-l:#11141A;
+    --sq-d:#161A22;
+    --hatch:rgba(236,238,241,.22);
+    --wf:#ECEEF1; --ws:#0D0F13; --wd:#0D0F13;
+    --bf:#0D0F13; --bs:#ECEEF1; --bd:#ECEEF1;
+    --halo:#11141A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#050608;
+  --bg:#0D0F13;
+  --surface:#151920;
+  --ink:#ECEEF1;
+  --ink2:#9BA2AE;
+  --ink3:#666D79;
+  --hair:rgba(236,238,241,.14);
+  --hair2:rgba(236,238,241,.06);
+  --accent:var(--accent-d);
+  --accent-soft:color-mix(in srgb,var(--accent) 15%,transparent);
+  --accent-mid:color-mix(in srgb,var(--accent) 30%,transparent);
+  --scrim:rgba(0,0,0,.5);
+  --shadow:0 0 0 1px rgba(236,238,241,.08),0 22px 48px -14px rgba(0,0,0,.7);
+  --sq-l:#11141A;
+  --sq-d:#161A22;
+  --hatch:rgba(236,238,241,.22);
+  --wf:#ECEEF1; --ws:#0D0F13; --wd:#0D0F13;
+  --bf:#0D0F13; --bs:#ECEEF1; --bd:#ECEEF1;
+  --halo:#11141A;
+}
+@media (prefers-reduced-motion:reduce){ :root{--dur:1ms} *{animation-duration:1ms!important;transition-duration:1ms!important} }

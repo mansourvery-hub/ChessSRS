@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" fill="#101318"/>
+  <g transform="translate(212 212) scale(27.27)" color="#F1F3F4">
+    <defs><pattern id="h" width="2.4" height="2.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width=".9" height="2.4" fill="currentColor"/></pattern></defs>
+    <rect x=".75" y=".75" width="20.5" height="20.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <rect x="11" y="1.5" width="9.5" height="9.5" fill="url(#h)"/>
+    <rect x="1.5" y="11" width="9.5" height="9.5" fill="url(#h)"/>
+  </g>
+</svg>
