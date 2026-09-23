@@ -18,8 +18,10 @@ String chapterToPgn(Chapter chapter, {String? studyTitle}) {
   buffer.writeln('[Event "$event"]');
   buffer.writeln('[Site "ChessSRS"]');
   buffer.writeln('[Date "${_formatDate(chapter.createdAt ?? DateTime.now())}"]');
-  buffer.writeln('[White "Repertoire"]');
-  buffer.writeln('[Black "Opponent"]');
+  final isBlack = chapter.orientation == Side.black;
+  buffer.writeln('[White "${isBlack ? 'Opponent' : 'Repertoire'}"]');
+  buffer.writeln('[Black "${isBlack ? 'Repertoire' : 'Opponent'}"]');
+  buffer.writeln('[Orientation "${isBlack ? 'black' : 'white'}"]');
   buffer.writeln('[Result "*"]');
   if (studyTitle != null && studyTitle.trim().isNotEmpty) {
     buffer.writeln('[Study "${studyTitle.trim()}"]');

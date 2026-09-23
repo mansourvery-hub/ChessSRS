@@ -767,5 +767,82 @@ void main() {
       expect(state.isDailyLimitReached, isFalse);
       expect(state.currentPrompt, isNotNull);
     });
+
+    test('onUserMove rejects concurrent moves while move animation delay is in flight', () async {
+      final container = createContainer();
+      final controller = container.read(reviewControllerProvider.notifier);
+
+      const pgn = '''
+[Event "Italian Game"]
+1. e4 e5 2. Nf3 Nc6 *
+''';
+
+      await controller.importPgnText(pgnText: pgn, title: 'Italian', repertoireSide: Side.white);
+
+      // Trigger first move: 1. e4 (animates opponent response over 300ms)
+      final firstMoveFuture = controller.onUserMove(
+        const NormalMove(from: Square.e2, to: Square.e4),
+      );
+
+      // Attempt concurrent second move while the first is still processing/animating
+      final concurrentResult = await controller.onUserMove(
+        const NormalMove(from: Square.g1, to: Square.f3),
+      );
+
+      // Concurrent move should be locked out and return null
+      expect(concurrentResult, isNull);
+
+      final firstResult = await firstMoveFuture;
+      expect(firstResult, isNotNull);
+      expect(firstResult!.isCorrect, isTrue);
+    });
+
+    test(
+      'reviewing an already-learned decision decrements due but does not increment learnedDecisions',
+      () async {
+        final container = createContainer();
+        final controller = container.read(reviewControllerProvider.notifier);
+
+        const pgn = '''
+[Event "Single Move Study"]
+1. e4 *
+''';
+
+        final importRes = await controller.importPgnText(
+          pgnText: pgn,
+          title: 'Learned Test',
+          repertoireSide: Side.white,
+        );
+
+        final decision = importRes.decisions.first;
+        final past = clock.now().subtract(const Duration(days: 2));
+
+        // Seed an already-learned state (reps: 3) that is overdue
+        await repo.saveReviewState(
+          ReviewState(
+            decisionId: decision.id,
+            repetitionCount: 3,
+            stability: 1000.0,
+            nextDueAt: past,
+          ),
+        );
+
+        await controller.reload();
+        var state = container.read(reviewControllerProvider).requireValue;
+        final initialStudyProg = state.studyProgress[importRes.study.id]!;
+        expect(initialStudyProg.learnedDecisions, 1);
+        expect(initialStudyProg.dueDecisions, 1);
+
+        // Play correct move
+        final step = await controller.onUserMove(const NormalMove(from: Square.e2, to: Square.e4));
+        expect(step?.isCorrect, isTrue);
+
+        state = container.read(reviewControllerProvider).requireValue;
+        final updatedStudyProg = state.studyProgress[importRes.study.id]!;
+        // Due count decrements, but learned count does NOT increment beyond 1!
+        expect(updatedStudyProg.dueDecisions, 0);
+        expect(updatedStudyProg.learnedDecisions, 1);
+      },
+    );
   });
 }

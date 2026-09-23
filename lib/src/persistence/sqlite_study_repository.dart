@@ -9,7 +9,10 @@ import 'package:chess_srs/src/persistence/json_adapters.dart';
 import 'package:chess_srs/src/persistence/srs_schema.dart';
 import 'package:chess_srs/src/persistence/study_repository.dart';
 import 'package:dartchess/dartchess.dart' show Side;
+import 'package:logging/logging.dart';
 import 'package:sqflite/sqflite.dart';
+
+final Logger _logger = Logger('StudyRepository');
 
 /// Concrete SQLite implementation of [StudyRepository].
 ///
@@ -23,6 +26,7 @@ class SqliteStudyRepository implements StudyRepository {
 
   @override
   Future<void> saveImportResult(ImportResult result) async {
+    final sw = Stopwatch()..start();
     await _db.transaction((txn) async {
       final now = DateTime.now().toIso8601String();
       await txn.insert(kTableSrsStudy, {
@@ -66,6 +70,11 @@ class SqliteStudyRepository implements StudyRepository {
       }
       await decisionBatch.commit(noResult: true);
     });
+    sw.stop();
+    _logger.info(
+      'Saved import result for study ${result.study.id} ("${result.study.title}"): '
+      '${result.chapters.length} chapters, ${result.decisions.length} decisions in ${sw.elapsedMilliseconds}ms',
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -173,36 +182,64 @@ class SqliteStudyRepository implements StudyRepository {
       final decisionIds = decisions.map((d) => d['id']! as String).toList();
 
       if (decisionIds.isNotEmpty) {
-        final placeholders = List.filled(decisionIds.length, '?').join(',');
-        final canonicalRows = await txn.query(
-          kTableSrsDecision,
-          columns: ['canonicalStateId'],
-          where: 'id IN ($placeholders)',
-          whereArgs: decisionIds,
-        );
-        final canonicalIds = canonicalRows
-            .map((r) => r['canonicalStateId'] as String?)
-            .whereType<String>()
-            .toList();
+        const chunkSize = 400;
+        final canonicalIds = <String>{};
 
-        await txn.delete(
-          kTableSrsReviewEvent,
-          where: 'decisionId IN ($placeholders)',
-          whereArgs: decisionIds,
-        );
-        await txn.delete(
-          kTableSrsReviewState,
-          where: 'decisionId IN ($placeholders)',
-          whereArgs: decisionIds,
-        );
-        if (canonicalIds.isNotEmpty) {
-          final cPlaceholders = List.filled(canonicalIds.length, '?').join(',');
+        for (var i = 0; i < decisionIds.length; i += chunkSize) {
+          final chunk = decisionIds.sublist(
+            i,
+            i + chunkSize > decisionIds.length ? decisionIds.length : i + chunkSize,
+          );
+          final placeholders = List.filled(chunk.length, '?').join(',');
+
+          final canonicalRows = await txn.query(
+            kTableSrsDecision,
+            columns: ['canonicalStateId'],
+            where: 'id IN ($placeholders)',
+            whereArgs: chunk,
+          );
+          for (final r in canonicalRows) {
+            final cId = r['canonicalStateId'] as String?;
+            if (cId != null && cId.isNotEmpty) {
+              canonicalIds.add(cId);
+            }
+          }
+
           await txn.delete(
-            kTablePositionKnowledgeState,
-            where: 'canonicalId IN ($cPlaceholders)',
-            whereArgs: canonicalIds,
+            kTableSrsReviewEvent,
+            where: 'decisionId IN ($placeholders)',
+            whereArgs: chunk,
+          );
+          await txn.delete(
+            kTableSrsReviewState,
+            where: 'decisionId IN ($placeholders)',
+            whereArgs: chunk,
           );
         }
+
+        final canonicalList = canonicalIds.toList(growable: false);
+        for (var i = 0; i < canonicalList.length; i += chunkSize) {
+          final chunk = canonicalList.sublist(
+            i,
+            i + chunkSize > canonicalList.length ? canonicalList.length : i + chunkSize,
+          );
+          final cPlaceholders = List.filled(chunk.length, '?').join(',');
+          await txn.delete(
+            kTablePositionKnowledgeState,
+            where:
+                'canonicalId IN ($cPlaceholders) AND canonicalId NOT IN ( '
+                'SELECT canonicalStateId FROM $kTableSrsDecision WHERE studyId != ? AND canonicalStateId IS NOT NULL)',
+            whereArgs: [...chunk, id],
+          );
+          await txn.delete(
+            kTableSrsReviewState,
+            where:
+                'decisionId IN ($cPlaceholders) AND decisionId NOT IN ( '
+                'SELECT canonicalStateId FROM $kTableSrsDecision WHERE studyId != ? AND canonicalStateId IS NOT NULL)',
+            whereArgs: [...chunk, id],
+          );
+        }
+
         await txn.delete(kTableSrsDecision, where: 'studyId = ?', whereArgs: [id]);
       }
 
@@ -456,6 +493,77 @@ class SqliteStudyRepository implements StudyRepository {
   }
 
   @override
+  Future<void> saveAnswerBatch({
+    required List<PositionKnowledgeState> knowledgeStates,
+    ReviewEvent? event,
+  }) async {
+    if (knowledgeStates.isEmpty && event == null) return;
+    await _db.transaction((txn) async {
+      final batch = txn.batch();
+
+      for (final s in knowledgeStates) {
+        batch.insert(kTablePositionKnowledgeState, {
+          'canonicalId': s.canonicalId,
+          'firstReviewedAt': s.firstReviewedAt?.toIso8601String(),
+          'lastReviewedAt': s.lastReviewedAt?.toIso8601String(),
+          'nextDueAt': s.nextDueAt?.toIso8601String(),
+          'repetitionCount': s.repetitionCount,
+          'lapseCount': s.lapseCount,
+          'stability': s.stability,
+          'difficulty': s.difficulty,
+          'latencyEmaMs': s.latencyEmaMs,
+          'latencySampleCount': s.latencySampleCount,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+        batch.insert(kTableSrsReviewState, {
+          'decisionId': s.canonicalId,
+          'firstReviewedAt': s.firstReviewedAt?.toIso8601String(),
+          'lastReviewedAt': s.lastReviewedAt?.toIso8601String(),
+          'nextDueAt': s.nextDueAt?.toIso8601String(),
+          'repetitionCount': s.repetitionCount,
+          'lapseCount': s.lapseCount,
+          'stability': s.stability,
+          'difficulty': s.difficulty,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+        batch.rawInsert(
+          '''
+          INSERT OR REPLACE INTO $kTableSrsReviewState(
+            decisionId, firstReviewedAt, lastReviewedAt, nextDueAt,
+            repetitionCount, lapseCount, stability, difficulty
+          )
+          SELECT id, ?, ?, ?, ?, ?, ?, ?
+          FROM $kTableSrsDecision
+          WHERE canonicalStateId = ?
+        ''',
+          [
+            s.firstReviewedAt?.toIso8601String(),
+            s.lastReviewedAt?.toIso8601String(),
+            s.nextDueAt?.toIso8601String(),
+            s.repetitionCount,
+            s.lapseCount,
+            s.stability,
+            s.difficulty,
+            s.canonicalId,
+          ],
+        );
+      }
+
+      if (event != null) {
+        batch.insert(kTableSrsReviewEvent, {
+          'decisionId': event.decisionId,
+          'whenTimestamp': event.when.toIso8601String(),
+          'result': event.result.name,
+          'oldStateJson': jsonEncode(reviewStateToJson(event.oldState)),
+          'newStateJson': jsonEncode(reviewStateToJson(event.newState)),
+        });
+      }
+
+      await batch.commit(noResult: true);
+    });
+  }
+
+  @override
   Future<PositionKnowledgeState?> getPositionKnowledgeState(String canonicalId) async {
     final rows = await _db.query(
       kTablePositionKnowledgeState,
@@ -531,7 +639,7 @@ class SqliteStudyRepository implements StudyRepository {
       repetitionCount: (row['repetitionCount']! as num).toInt(),
       lapseCount: (row['lapseCount']! as num).toInt(),
       stability: (row['stability']! as num).toDouble(),
-      difficulty: (row['difficulty'] as num?)?.toDouble() ?? 0.0,
+      difficulty: (row['difficulty'] as num?)?.toDouble() ?? 5.0,
       latencyEmaMs: (row['latencyEmaMs'] as num?)?.toDouble(),
       latencySampleCount: (row['latencySampleCount'] as num?)?.toInt() ?? 0,
     );
@@ -551,6 +659,7 @@ class SqliteStudyRepository implements StudyRepository {
       'repetitionCount': state.repetitionCount,
       'lapseCount': state.lapseCount,
       'stability': state.stability,
+      'difficulty': state.difficulty,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -566,6 +675,7 @@ class SqliteStudyRepository implements StudyRepository {
         'repetitionCount': s.repetitionCount,
         'lapseCount': s.lapseCount,
         'stability': s.stability,
+        'difficulty': s.difficulty,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await batch.commit(noResult: true);
@@ -673,6 +783,9 @@ class SqliteStudyRepository implements StudyRepository {
 
   @override
   Future<void> saveReviewEvent(ReviewEvent event) async {
+    _logger.fine(
+      'Saving review event: decisionId=${event.decisionId}, result=${event.result.name}, at=${event.when}',
+    );
     await _db.insert(kTableSrsReviewEvent, {
       'decisionId': event.decisionId,
       'whenTimestamp': event.when.toIso8601String(),
@@ -719,7 +832,9 @@ class SqliteStudyRepository implements StudyRepository {
       ''',
       [startOfDay],
     );
-    return Sqflite.firstIntValue(result) ?? 0;
+    final count = Sqflite.firstIntValue(result) ?? 0;
+    _logger.fine('Today reviewed positions count: $count (startOfDay: $startOfDay)');
+    return count;
   }
 
   // ---------------------------------------------------------------------------
@@ -786,7 +901,7 @@ class SqliteStudyRepository implements StudyRepository {
       repetitionCount: (row['repetitionCount']! as num).toInt(),
       lapseCount: (row['lapseCount']! as num).toInt(),
       stability: (row['stability']! as num).toDouble(),
-      difficulty: (row['difficulty'] as num?)?.toDouble() ?? 0.0,
+      difficulty: (row['difficulty'] as num?)?.toDouble() ?? 5.0,
     );
   }
 

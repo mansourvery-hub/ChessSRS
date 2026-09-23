@@ -4,6 +4,7 @@
 import 'package:chess_srs/src/domain/chess_fsrs_scheduler.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/view/settings/app_log_settings_screen.dart';
 import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
 import 'package:chess_srs/src/widgets/list.dart';
 import 'package:chess_srs/src/widgets/platform.dart';
@@ -253,6 +254,16 @@ class SrsSettingsScreen extends ConsumerWidget {
                 value: prefs.srsDiagnostics,
                 onChanged: (_) =>
                     ref.read(studyPreferencesProvider.notifier).toggleSrsDiagnostics(),
+              ),
+              SettingsListTile(
+                icon: const Icon(Symbols.receipt_long_rounded),
+                settingsLabel: const Text('View in-app diagnostic logs'),
+                settingsValue: 'SRS & Engine Traces',
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).push(AppLogSettingsScreen.buildRoute(initialCategory: LogCategory.review));
+                },
               ),
             ],
           ),

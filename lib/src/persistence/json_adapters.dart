@@ -67,6 +67,7 @@ Map<String, dynamic> reviewStateToJson(ReviewState state) => {
   'repetitionCount': state.repetitionCount,
   'lapseCount': state.lapseCount,
   'stability': state.stability,
+  'difficulty': state.difficulty,
 };
 
 ReviewState reviewStateFromJson(Map<String, dynamic> json) => ReviewState(
@@ -81,6 +82,7 @@ ReviewState reviewStateFromJson(Map<String, dynamic> json) => ReviewState(
   repetitionCount: (json['repetitionCount'] as num?)?.toInt() ?? 0,
   lapseCount: (json['lapseCount'] as num?)?.toInt() ?? 0,
   stability: (json['stability'] as num?)?.toDouble() ?? 0.0,
+  difficulty: (json['difficulty'] as num?)?.toDouble() ?? 5.0,
 );
 
 Map<String, dynamic> reviewEventToJson(ReviewEvent event) => {

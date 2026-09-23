@@ -53,6 +53,10 @@ abstract class StudyRepository {
   // Position Knowledge States (canonical SRS memory layer)
   Future<void> savePositionKnowledgeState(PositionKnowledgeState state);
   Future<void> savePositionKnowledgeStates(List<PositionKnowledgeState> states);
+  Future<void> saveAnswerBatch({
+    required List<PositionKnowledgeState> knowledgeStates,
+    ReviewEvent? event,
+  });
   Future<PositionKnowledgeState?> getPositionKnowledgeState(String canonicalId);
   Future<List<PositionKnowledgeState>> getKnowledgeStatesByCanonicalIds(List<String> canonicalIds);
   Future<List<PositionKnowledgeState>> getAllKnowledgeStates();

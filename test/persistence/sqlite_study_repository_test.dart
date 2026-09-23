@@ -355,6 +355,94 @@ void main() {
       }
     });
 
+    test(
+      'deleteStudy preserves shared canonical knowledge states referenced by another study',
+      () async {
+        final db = await openAppDatabase(databaseFactoryFfi, dbPath);
+        final repo = SqliteStudyRepository(db);
+
+        try {
+          final now = DateTime.utc(2026, 9, 16, 12, 0, 0);
+          final studyA = Study(id: 'study-a', title: 'Study A', createdAt: now, updatedAt: now);
+          final chapterA = Chapter(id: 'ch-a', studyId: studyA.id, sourceOrder: 0);
+          final studyB = Study(id: 'study-b', title: 'Study B', createdAt: now, updatedAt: now);
+          final chapterB = Chapter(id: 'ch-b', studyId: studyB.id, sourceOrder: 0);
+
+          const sharedCanonicalId = 'shared-pos-canonical';
+          const unsharedCanonicalId = 'unshared-pos-canonical';
+
+          const decA1 = RepertoireDecision(
+            id: 'dec-a1',
+            studyId: 'study-a',
+            chapterId: 'ch-a',
+            nodeId: 'na1',
+            expectedMoves: [],
+            canonicalStateId: sharedCanonicalId,
+          );
+          const decA2 = RepertoireDecision(
+            id: 'dec-a2',
+            studyId: 'study-a',
+            chapterId: 'ch-a',
+            nodeId: 'na2',
+            expectedMoves: [],
+            canonicalStateId: unsharedCanonicalId,
+          );
+          const decB1 = RepertoireDecision(
+            id: 'dec-b1',
+            studyId: 'study-b',
+            chapterId: 'ch-b',
+            nodeId: 'nb1',
+            expectedMoves: [],
+            canonicalStateId: sharedCanonicalId,
+          );
+
+          const sharedKState = PositionKnowledgeState(
+            canonicalId: sharedCanonicalId,
+            repetitionCount: 5,
+            stability: 100.0,
+          );
+          const unsharedKState = PositionKnowledgeState(
+            canonicalId: unsharedCanonicalId,
+            repetitionCount: 2,
+            stability: 40.0,
+          );
+
+          await repo.saveStudy(studyA);
+          await repo.saveChapter(chapterA);
+          await repo.saveDecision(decA1);
+          await repo.saveDecision(decA2);
+
+          await repo.saveStudy(studyB);
+          await repo.saveChapter(chapterB);
+          await repo.saveDecision(decB1);
+
+          await repo.savePositionKnowledgeState(sharedKState);
+          await repo.savePositionKnowledgeState(unsharedKState);
+
+          expect(await repo.getPositionKnowledgeState(sharedCanonicalId), isNotNull);
+          expect(await repo.getPositionKnowledgeState(unsharedCanonicalId), isNotNull);
+
+          // Delete study A
+          await repo.deleteStudy(studyA.id);
+
+          // Study A decisions are deleted
+          expect(await repo.getDecision(decA1.id), isNull);
+          expect(await repo.getDecision(decA2.id), isNull);
+
+          // Unshared canonical state should be deleted
+          expect(await repo.getPositionKnowledgeState(unsharedCanonicalId), isNull);
+
+          // Shared canonical state MUST be preserved because Study B still references it
+          final preserved = await repo.getPositionKnowledgeState(sharedCanonicalId);
+          expect(preserved, isNotNull);
+          expect(preserved!.canonicalId, sharedCanonicalId);
+          expect(preserved.repetitionCount, 5);
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
     test('savePositionTree updates tree independently of chapter metadata', () async {
       final db = await openAppDatabase(databaseFactoryFfi, dbPath);
       final repo = SqliteStudyRepository(db);
@@ -662,6 +750,267 @@ void main() {
       } finally {
         await db.close();
       }
+    });
+
+    test(
+      'saveAnswerBatch atomically commits knowledge states, legacy mirrors, and events',
+      () async {
+        final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+        try {
+          final batch = db.batch();
+          createSrsTables(batch);
+          await batch.commit();
+
+          final repo = SqliteStudyRepository(db);
+          final now = DateTime.utc(2026, 9, 20, 10, 0);
+
+          final study = Study.create(title: 'Batch Test Study');
+          final chapter = Chapter.create(studyId: study.id, title: 'Chapter 1', sourceOrder: 0);
+          final dec1 = RepertoireDecision(
+            id: 'dec-batch-1',
+            studyId: study.id,
+            chapterId: chapter.id,
+            nodeId: 'node-1',
+            expectedMoves: [const RepertoireMove(from: 'e2', to: 'e4')],
+            canonicalStateId: 'canon-1',
+          );
+
+          await repo.saveStudy(study);
+          await repo.saveChapter(chapter);
+          await repo.saveDecision(dec1);
+
+          final kState = PositionKnowledgeState(
+            canonicalId: 'canon-1',
+            firstReviewedAt: now,
+            lastReviewedAt: now,
+            nextDueAt: now.add(const Duration(days: 1)),
+            repetitionCount: 1,
+            lapseCount: 0,
+            stability: 86400000.0,
+            difficulty: 5.0,
+          );
+
+          final event = ReviewEvent(
+            decisionId: 'canon-1',
+            when: now,
+            result: ReviewResult.correct,
+            oldState: const ReviewState(decisionId: 'canon-1'),
+            newState: const ReviewState(decisionId: 'canon-1', repetitionCount: 1),
+          );
+
+          await repo.saveAnswerBatch(knowledgeStates: [kState], event: event);
+
+          final fetchedK = await repo.getPositionKnowledgeState('canon-1');
+          expect(fetchedK, isNotNull);
+          expect(fetchedK!.repetitionCount, 1);
+          expect(fetchedK.difficulty, 5.0);
+
+          // Verify mirror in legacy srs_review_state
+          final fetchedLegacy = await repo.getReviewState('dec-batch-1');
+          expect(fetchedLegacy, isNotNull);
+          expect(fetchedLegacy!.repetitionCount, 1);
+
+          final events = await repo.getReviewEvents('canon-1');
+          expect(events.length, 1);
+          expect(events.first.result, ReviewResult.correct);
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
+    test(
+      'deleteStudy chunks large decision sets (>400) without hitting parameter limits',
+      () async {
+        final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+        try {
+          final batch = db.batch();
+          createSrsTables(batch);
+          await batch.commit();
+
+          final repo = SqliteStudyRepository(db);
+          final study = Study.create(title: 'Large Study');
+          final chapter = Chapter.create(studyId: study.id, title: 'Chapter 1', sourceOrder: 0);
+          await repo.saveStudy(study);
+          await repo.saveChapter(chapter);
+
+          // Insert 450 decisions (exceeds single 400 chunk)
+          final decisions = List.generate(
+            450,
+            (i) => RepertoireDecision(
+              id: 'dec-$i',
+              studyId: study.id,
+              chapterId: chapter.id,
+              nodeId: 'node-$i',
+              expectedMoves: [const RepertoireMove(from: 'e2', to: 'e4')],
+              canonicalStateId: 'canon-$i',
+            ),
+          );
+          await repo.saveDecisions(decisions);
+
+          // Delete study should chunk delete operations smoothly
+          await repo.deleteStudy(study.id);
+
+          final remainingDecisions = await repo.getDecisionsByStudy(study.id);
+          expect(remainingDecisions, isEmpty);
+
+          final remainingStudy = await repo.getStudy(study.id);
+          expect(remainingStudy, isNull);
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
+    test(
+      'ReviewState roundtrips custom difficulty through saveReviewState and getReviewState',
+      () async {
+        final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+        try {
+          final batch = db.batch();
+          createSrsTables(batch);
+          await batch.commit();
+
+          final repo = SqliteStudyRepository(db);
+          const state = ReviewState(
+            decisionId: 'dec-diff-test',
+            repetitionCount: 3,
+            stability: 42.0,
+            difficulty: 7.25,
+          );
+
+          await repo.saveReviewState(state);
+          final loaded = await repo.getReviewState('dec-diff-test');
+          expect(loaded, isNotNull);
+          expect(loaded!.difficulty, equals(7.25));
+          expect(loaded.stability, equals(42.0));
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
+    test(
+      'saveAnswerBatch commits with PRAGMA foreign_keys = ON without constraint errors',
+      () async {
+        final db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+        try {
+          await db.execute('PRAGMA foreign_keys = ON;');
+          final batch = db.batch();
+          createSrsTables(batch);
+          await batch.commit();
+
+          final repo = SqliteStudyRepository(db);
+          final now = DateTime.utc(2026, 9, 23, 12, 0);
+
+          final study = Study.create(title: 'FK Safety Study');
+          final chapter = Chapter.create(studyId: study.id, title: 'Chapter 1', sourceOrder: 0);
+          final decision = RepertoireDecision(
+            id: 'dec-fk-1',
+            studyId: study.id,
+            chapterId: chapter.id,
+            nodeId: 'node-fk-1',
+            expectedMoves: [const RepertoireMove(from: 'e2', to: 'e4')],
+            canonicalStateId: 'canonical-key-fk-1',
+          );
+
+          await repo.saveStudy(study);
+          await repo.saveChapter(chapter);
+          await repo.saveDecision(decision);
+
+          final kState = PositionKnowledgeState(
+            canonicalId: 'canonical-key-fk-1',
+            firstReviewedAt: now,
+            lastReviewedAt: now,
+            nextDueAt: now.add(const Duration(days: 1)),
+            repetitionCount: 1,
+            lapseCount: 0,
+            stability: 86400000.0,
+            difficulty: 6.8,
+          );
+
+          final event = ReviewEvent(
+            decisionId: 'canonical-key-fk-1',
+            when: now,
+            result: ReviewResult.correct,
+            oldState: const ReviewState(decisionId: 'canonical-key-fk-1'),
+            newState: const ReviewState(
+              decisionId: 'canonical-key-fk-1',
+              repetitionCount: 1,
+              difficulty: 6.8,
+            ),
+          );
+
+          // Should commit cleanly under active foreign keys
+          await repo.saveAnswerBatch(knowledgeStates: [kState], event: event);
+
+          final loadedKState = await repo.getPositionKnowledgeState('canonical-key-fk-1');
+          expect(loadedKState, isNotNull);
+          expect(loadedKState!.difficulty, equals(6.8));
+        } finally {
+          await db.close();
+        }
+      },
+    );
+
+    test('reviewStateToJson and reviewStateFromJson preserve difficulty', () {
+      const state = ReviewState(
+        decisionId: 'test-canon-json',
+        repetitionCount: 4,
+        lapseCount: 1,
+        stability: 12345.0,
+        difficulty: 8.75,
+      );
+      final json = reviewStateToJson(state);
+      expect(json['difficulty'], equals(8.75));
+
+      final restored = reviewStateFromJson(json);
+      expect(restored.difficulty, equals(8.75));
+      expect(restored.stability, equals(12345.0));
+      expect(restored.repetitionCount, equals(4));
+      expect(restored.lapseCount, equals(1));
+    });
+
+    test('database migration v12 to v13 adds difficulty column to srs_review_state', () async {
+      // Create database at version 12 without difficulty column in srs_review_state
+      final v12Db = await databaseFactoryFfi.openDatabase(
+        dbPath,
+        options: OpenDatabaseOptions(
+          version: 12,
+          onCreate: (db, version) async {
+            final batch = db.batch();
+            createSrsTables(batch);
+            await batch.commit();
+            await db.execute('ALTER TABLE $kTableSrsReviewState DROP COLUMN difficulty');
+          },
+        ),
+      );
+
+      // Verify difficulty column is absent
+      var tableInfo = await v12Db.rawQuery('PRAGMA table_info($kTableSrsReviewState)');
+      var hasDifficulty = tableInfo.any((col) => col['name'] == 'difficulty');
+      expect(hasDifficulty, isFalse);
+      await v12Db.close();
+
+      // Open through openAppDatabase which upgrades to v13
+      final upgradedDb = await openAppDatabase(databaseFactoryFfi, dbPath);
+      tableInfo = await upgradedDb.rawQuery('PRAGMA table_info($kTableSrsReviewState)');
+      hasDifficulty = tableInfo.any((col) => col['name'] == 'difficulty');
+      expect(hasDifficulty, isTrue);
+
+      final repo = SqliteStudyRepository(upgradedDb);
+      await repo.saveReviewState(
+        const ReviewState(
+          decisionId: 'migrated-dec-1',
+          repetitionCount: 2,
+          stability: 50.0,
+          difficulty: 7.2,
+        ),
+      );
+      final states = await repo.getReviewStatesByDecisions(['migrated-dec-1']);
+      expect(states.first.difficulty, equals(7.2));
+
+      await upgradedDb.close();
     });
   });
 }

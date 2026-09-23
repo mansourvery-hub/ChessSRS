@@ -271,6 +271,12 @@ or HTTP consumers outside auth and study-import paths.
 - `dartchess` + `chessground` + piece/board assets
 - `model/common/` (chess.dart, node.dart, eval, id, uci, perf, etc.)
 - `styles/`, `widgets/` reusable set, `db/` sqflite, `model/settings/`
+
+> **Amended by D016:** "not cut" here means these directories are not deleted wholesale; it does not mean
+> their *visual* contents (Lichess colours, Material-styled components, Lichess-specific widgets) are frozen.
+> The visual identity in `design/docs/` supersedes the Lichess-styled parts of `styles/` and `widgets/`.
+> Structural/non-visual code in these directories (layout math, platform adapters unrelated to look) may still
+> be kept and reused where it doesn't conflict with the new design.
 - l10n pipeline
 - `model/auth/` (C3 kept — optional login for study import)
 - `view/study/`, `model/study/` (D1 — closest to our review scene)

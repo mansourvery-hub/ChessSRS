@@ -238,9 +238,17 @@ remains a later option — never a redesign.
       2. Unique Position Tracking: added `getTodayReviewedPositionsCount` to `StudyRepository` and SQLite schema v12 with index on `srs_review_event(whenTimestamp)` counting distinct positions reviewed today (not raw guesses; mistakes and reguesses count as 1 position).
       3. Session & Queue Quota: `ReviewEngine` and `ReviewSession` enforce `remainingDailyQuota` so review stops once the daily limit is hit, while allowing in-flight lapse reguesses to conclude gracefully.
       4. UI Feedback: updated `_AllCaughtUpView` on `ReviewScreen` to display "Daily Goal Reached!" with progress metrics and an "Adjust Limit" action, while leaving Free Practice mode unrestricted. *(done: 2026-09-18)*
+- [x] **R11: Repertoire & Chapter PGN Export & Sharing Pipeline**
+      1. Serialization API: added `ReviewController.exportStudyPgn` and `ReviewController.exportChapterPgn` compiling multi-chapter studies and individual chapters back to standard PGN notation with variations, move comments, and orientation tags.
+      2. Export Dialog UX: built `ExportPgnDialog` featuring clean monospace scrollable PGN text preview, one-tap "Copy to Clipboard", native "Save File" (.pgn file dialog via `FilePicker.saveFile`), and resilient "Share" with desktop clipboard fallback in `launchShareDialog`.
+      3. Entry Points: integrated "Export PGN" action in `ReviewScopeDrawer` study options sheet, global study export in `StudyChaptersScreen`'s AppBar, and per-chapter export icon buttons on chapter list tiles. *(done: 2026-09-19)*
 
 ### Future Horizon Tasks & Backlog
-- [ ] **F-LOGS: In-App Logs & Diagnostics Audit**: Review in-app logs (`HttpLogScreen`, `AppLogSettingsScreen`, and runtime logger output) — rich diagnostic data for edge cases, performance timings, and review patterns.
+- [x] **F-LOGS: In-App Logs & Diagnostics Audit**
+      1. Diagnostic Instrumentation: added dedicated runtime loggers (`ReviewEngine`, `ReviewController`, `StudyRepository`, `StudyImporter`, `FsrsScheduler`, `Database`) emitting rich telemetry for session lifecycles, move validations, lapse contagion, FSRS interval computations, orientation resolutions, and DB performance timings. Included all domain loggers in terminal output filters.
+      2. HttpLogScreen Modernization: migrated to `PlatformScaffold`/`PlatformAppBar`, added trace export/share action, displayed error messages directly on log tiles, and built an inspection modal dialog with copy URL/copy details actions.
+      3. AppLogSettingsScreen Polish: added quick category filter chips (`All`, `Review`, `Repo / DB`, `Import`, `Network`, `Engine`), stylized domain-colored logger badges, copy to clipboard on long-press, and a full detail inspection modal dialog with copy message/error/stack actions.
+      4. SRS Diagnostics Integration: added direct "View in-app diagnostic logs" tile in `SrsSettingsScreen` under the Diagnostics section, pre-filtering directly to review and scheduling traces. *(done: 2026-09-19)*
 
 Workflow polish, information architecture, performance, onboarding/import
 improvements, remaining Lichess code removal (per CUT_PROPOSALS §2), and only

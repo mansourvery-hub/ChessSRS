@@ -18,6 +18,9 @@ import 'package:chess_srs/src/domain/review_state.dart';
 import 'package:chess_srs/src/domain/scheduler.dart';
 import 'package:chess_srs/src/domain/study.dart';
 import 'package:dartchess/dartchess.dart';
+import 'package:logging/logging.dart';
+
+final Logger _logger = Logger('ReviewEngine');
 
 /// Active review session state machine.
 ///
@@ -53,10 +56,12 @@ class ReviewSession {
       }
     }
 
-    // Index canonical keys for (fenKey, expectedMoveUci)
+    // Index canonical keys for (fenKey, expectedMoveUci) and O(1) decision lookup maps
     for (final d in decisions) {
+      _decisionsByCanonicalId[d.canonicalId] = d;
       final node = _nodesById[d.nodeId];
       if (node != null) {
+        _decisionsByFenKey.putIfAbsent(node.fenKey, () => []).add(d);
         for (final m in d.expectedMoves) {
           _canonicalByFenMove['${node.fenKey}|${m.uci}'] = d.canonicalId;
         }
@@ -74,11 +79,6 @@ class ReviewSession {
     final now = clock.now();
     final queuedCanonicalIds = <String>{};
     for (final d in decisions) {
-      if (mode == ReviewMode.srs &&
-          remainingDailyQuota != null &&
-          _unbufferedQueue.length >= remainingDailyQuota!) {
-        break;
-      }
       final chapter = _chapters[d.chapterId];
       if (!scope.matches(
         studyId: d.studyId,
@@ -99,9 +99,32 @@ class ReviewSession {
       }
     }
 
+    if (mode == ReviewMode.srs) {
+      _unbufferedQueue.sort((a, b) {
+        final stateA = _reviewStates[a.canonicalId] ?? _reviewStates[a.id];
+        final stateB = _reviewStates[b.canonicalId] ?? _reviewStates[b.id];
+        final dueA = stateA?.nextDueAt;
+        final dueB = stateB?.nextDueAt;
+        if (dueA == null && dueB == null) return 0;
+        if (dueA == null) return -1;
+        if (dueB == null) return 1;
+        return dueA.compareTo(dueB);
+      });
+
+      if (remainingDailyQuota != null && _unbufferedQueue.length > remainingDailyQuota!) {
+        _logger.info(
+          'Daily review quota ($remainingDailyQuota) reached, truncating queue to most urgent due items',
+        );
+        _unbufferedQueue.removeRange(remainingDailyQuota!, _unbufferedQueue.length);
+      }
+    }
+
     _initialDueCount = _unbufferedQueue.length;
     _refillPrefetchBuffer();
     _advanceToNextDue();
+    _logger.info(
+      'ReviewSession created: mode=$mode, scope=$scope, initialDueCount=$_initialDueCount, remainingQuota=$remainingDailyQuota',
+    );
   }
 
   final ReviewScope scope;
@@ -126,9 +149,12 @@ class ReviewSession {
   final Map<String, ReviewState> _reviewStates;
   final Map<String, RepertoireDecision> _decisionsById;
   final Map<String, RepertoireDecision> _decisionForNode;
+  final Map<String, RepertoireDecision> _decisionsByCanonicalId = {};
+  final Map<String, List<RepertoireDecision>> _decisionsByFenKey = {};
   final Map<String, RepertoireNode> _nodesById = {};
   final Map<String, RepertoireNode> _parentOfNode = {};
   final Map<String, String> _canonicalByFenMove = {};
+  final Map<String, int> _nodeCountCache = {};
 
   final List<RepertoireDecision> _dueQueue = [];
   final List<RepertoireDecision> _unbufferedQueue = [];
@@ -224,6 +250,11 @@ class ReviewSession {
 
       _completedCount++;
 
+      _logger.info(
+        'Move correct: ${expectedMatch.san ?? expectedMatch.uci} for decision ${decision.canonicalId} '
+        '(reps: ${nextState.repetitionCount}, stability: ${nextState.stability.toStringAsFixed(2)})',
+      );
+
       return _continueWithCorrectMove(
         prompt: prompt,
         expectedMatch: expectedMatch,
@@ -272,6 +303,15 @@ class ReviewSession {
         );
       }
 
+      _logger.warning(
+        'Lapse on decision ${decision.canonicalId}: played ${movePlayed.uci}, '
+        'expected: ${prompt.expectedMoves.map((m) => m.san ?? m.uci).join(', ')} '
+        '(lapses: ${nextState.lapseCount}, stability: ${nextState.stability.toStringAsFixed(2)})',
+      );
+      if (sideEffects.isNotEmpty) {
+        _logger.fine('Lapse contagion/coupling updated ${sideEffects.length} associated states');
+      }
+
       // Re-queue the failed decision at the end of the session queue
       // so the user can re-test it before completing the session
       _dueQueue.removeWhere((d) => d.id == decision.id);
@@ -310,7 +350,9 @@ class ReviewSession {
     final expectedMatch = prompt.expectedMoves.where((exp) => exp.matches(movePlayed)).firstOrNull;
 
     final currentState =
-        _reviewStates[prompt.decision.id] ?? ReviewState.initial(decisionId: prompt.decision.id);
+        _reviewStates[prompt.decision.canonicalId] ??
+        _reviewStates[prompt.decision.id] ??
+        ReviewState.initial(decisionId: prompt.decision.id);
 
     if (expectedMatch != null) {
       return _continueWithCorrectMove(
@@ -457,6 +499,9 @@ class ReviewSession {
   ReviewPrompt? skip() {
     if (_currentPrompt == null) return null;
     final skippedDecision = _currentPrompt!.decision;
+    _logger.info(
+      'Skipped prompt for decision ${skippedDecision.canonicalId}; moved to back of queue',
+    );
     if (_unbufferedQueue.isNotEmpty) {
       _unbufferedQueue.add(skippedDecision);
     } else {
@@ -474,6 +519,9 @@ class ReviewSession {
     if (mode == ReviewMode.srs &&
         remainingDailyQuota != null &&
         _completedDecisionIds.length >= remainingDailyQuota!) {
+      _logger.info(
+        'Daily review quota reached ($_completedDecisionIds.length / $remainingDailyQuota), concluding review session',
+      );
       _dueQueue.clear();
       _unbufferedQueue.clear();
       _currentPrompt = null;
@@ -484,6 +532,7 @@ class ReviewSession {
     }
     if (_dueQueue.isEmpty) {
       _currentPrompt = null;
+      _logger.info('ReviewSession queue empty. Completed decisions: $_completedCount');
       return;
     }
     final nextDecision = _dueQueue.removeAt(0);
@@ -570,7 +619,10 @@ class ReviewSession {
     // Fallback: weight by total subtree size so larger variations get proportionate practice
     final subtreeSizes = <RepertoireNode, int>{};
     for (final child in node.children) {
-      subtreeSizes[child] = _countNodesInSubtree(child);
+      subtreeSizes[child] = _nodeCountCache.putIfAbsent(
+        child.id,
+        () => _countNodesInSubtree(child),
+      );
     }
     return _selectWeighted(node.children, subtreeSizes);
   }
@@ -579,7 +631,7 @@ class ReviewSession {
     var count = 0;
     final decision = _decisionForNode[node.id];
     if (decision != null) {
-      final state = _reviewStates[decision.id];
+      final state = _reviewStates[decision.canonicalId] ?? _reviewStates[decision.id];
       final isDue = mode == ReviewMode.practice || state == null || state.isDueAt(now);
       if (isDue) {
         count++;
@@ -622,9 +674,7 @@ class ReviewSession {
   }
 
   List<String> _childDecisionIdsOf(String decisionId) {
-    final decision =
-        _decisionsById[decisionId] ??
-        _decisionForNode.values.where((d) => d.canonicalId == decisionId).firstOrNull;
+    final decision = _decisionsByCanonicalId[decisionId] ?? _decisionsById[decisionId];
     if (decision == null) return const [];
     final node = _nodesById[decision.nodeId];
     if (node == null) return const [];
@@ -647,21 +697,21 @@ class ReviewSession {
     final node = _nodesById[decision.nodeId];
     if (node == null) return const [];
 
+    final candidates = _decisionsByFenKey[node.fenKey];
+    if (candidates == null || candidates.isEmpty) return const [];
+
     final siblings = <GraphNode>[];
-    for (final other in _decisionForNode.values) {
+    for (final other in candidates) {
       if (other.id == decision.id || other.canonicalId == decision.canonicalId) continue;
-      final otherNode = _nodesById[other.nodeId];
-      if (otherNode != null && otherNode.fenKey == node.fenKey) {
-        for (final m in other.expectedMoves) {
-          siblings.add(
-            GraphNode(
-              decisionId: other.canonicalId,
-              parentId: null,
-              fen4: otherNode.fenKey,
-              expectedMoveUci: m.uci,
-            ),
-          );
-        }
+      for (final m in other.expectedMoves) {
+        siblings.add(
+          GraphNode(
+            decisionId: other.canonicalId,
+            parentId: null,
+            fen4: node.fenKey,
+            expectedMoveUci: m.uci,
+          ),
+        );
       }
     }
     return siblings;
@@ -673,11 +723,24 @@ class _SessionReviewStateRepository implements ReviewStateRepository {
   final ReviewSession _session;
 
   @override
-  ReviewState? get(String decisionId) => _session._reviewStates[decisionId];
+  ReviewState? get(String decisionId) {
+    final decision =
+        _session._decisionsById[decisionId] ?? _session._decisionsByCanonicalId[decisionId];
+    if (decision != null) {
+      return _session._reviewStates[decision.canonicalId] ?? _session._reviewStates[decision.id];
+    }
+    return _session._reviewStates[decisionId];
+  }
 
   @override
   void put(String decisionId, ReviewState state) {
     _session._reviewStates[decisionId] = state;
+    final decision =
+        _session._decisionsById[decisionId] ?? _session._decisionsByCanonicalId[decisionId];
+    if (decision != null) {
+      _session._reviewStates[decision.canonicalId] = state;
+      _session._reviewStates[decision.id] = state;
+    }
   }
 
   @override

@@ -79,6 +79,7 @@ void main() {
     // Toggle diagnostics
     await tester.scrollUntilVisible(find.text('Developer / SRS diagnostics'), 100);
     await tester.pumpAndSettle();
+    expect(find.text('View in-app diagnostic logs'), findsOneWidget);
     await tester.tap(find.text('Developer / SRS diagnostics'));
     await tester.pumpAndSettle();
 

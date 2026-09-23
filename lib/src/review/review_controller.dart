@@ -1,6 +1,8 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:io' show Platform;
+
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/import/lichess_study_importer.dart';
 import 'package:chess_srs/src/import/pgn_exporter.dart';
@@ -15,6 +17,9 @@ import 'package:chess_srs/src/review/review_service.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' show ClientException;
+import 'package:logging/logging.dart';
+
+final Logger _logger = Logger('ReviewController');
 
 enum ReviewFeedback { none, correct, incorrect }
 
@@ -217,6 +222,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   StudyRepository get _repository => ref.read(reviewServiceProvider).repository;
 
   _PendingAdvancement? _pendingAdvancement;
+  bool _isProcessingMove = false;
 
   bool _hasAnnotationsOrShapes(String? comment) {
     if (comment == null || comment.trim().isEmpty) return false;
@@ -338,6 +344,10 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       Future.microtask(() => _playIncomingPreMove(prompt));
     }
 
+    _logger.info(
+      'ReviewState loaded for scope $scope: ${studies.length} studies, totalDue=${summary.totalDueCount}, mode=$mode, quota=$dailyReviewedCount/$maxDailyReviews',
+    );
+
     return ReviewScreenState(
       studies: studies,
       scope: scope,
@@ -396,6 +406,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   Future<void> toggleStudyActive(String studyId, bool isActive) async {
     final currentState = state.value;
     if (currentState == null) return;
+    _logger.info('Toggling study $studyId active state to $isActive');
 
     // 1. Optimistic UI update: flip isActive immediately so user sees instant feedback
     final updatedStudies = currentState.studies
@@ -457,6 +468,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   Future<void> renameStudy(String studyId, String newTitle) async {
     final trimmed = newTitle.trim();
     if (trimmed.isEmpty) return;
+    _logger.info('Renaming study $studyId to "$trimmed"');
     await _repository.updateStudyTitle(studyId, trimmed);
     final currentState = state.value;
     if (currentState != null) {
@@ -469,6 +481,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Deletes a study and all associated chapters, decisions, and recall history.
   Future<void> deleteStudy(String studyId) async {
+    _logger.info('Deleting study $studyId');
     await _repository.deleteStudy(studyId);
     if (state.value?.scope.studyId == studyId) {
       await changeScope(const ReviewScope.all());
@@ -512,22 +525,41 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     return studyToPgn(study, chapters);
   }
 
+  /// Exports a single chapter with [chapterId] to standard PGN string.
+  Future<String?> exportChapterPgn(String chapterId) async {
+    final chapter = await _repository.getChapter(chapterId);
+    if (chapter == null) return null;
+    Chapter fullChapter = chapter;
+    if (fullChapter.root == null) {
+      final root = await _repository.getPositionTree(chapter.id);
+      fullChapter = chapter.copyWith(root: root);
+    }
+    final study = await _repository.getStudy(chapter.studyId);
+    return chapterToPgn(fullChapter, studyTitle: study?.title);
+  }
+
   /// Advances to the next prompt after pausing to display move commentary or shapes.
   Future<void> continueAdvancement() async {
+    if (_isProcessingMove) return;
     final pending = _pendingAdvancement;
     if (pending == null) return;
     _pendingAdvancement = null;
 
-    // Dismiss awaiting advance immediately so user receives instant tactile feedback
-    if (state.value != null && state.value!.isAwaitingAdvance) {
-      state = AsyncData(state.value!.copyWith(isAwaitingAdvance: false));
-    }
+    _isProcessingMove = true;
+    try {
+      // Dismiss awaiting advance immediately so user receives instant tactile feedback
+      if (state.value != null && state.value!.isAwaitingAdvance) {
+        state = AsyncData(state.value!.copyWith(isAwaitingAdvance: false));
+      }
 
-    await _executeAdvancement(
-      currentState: pending.currentState,
-      result: pending.result,
-      isFirstAttempt: pending.isFirstAttempt,
-    );
+      await _executeAdvancement(
+        currentState: pending.currentState,
+        result: pending.result,
+        isFirstAttempt: pending.isFirstAttempt,
+      );
+    } finally {
+      _isProcessingMove = false;
+    }
   }
 
   /// Handles move animation, opponent reply pacing, and transition to the next prompt.
@@ -667,11 +699,18 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final chapterProgressMap = Map<String, RepertoireProgress>.from(currentState.chapterProgress);
     final currentChapterId = currentState.currentPrompt!.chapterId;
     if (isFirstAttempt) {
+      final isNewlyLearned =
+          result.event != null &&
+          !result.event!.oldState.isLearned &&
+          result.updatedState.isLearned;
+
       final stProg = studyProgressMap[currentStudyId];
       if (stProg != null) {
         studyProgressMap[currentStudyId] = RepertoireProgress(
           totalDecisions: stProg.totalDecisions,
-          learnedDecisions: (stProg.learnedDecisions + 1).clamp(0, stProg.totalDecisions),
+          learnedDecisions: isNewlyLearned
+              ? (stProg.learnedDecisions + 1).clamp(0, stProg.totalDecisions)
+              : stProg.learnedDecisions,
           dueDecisions: (stProg.dueDecisions - 1).clamp(0, stProg.totalDecisions),
         );
       }
@@ -679,7 +718,9 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       if (chProg != null) {
         chapterProgressMap[currentChapterId] = RepertoireProgress(
           totalDecisions: chProg.totalDecisions,
-          learnedDecisions: (chProg.learnedDecisions + 1).clamp(0, chProg.totalDecisions),
+          learnedDecisions: isNewlyLearned
+              ? (chProg.learnedDecisions + 1).clamp(0, chProg.totalDecisions)
+              : chProg.learnedDecisions,
           dueDecisions: (chProg.dueDecisions - 1).clamp(0, chProg.totalDecisions),
         );
       }
@@ -725,6 +766,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   Future<ReviewStepResult?> onUserMove(Move move) async {
     final currentState = state.asData?.value;
     if (currentState == null || currentState.currentPrompt == null) return null;
+    if (_isProcessingMove) return null;
     if (currentState.isAwaitingAdvance) {
       await continueAdvancement();
       return null;
@@ -736,18 +778,48 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     final promotion = move.promotion?.letter;
 
     final isRetrying = currentState.feedback == ReviewFeedback.incorrect;
+    _logger.fine('onUserMove: ${move.uci} (retrying=$isRetrying)');
 
-    if (isRetrying) {
-      // Reguess attempt after previous lapse
-      final result = _service.retryMove(from: from, to: to, promotion: promotion);
+    _isProcessingMove = true;
+    try {
+      if (isRetrying) {
+        // Reguess attempt after previous lapse
+        final result = _service.retryMove(from: from, to: to, promotion: promotion);
+        if (result.isCorrect) {
+          await _handleCorrectAdvancement(
+            currentState: currentState,
+            result: result,
+            userMove: move,
+            isFirstAttempt: false,
+          );
+        } else {
+          state = AsyncData(
+            currentState.copyWith(
+              feedback: ReviewFeedback.incorrect,
+              expectedMove: result.expectedMoves.firstOrNull,
+              isLapseAcknowledged: false,
+              revealedComment: _resolveComment(
+                currentState.currentPrompt,
+                result.expectedMoves.firstOrNull,
+              ),
+            ),
+          );
+        }
+        return result;
+      }
+
+      // Initial move attempt on this prompt
+      final result = await _service.submitMove(from: from, to: to, promotion: promotion);
+
       if (result.isCorrect) {
         await _handleCorrectAdvancement(
           currentState: currentState,
           result: result,
           userMove: move,
-          isFirstAttempt: false,
+          isFirstAttempt: true,
         );
       } else {
+        // Lapse: show expected move banner, allow user to reguess on board
         state = AsyncData(
           currentState.copyWith(
             feedback: ReviewFeedback.incorrect,
@@ -757,43 +829,20 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
               currentState.currentPrompt,
               result.expectedMoves.firstOrNull,
             ),
+            lastStepResult: result,
           ),
         );
       }
+
       return result;
+    } finally {
+      _isProcessingMove = false;
     }
-
-    // Initial move attempt on this prompt
-    final result = await _service.submitMove(from: from, to: to, promotion: promotion);
-
-    if (result.isCorrect) {
-      await _handleCorrectAdvancement(
-        currentState: currentState,
-        result: result,
-        userMove: move,
-        isFirstAttempt: true,
-      );
-    } else {
-      // Lapse: show expected move banner, allow user to reguess on board
-      state = AsyncData(
-        currentState.copyWith(
-          feedback: ReviewFeedback.incorrect,
-          expectedMove: result.expectedMoves.firstOrNull,
-          isLapseAcknowledged: false,
-          revealedComment: _resolveComment(
-            currentState.currentPrompt,
-            result.expectedMoves.firstOrNull,
-          ),
-          lastStepResult: result,
-        ),
-      );
-    }
-
-    return result;
   }
 
   /// Acknowledges a lapse, clearing the expected move arrow and advancing.
   void acknowledgeLapse() {
+    if (_isProcessingMove) return;
     _pendingAdvancement = null;
     final currentState = state.asData?.value;
     if (currentState == null) return;
@@ -838,6 +887,7 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
 
   /// Skips the current prompt, moving it to the back of the queue.
   void skip() {
+    if (_isProcessingMove) return;
     _pendingAdvancement = null;
     final currentState = state.asData?.value;
     if (currentState == null || currentState.currentPrompt == null) return;
@@ -914,6 +964,9 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     Side? repertoireSide,
   }) async {
     final hash = computePgnHash(pgnText);
+    _logger.info(
+      'importPgnText called (title="$title", side=$repertoireSide, hash=${hash.substring(0, 8)})',
+    );
     var existingStudy = await _repository.getStudyByPgnHash(hash);
 
     if (existingStudy == null && title != null && title.trim().isNotEmpty) {
@@ -931,6 +984,9 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
     }
 
     if (existingStudy != null) {
+      _logger.info(
+        'Duplicate study detected for hash ${hash.substring(0, 8)}, skipping re-import: ${existingStudy.id}',
+      );
       await changeScope(ReviewScope.study(existingStudy.id));
       return ImportResult(
         study: existingStudy,
@@ -941,11 +997,23 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
       );
     }
 
-    final result = importPgn(
-      pgnText,
-      studyTitle: title ?? 'Imported Study',
-      repertoireSide: repertoireSide,
-    );
+    // Offload large PGN parsing (>=64KB) to background worker isolate to keep UI thread 60/120fps.
+    final ImportResult result;
+    if (!Platform.environment.containsKey('FLUTTER_TEST') && pgnText.length >= 65536) {
+      result = await importPgnAsync(
+        pgnText,
+        studyTitle: title ?? 'Imported Study',
+        repertoireSide: repertoireSide,
+        pgnHash: hash,
+      );
+    } else {
+      result = importPgn(
+        pgnText,
+        studyTitle: title ?? 'Imported Study',
+        repertoireSide: repertoireSide,
+        pgnHash: hash,
+      );
+    }
 
     await _repository.saveImportResult(result);
     await changeScope(ReviewScope.study(result.study.id));
@@ -960,9 +1028,11 @@ class ReviewController extends AsyncNotifier<ReviewScreenState> {
   }) async {
     final studyRef = parseLichessStudyReference(studyIdOrUrl);
     if (studyRef == null) {
+      _logger.warning('Invalid Lichess study reference: $studyIdOrUrl');
       throw const FormatException('Invalid Lichess study URL or 8-character study ID');
     }
 
+    _logger.info('Fetching study from Lichess: ${studyRef.id} on ${studyRef.host}');
     final studyRepo = ref.read(studyRepositoryProvider);
     final String pgnText;
     try {

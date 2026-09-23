@@ -79,6 +79,19 @@ Every engineering task must follow:
 - Package imports, single quotes, strict-casts/inference/raw-types.
 - Translations: hardcoded English first; l10n pipeline only after stability.
 
+### Visual work
+
+For anything touching layout, colour, typography, iconography, motion, or
+component choice, follow `design/docs/` (see `design/README.md`), not Lichess
+Mobile's visual conventions in the inherited `CLAUDE.md`. Lichess Mobile
+conventions still apply to non-visual engineering practices (testing,
+architecture, commit hygiene) inherited via `CLAUDE.md`.
+
+Screenshot evidence is required for visual PRs (this was already the rule; it
+now also applies against the design package): capture the affected screens at
+phone, tablet and desktop widths, light and dark, and compare them against
+`design/reference/index.html` shown at the same sizes/themes.
+
 ## 4. Runtime validation is mandatory
 
 Past sessions produced green `./verify` runs while the real app had runtime

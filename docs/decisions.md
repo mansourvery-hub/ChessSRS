@@ -121,3 +121,31 @@ Rules:
 1. `Rating.good`: First committed move on the board is correct, regardless of thinking duration.
 2. `Rating.again`: Incorrect move, hint used, or a corrected false-start attempt.
 3. Latency is demoted from a scheduling input to an optional analytics metric (`latencyEmaMs`), strictly firewalled from interval computation.
+
+## D016 — Visual identity is independent of Lichess Mobile
+
+Decision: ChessSRS's visual identity ("Diagram") is designed and specified
+independently of Lichess Mobile's theme, per the design package in `design/`.
+Lichess Mobile remains the technical foundation only: chess board rendering
+(chessground), chess rules (dartchess), and the underlying Flutter/Riverpod
+architecture are kept; the Material-themed widget layer, Lichess board/piece/
+sound assets, Lichess iconography, and Lichess component conventions are
+replaced.
+
+Date: 2026-09-22
+
+Context: D012 chose to fork Lichess Mobile for its technical foundation
+(chessground, dartchess, the Riverpod architecture, board rendering).
+PRODUCT.md's original "Lichess Professional Polish" section also mandated
+inheriting Lichess's visual theme (colours, typography, component style). Ship
+review and outside research concluded that this made ChessSRS visually
+indistinguishable from a trimmed Lichess Mobile, which undermines the
+product's goal of being recognised as its own product.
+
+Consequences: `lib/src/styles/` and the Material-based widgets in
+`lib/src/widgets/` are no longer preserved as-is (supersedes the "NOT cut"
+note in `CUT_PROPOSALS.md` for those two paths specifically — see the
+amendment there). New screens use the primitives and tokens in the design
+package instead of `material_ui`/`cupertino_ui` components. This is a
+presentation-layer change only; it does not affect scheduling, persistence,
+import, or any domain logic.

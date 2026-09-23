@@ -69,5 +69,41 @@ void main() {
       expect(parsed[0].headers['Event'], 'Chapter 1');
       expect(parsed[1].headers['Event'], 'Chapter 2');
     });
+
+    test('exports orientation header and player tags matching chapter orientation', () {
+      const pgn = '1. e4 c5 2. Nf3 d6 *';
+      final importResult = importPgn(
+        pgn,
+        studyTitle: 'Sicilian for Black',
+        repertoireSide: Side.black,
+      );
+      final chapter = importResult.chapters.first;
+      expect(chapter.orientation, Side.black);
+
+      final exported = chapterToPgn(chapter);
+
+      expect(exported, contains('[Orientation "black"]'));
+      expect(exported, contains('[White "Opponent"]'));
+      expect(exported, contains('[Black "Repertoire"]'));
+
+      // Re-importing the exported PGN without explicitSide should preserve Black orientation
+      final reimported = importPgn(exported);
+      expect(reimported.chapters.first.orientation, Side.black);
+      // And decisions should be for Black moves (1... c5 and 2... d6)
+      expect(reimported.decisions.length, 2);
+      expect(reimported.decisions.first.expectedMoves.first.san, 'c5');
+    });
+
+    test('exports orientation white when chapter orientation is white', () {
+      const pgn = '1. e4 e5 *';
+      final importResult = importPgn(pgn, studyTitle: 'Italian for White');
+      final chapter = importResult.chapters.first;
+
+      final exported = chapterToPgn(chapter);
+
+      expect(exported, contains('[Orientation "white"]'));
+      expect(exported, contains('[White "Repertoire"]'));
+      expect(exported, contains('[Black "Opponent"]'));
+    });
   });
 }

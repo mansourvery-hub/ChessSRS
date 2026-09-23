@@ -6,6 +6,9 @@ import 'dart:math' as math;
 import 'package:chess_srs/src/domain/review_result.dart';
 import 'package:chess_srs/src/domain/review_state.dart';
 import 'package:chess_srs/src/domain/scheduler.dart';
+import 'package:logging/logging.dart';
+
+final Logger _logger = Logger('FsrsScheduler');
 
 /// Rating outcome for binary FSRS recall in chess (Decision D015).
 ///
@@ -205,6 +208,12 @@ class ChessFsrsScheduler implements Scheduler {
     ).clamp(minIntervalDays, maxIntervalDays);
 
     final nextDue = now.add(Duration(milliseconds: (intervalDays * _dayMs).round()));
+
+    _logger.fine(
+      'FSRS scheduled decision ${previous.decisionId}: rating=${rating.name}, '
+      'D=${newDifficulty.toStringAsFixed(2)}, S=${newStabilityDays.toStringAsFixed(2)}d, '
+      'interval=${intervalDays.toStringAsFixed(2)}d (targetRetention=$effectiveRetention)',
+    );
 
     return previous.copyWith(
       firstReviewedAt: previous.firstReviewedAt ?? now,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:chess_srs/src/model/common/chess.dart';
@@ -20,6 +21,7 @@ import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:multistockfish/multistockfish.dart';
@@ -40,6 +42,11 @@ const _kUserNotificationThrottle = Duration(seconds: 10);
 /// The message shown to the user when the engine is gone for good.
 const _kUnrecoverableEngineMessage =
     'The chess engine stopped responding. Please restart the app to use it again.';
+
+/// Whether the native Stockfish engine is supported on the current platform.
+bool get isNativeEngineSupported =>
+    !kIsWeb &&
+    (Platform.environment.containsKey('FLUTTER_TEST') || Platform.isAndroid || Platform.isIOS);
 
 /// The evaluator for one [EvaluationContext] — one game, study, puzzle or offline game.
 ///
@@ -312,6 +319,14 @@ class PositionEvaluator extends Notifier<EngineEvaluationState> {
 
   /// Points the service at the engine [flavor] needs, and lets go of the previous one.
   Future<void> _acquireEngine(StockfishFlavor flavor) async {
+    if (!isNativeEngineSupported) {
+      _logger.info(
+        'Native engine evaluation is not supported on ${kIsWeb ? 'web' : Platform.operatingSystem}',
+      );
+      _setEngine(const AsyncData(null));
+      return;
+    }
+
     final generation = _generation;
     _resolvingSpec = true;
     _setEngine(const AsyncLoading());

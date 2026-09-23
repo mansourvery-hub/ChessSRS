@@ -10,7 +10,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
-const _loggersToShowInTerminal = {'HttpClient', 'Socket', 'PositionEvaluator', 'Stockfish', 'Lc0'};
+const _loggersToShowInTerminal = {
+  'HttpClient',
+  'Socket',
+  'PositionEvaluator',
+  'Stockfish',
+  'Lc0',
+  'ReviewEngine',
+  'ReviewController',
+  'StudyRepository',
+  'StudyImporter',
+  'Database',
+  'FsrsScheduler',
+};
 
 /// Loggers whose severe records are worth a non-fatal Crashlytics report on their own.
 ///
@@ -86,14 +98,16 @@ class AppLogService {
       _logs.put(record);
 
       // Persist to database asynchronously (fire-and-forget).
-      // The try-catch guards against ref being invalid (e.g. disposed ProviderScope in tests).
-      scheduleMicrotask(() {
-        try {
-          ref
-              .read(appLogStorageProvider.future)
-              .then((storage) => storage.save(AppLogEntry.fromLogRecord(record)), onError: (_) {});
-        } catch (_) {}
-      });
+      // In tests, avoid asynchronous database writes for log records to prevent lock contention.
+      if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+        scheduleMicrotask(() {
+          try {
+            ref
+                .read(appLogStorageProvider.future)
+                .then((storage) => storage.save(AppLogEntry.fromLogRecord(record)), onError: (_) {});
+          } catch (_) {}
+        });
+      }
     });
   }
 
@@ -107,7 +121,7 @@ final class ProviderLogger extends ProviderObserver {
 
   @override
   void didAddProvider(ProviderObserverContext context, Object? value) {
-    _logger.finer('${context.provider.name ?? context.provider.runtimeType} initialized', value);
+    _logger.finer('${context.provider.name ?? context.provider.runtimeType} initialized: $value');
   }
 
   /// Riverpod calls this whenever a provider's `onDispose` listeners run, which a rebuild does as

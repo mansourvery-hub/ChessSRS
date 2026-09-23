@@ -305,11 +305,29 @@ void main() {
   group('importPgn — decision derivation', () {
     const simplePgn = '1. e4 e5 *';
 
-    test('derives decisions for both sides when repertoireSide is null', () {
+    test('derives decisions for chapter orientation when repertoireSide is null', () {
       final result = importPgn(simplePgn);
-      // Root (white to move, e4 available) + after e4 (black to move, e5 available)
-      expect(result.decisions, hasLength(2));
+      // Default orientation is white: only root (white to move, e4 available)
+      expect(result.decisions, hasLength(1));
+      expect(result.decisions.first.expectedMoves.first.san, equals('e4'));
     });
+
+    test(
+      'derives decisions for resolved black chapter orientation when repertoireSide is null',
+      () {
+        const blackPgn = '''
+[Event "French Defense for Black"]
+1. e4 e6 2. d4 d5 *
+''';
+        final result = importPgn(blackPgn);
+        // Resolved orientation is black: only black responses (e6, d5)
+        expect(result.decisions, hasLength(2));
+        expect(
+          result.decisions.map((d) => d.expectedMoves.first.san).toList(),
+          equals(['e6', 'd5']),
+        );
+      },
+    );
 
     test('derives only white decisions when repertoireSide is white', () {
       final result = importPgn(simplePgn, repertoireSide: Side.white);
@@ -405,28 +423,49 @@ void main() {
       expect(result.study.pgnHash, equals(computePgnHash(pgn)));
     });
 
-    test(
-      'computes identical hash when PGN headers/titles are renamed but moves are identical',
-      () {
-        const pgn1 = '''
+    test('computes identical hash when PGN headers/titles are renamed but moves are identical', () {
+      const pgn1 = '''
 [Event "French Defense"]
 [Date "2024.01.01"]
 1. e4 e6 2. d4 d5 *
 ''';
-        const pgn2 = '''
+      const pgn2 = '''
 [Event "My Custom French Repertoire"]
 [Date "2026.09.18"]
 1. e4 e6 2. d4 d5 *
 ''';
-        expect(computePgnHash(pgn1), equals(computePgnHash(pgn2)));
-      },
-    );
+      expect(computePgnHash(pgn1), equals(computePgnHash(pgn2)));
+    });
 
     test('computeRepertoireTreeHash matches computePgnHash for same moves', () {
       const pgn = '1. e4 e5 2. Nf3 Nc6 3. Bc4 *';
       final importResult = importPgn(pgn);
       final treeHash = computeRepertoireTreeHash(importResult.chapters);
       expect(treeHash, equals(computePgnHash(pgn)));
+    });
+
+    test('computePgnHashAsync and importPgnAsync work across isolate boundaries', () async {
+      const pgn = '''
+[Event "Background Isolate Test"]
+[Site "ChessSRS"]
+[White "Player1"]
+[Black "Player2"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 *
+''';
+      final syncHash = computePgnHash(pgn);
+      final asyncHash = await computePgnHashAsync(pgn);
+      expect(asyncHash, equals(syncHash));
+
+      final asyncResult = await importPgnAsync(
+        pgn,
+        studyTitle: 'Async Study',
+        repertoireSide: Side.black,
+      );
+      expect(asyncResult.chapters.length, 1);
+      expect(asyncResult.decisions.isNotEmpty, isTrue);
+      expect(asyncResult.study.title, 'Async Study');
+      expect(asyncResult.errors, isEmpty);
     });
   });
 }

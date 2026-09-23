@@ -1,5 +1,10 @@
 # Design System and UX Rules
 
+> **Visual identity specification:** The full visual identity ("Diagram") is specified in `design/docs/`.
+> See `design/README.md` for reading order. The prototype in `design/reference/index.html` is the visual
+> source of truth — if this document and the design package disagree, the design package wins.
+> This file retains the UX *principles* that predate the visual identity and remain valid.
+
 ## Design thesis
 
 **Dogmatic minimalism.** Review is the product. The board is the primary interface.

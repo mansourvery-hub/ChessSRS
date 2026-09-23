@@ -11,6 +11,7 @@ import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
+import 'package:chess_srs/src/view/review/export_pgn_dialog.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/misc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,7 +58,7 @@ Future<void> openStudyExplorer(BuildContext context, WidgetRef ref, {String? stu
     Navigator.of(
       context,
       rootNavigator: true,
-    ).push(StudyChaptersScreen.buildRoute(study: study, chapters: chapters));
+    ).push(StudyChaptersScreen.buildRoute(study: study, chapters: chapters, isExplorerMode: true));
   }
 }
 
@@ -100,14 +101,24 @@ Future<void> openChapterAnalysis(
 
 /// Screen displaying the chapters of a study for interactive analysis.
 class StudyChaptersScreen extends ConsumerWidget {
-  const StudyChaptersScreen({required this.study, required this.chapters, super.key});
+  const StudyChaptersScreen({
+    required this.study,
+    required this.chapters,
+    this.isExplorerMode = false,
+    super.key,
+  });
 
   final Study study;
   final List<Chapter> chapters;
+  final bool isExplorerMode;
 
-  static Route<dynamic> buildRoute({required Study study, required List<Chapter> chapters}) {
+  static Route<dynamic> buildRoute({
+    required Study study,
+    required List<Chapter> chapters,
+    bool isExplorerMode = false,
+  }) {
     return buildScreenRoute(
-      screen: StudyChaptersScreen(study: study, chapters: chapters),
+      screen: StudyChaptersScreen(study: study, chapters: chapters, isExplorerMode: isExplorerMode),
     );
   }
 
@@ -125,6 +136,35 @@ class StudyChaptersScreen extends ConsumerWidget {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Symbols.share_rounded),
+            tooltip: 'Export study PGN',
+            onPressed: () async {
+              final pgn = await ref
+                  .read(reviewControllerProvider.notifier)
+                  .exportStudyPgn(study.id);
+              if (pgn == null || pgn.trim().isEmpty) {
+                if (context.mounted) {
+                  showSnackBar(
+                    context,
+                    'No moves to export in this study',
+                    type: SnackBarType.info,
+                  );
+                }
+                return;
+              }
+              if (context.mounted) {
+                ExportPgnDialog.show(
+                  context,
+                  title: study.title,
+                  pgnText: pgn,
+                  subtitle: '${chapters.length} chapters',
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -200,14 +240,45 @@ class StudyChaptersScreen extends ConsumerWidget {
                     Navigator.of(context).pop();
                   },
                 ),
+                IconButton(
+                  icon: const Icon(Symbols.share_rounded),
+                  tooltip: 'Export chapter PGN',
+                  onPressed: () async {
+                    final pgn = await ref
+                        .read(reviewControllerProvider.notifier)
+                        .exportChapterPgn(chapter.id);
+                    if (pgn == null || pgn.trim().isEmpty) {
+                      if (context.mounted) {
+                        showSnackBar(
+                          context,
+                          'Chapter has no moves to export',
+                          type: SnackBarType.info,
+                        );
+                      }
+                      return;
+                    }
+                    if (context.mounted) {
+                      ExportPgnDialog.show(
+                        context,
+                        title: chapterTitle,
+                        pgnText: pgn,
+                        subtitle: study.title,
+                      );
+                    }
+                  },
+                ),
                 const Icon(Symbols.chevron_right_rounded),
               ],
             ),
             onTap: () {
-              ref
-                  .read(reviewControllerProvider.notifier)
-                  .changeScope(ReviewScope.chapter(studyId: study.id, chapterId: chapter.id));
-              Navigator.of(context).pop();
+              if (isExplorerMode) {
+                openChapterAnalysis(context, ref, study: study, chapter: chapter);
+              } else {
+                ref
+                    .read(reviewControllerProvider.notifier)
+                    .changeScope(ReviewScope.chapter(studyId: study.id, chapterId: chapter.id));
+                Navigator.of(context).pop();
+              }
             },
           );
         },

@@ -1,14 +1,22 @@
+// Copyright (C) 2024 ChessSRS contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import 'package:chess_srs/src/constants.dart';
 import 'package:chess_srs/src/model/log/http_log_paginator.dart';
 import 'package:chess_srs/src/model/log/http_log_storage.dart';
 import 'package:chess_srs/src/styles/styles.dart';
 import 'package:chess_srs/src/utils/navigation.dart';
+import 'package:chess_srs/src/utils/share.dart';
 import 'package:chess_srs/src/widgets/adaptive_action_sheet.dart';
+import 'package:chess_srs/src/widgets/feedback.dart';
 import 'package:chess_srs/src/widgets/haptic_refresh_indicator.dart';
+import 'package:chess_srs/src/widgets/platform.dart';
 import 'package:chess_srs/src/widgets/platform_search_bar.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:share_plus/share_plus.dart';
 
 class HttpLogScreen extends ConsumerStatefulWidget {
   const HttpLogScreen({super.key});
@@ -58,19 +66,28 @@ class _HttpLogScreenState extends ConsumerState<HttpLogScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncState = ref.watch(httpLogPaginatorProvider(_searchQuery));
-    return Scaffold(
-      appBar: AppBar(
+    final logs = asyncState.value?.logs.toList() ?? [];
+
+    return PlatformScaffold(
+      appBar: PlatformAppBar(
         title: const Text('HTTP logs'),
         actions: [
+          if (logs.isNotEmpty)
+            IconButton(
+              tooltip: 'Export',
+              icon: const Icon(Icons.share),
+              onPressed: () => launchShareDialog(
+                context,
+                ShareParams(text: logs.map(_formatHttpLogEntry).join('\n\n---\n\n')),
+              ),
+            ),
           if (asyncState.value?.isDeleteButtonVisible == true)
             IconButton(
-              // TODO localize
               tooltip: 'Clear all logs',
               icon: const Icon(Icons.delete_sweep),
               onPressed: () {
                 showConfirmDialog<dynamic>(
                   context,
-                  // TODO localize
                   title: const Text('Delete all logs'),
                   onConfirm: () =>
                       ref.read(httpLogPaginatorProvider(_searchQuery).notifier).deleteAll(),
@@ -99,7 +116,7 @@ class _HttpLogScreenState extends ConsumerState<HttpLogScreen> {
       body: _HttpLogList(
         scrollController: _scrollController,
         refreshIndicatorKey: _refreshIndicatorKey,
-        logs: asyncState.value?.logs.toList() ?? [],
+        logs: logs,
         onRefresh: _onRefresh,
       ),
     );
@@ -165,21 +182,42 @@ String _formatElapsed(Duration elapsed) {
   return '${(elapsed.inMilliseconds / 1000).toStringAsFixed(1)}s';
 }
 
+String _formatHttpLogEntry(HttpLogEntry entry) {
+  final buffer = StringBuffer(
+    '[${_logDateFormatter.format(entry.requestDateTime)}] ${entry.requestMethod} ${entry.requestUrl}\n'
+    'Status: ${entry.responseCode ?? "No response"} | Duration: ${entry.elapsed != null ? _formatElapsed(entry.elapsed!) : "N/A"}',
+  );
+  if (entry.errorMessage != null) {
+    buffer.write('\nError: ${entry.errorMessage}');
+  }
+  return buffer.toString();
+}
+
 class HttpLogTile extends StatelessWidget {
   const HttpLogTile({super.key, required this.httpLog});
 
   final HttpLogEntry httpLog;
 
-  String get endpoint => httpLog.requestUrl.host == kLichessHost
+  String get endpoint =>
+      (httpLog.requestUrl.host == kLichessHost || httpLog.requestUrl.host == 'lichess.org')
       ? Uri(path: httpLog.requestUrl.path, query: httpLog.requestUrl.query).toString()
       : httpLog.requestUrl.toString();
 
   @override
   Widget build(BuildContext context) {
+    final isError =
+        httpLog.errorMessage != null ||
+        (httpLog.responseCode != null && httpLog.responseCode! >= 400);
+
     return ListTile(
       dense: true,
+      onTap: () => _showHttpLogDetails(context, httpLog),
+      onLongPress: () {
+        Clipboard.setData(ClipboardData(text: httpLog.requestUrl.toString()));
+        showSnackBar(context, 'URL copied to clipboard');
+      },
       leading: SizedBox(
-        width: 40,
+        width: 44,
         child: httpLog.hasResponse
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -188,12 +226,13 @@ class HttpLogTile extends StatelessWidget {
                   Text(
                     httpLog.responseCode!.toString(),
                     style: TextStyle(
-                      color: httpLog.responseCode! >= 400 ? context.lichessColors.error : null,
+                      color: isError ? context.lichessColors.error : null,
                       fontFeatures: const [FontFeature.tabularFigures()],
+                      fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   if (httpLog.elapsed != null)
                     Text(
                       _formatElapsed(httpLog.elapsed!),
@@ -206,26 +245,193 @@ class HttpLogTile extends StatelessWidget {
                     ),
                 ],
               )
-            : const Icon(Icons.error_outline, color: Colors.grey),
+            : Icon(
+                isError ? Icons.error_outline : Icons.pending_outlined,
+                color: isError ? Colors.red : Colors.grey,
+              ),
       ),
-      title: Text(
-        '${httpLog.requestMethod} $endpoint',
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 14,
-          letterSpacing: -0.15,
-          color: httpLog.hasResponse
-              ? httpLog.responseCode! >= 400
-                    ? context.lichessColors.error
-                    : null
-              : textShade(context, 0.7),
-        ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+            margin: const EdgeInsets.only(right: 6),
+            decoration: BoxDecoration(
+              color: isError
+                  ? Colors.red.withValues(alpha: 0.15)
+                  : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              httpLog.requestMethod,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isError ? Colors.red : Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              endpoint,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                letterSpacing: -0.15,
+                color: isError ? context.lichessColors.error : null,
+              ),
+            ),
+          ),
+        ],
       ),
-      subtitle: Text(
-        _logDateFormatter.format(httpLog.requestDateTime),
-        style: TextStyle(color: textShade(context, 0.7), fontSize: 12),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 2),
+          Text(
+            _logDateFormatter.format(httpLog.requestDateTime),
+            style: TextStyle(color: textShade(context, 0.7), fontSize: 11),
+          ),
+          if (httpLog.errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2.0),
+              child: Text(
+                httpLog.errorMessage!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.red, fontSize: 11),
+              ),
+            ),
+        ],
       ),
+      trailing: const Icon(Icons.chevron_right, size: 16),
     );
   }
+}
+
+void _showHttpLogDetails(BuildContext context, HttpLogEntry httpLog) {
+  final statusText = httpLog.responseCode != null && httpLog.responseCode != 0
+      ? '${httpLog.responseCode}'
+      : (httpLog.errorMessage != null ? 'Failed' : 'Pending');
+  final isError =
+      httpLog.errorMessage != null ||
+      (httpLog.responseCode != null && httpLog.responseCode! >= 400);
+
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isError
+                    ? Colors.red.withValues(alpha: 0.15)
+                    : Colors.green.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                httpLog.requestMethod,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: isError ? Colors.red : Colors.green,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              statusText,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isError ? Colors.red : null,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Request URL',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              SelectableText(httpLog.requestUrl.toString(), style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 12),
+              if (httpLog.elapsed != null) ...[
+                Row(
+                  children: [
+                    const Text(
+                      'Duration: ',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                    Text(_formatElapsed(httpLog.elapsed!), style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              Row(
+                children: [
+                  const Text('Time: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  Text(
+                    _logDateFormatter.format(httpLog.requestDateTime),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+              if (httpLog.errorMessage != null) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Error Details',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.red),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                  ),
+                  child: SelectableText(
+                    httpLog.errorMessage!,
+                    style: const TextStyle(fontSize: 12, color: Colors.red),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: httpLog.requestUrl.toString()));
+              Navigator.of(dialogContext).pop();
+              showSnackBar(context, 'URL copied to clipboard');
+            },
+            child: const Text('Copy URL'),
+          ),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: _formatHttpLogEntry(httpLog)));
+              Navigator.of(dialogContext).pop();
+              showSnackBar(context, 'Details copied to clipboard');
+            },
+            child: const Text('Copy All'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
 }

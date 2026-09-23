@@ -6,6 +6,7 @@ import 'package:chess_srs/src/persistence/persistence.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
 import 'package:chess_srs/src/styles/lichess_colors.dart';
 import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/view/review/export_pgn_dialog.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:chess_srs/src/widgets/feedback.dart';
@@ -268,76 +269,109 @@ class _ReviewScopeDrawerState extends ConsumerState<ReviewScopeDrawer> {
   void _showStudyActionsSheet(BuildContext context, WidgetRef ref, Study study) {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                study.title,
-                style: Styles.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Text(
+                  study.title,
+                  style: Styles.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Symbols.view_list_rounded),
-              title: const Text('Chapters'),
-              subtitle: const Text('View and train specific chapters in this study'),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-                final repo = await ref.read(srsStudyRepositoryProvider.future);
-                final chapters = await repo.getChaptersByStudy(study.id);
-                if (context.mounted) {
-                  Navigator.of(
-                    context,
-                    rootNavigator: true,
-                  ).push(StudyChaptersScreen.buildRoute(study: study, chapters: chapters));
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Symbols.explore_rounded),
-              title: const Text('Analyze Study'),
-              subtitle: const Text('Browse moves, variations, and engine evaluation'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-                openStudyExplorer(context, ref, studyId: study.id);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Symbols.fitness_center_rounded),
-              title: const Text('Free Practice'),
-              subtitle: const Text('Drill lines on the board without altering SRS schedule'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-                ref
-                    .read(reviewControllerProvider.notifier)
-                    .startPracticeMode(scope: ReviewScope.study(study.id));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Symbols.edit_rounded),
-              title: const Text('Rename Study'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _showRenameStudyDialog(context, ref, study);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Symbols.delete_rounded, color: LichessColors.red),
-              title: const Text('Delete Study', style: TextStyle(color: LichessColors.red)),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _showDeleteStudyDialog(context, ref, study);
-              },
-            ),
-          ],
+              const Divider(height: 1),
+              ListTile(
+                dense: true,
+                leading: const Icon(Symbols.view_list_rounded),
+                title: const Text('Chapters'),
+                subtitle: const Text('View and train specific chapters in this study'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
+                  final repo = await ref.read(srsStudyRepositoryProvider.future);
+                  final chapters = await repo.getChaptersByStudy(study.id);
+                  if (context.mounted) {
+                    Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    ).push(StudyChaptersScreen.buildRoute(study: study, chapters: chapters));
+                  }
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Symbols.explore_rounded),
+                title: const Text('Analyze Study'),
+                subtitle: const Text('Browse moves, variations, and engine evaluation'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
+                  openStudyExplorer(context, ref, studyId: study.id);
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Symbols.fitness_center_rounded),
+                title: const Text('Free Practice'),
+                subtitle: const Text('Drill lines on the board without altering SRS schedule'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pop();
+                  ref
+                      .read(reviewControllerProvider.notifier)
+                      .startPracticeMode(scope: ReviewScope.study(study.id));
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Symbols.share_rounded),
+                title: const Text('Export PGN'),
+                subtitle: const Text('Share or copy standard PGN notation for this study'),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final pgn = await ref
+                      .read(reviewControllerProvider.notifier)
+                      .exportStudyPgn(study.id);
+                  if (pgn == null || pgn.trim().isEmpty) {
+                    if (context.mounted) {
+                      showSnackBar(
+                        context,
+                        'No moves to export in this study',
+                        type: SnackBarType.info,
+                      );
+                    }
+                    return;
+                  }
+                  if (context.mounted) {
+                    ExportPgnDialog.show(context, title: study.title, pgnText: pgn);
+                  }
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Symbols.edit_rounded),
+                title: const Text('Rename Study'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showRenameStudyDialog(context, ref, study);
+                },
+              ),
+              ListTile(
+                dense: true,
+                leading: const Icon(Symbols.delete_rounded, color: LichessColors.red),
+                title: const Text('Delete Study', style: TextStyle(color: LichessColors.red)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showDeleteStudyDialog(context, ref, study);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

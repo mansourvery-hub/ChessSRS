@@ -5,6 +5,8 @@ import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/app_links_service.dart';
 import 'package:chess_srs/src/binding.dart';
 import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/design/theme_bridge.dart';
+import 'package:chess_srs/src/design/tokens.dart';
 import 'package:chess_srs/src/model/account/account_service.dart';
 import 'package:chess_srs/src/model/analysis/analysis_preferences.dart';
 import 'package:chess_srs/src/model/common/preloaded_data.dart';
@@ -17,7 +19,6 @@ import 'package:chess_srs/src/quick_actions.dart';
 import 'package:chess_srs/src/shared_pgn_service.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
 import 'package:chess_srs/src/tab_scaffold.dart';
-import 'package:chess_srs/src/theme.dart';
 import 'package:chess_srs/src/utils/screen.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -150,34 +151,62 @@ class _AppState extends ConsumerState<Application> {
   @override
   Widget build(BuildContext context) {
     final generalPrefs = ref.watch(generalPreferencesProvider);
-    final boardPrefs = ref.watch(boardPreferencesProvider);
-    final theme = makeAppTheme(context, generalPrefs, boardPrefs);
+
+    // Resolve brightness: system, forced, or explicit.
+    final brightness = generalPrefs.isForcedDarkMode
+        ? Brightness.dark
+        : switch (generalPrefs.themeMode) {
+            BackgroundThemeMode.light => Brightness.light,
+            BackgroundThemeMode.dark ||
+            BackgroundThemeMode.amoled =>
+              Brightness.dark,
+            BackgroundThemeMode.system =>
+              MediaQuery.platformBrightnessOf(context),
+          };
+
+    // Build design-system colours (accent defaults to ultramarine for now;
+    // accent preference will be added in a later phase).
+    final srsColors =
+        SrsColors.forBrightness(brightness, kSrsDefaultAccent);
+
+    // Material ThemeData bridge for un-migrated screens.
+    final theme = srsThemeData(srsColors);
 
     final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      // [AppLocalizations.localizationsDelegates] cannot be used: it is generated with the
-      // `flutter_localizations` delegates, which localize the Flutter material and cupertino
-      // libraries, not the `material_ui` and `cupertino_ui` ones the app is built with.
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-        MaterialLocalizationsEo.delegate,
-        CupertinoLocalizationsEo.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      title: 'ChessSRS',
-      locale: generalPrefs.locale,
-      theme: theme.copyWith(
-        navigationBarTheme: isIOS
-            ? null
-            : NavigationBarTheme.of(
-                context,
-              ).copyWith(height: isShortVerticalScreen(context) ? 60 : null),
+    return SrsTheme(
+      colors: srsColors,
+      child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+          MaterialLocalizationsEo.delegate,
+          CupertinoLocalizationsEo.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        title: 'ChessSRS',
+        locale: generalPrefs.locale,
+        theme: theme.copyWith(
+          navigationBarTheme: isIOS
+              ? null
+              : NavigationBarTheme.of(
+                  context,
+                ).copyWith(
+                  height:
+                      isShortVerticalScreen(context) ? 60 : null,
+                ),
+        ),
+        builder: (context, child) => SrsTheme(
+          colors: srsColors,
+          child: child!,
+        ),
+        home: const MainTabScaffold(),
+        navigatorObservers: [
+          rootNavPageRouteObserver,
+          rootNavRouteStackObserver,
+        ],
       ),
-      home: const MainTabScaffold(),
-      navigatorObservers: [rootNavPageRouteObserver, rootNavRouteStackObserver],
     );
   }
 }

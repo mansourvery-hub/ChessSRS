@@ -338,13 +338,15 @@ class FeedbackTile extends StatelessWidget {
 
 /// Shows a snackbar with the given message.
 void showSnackBar(BuildContext context, String message, {SnackBarType type = SnackBarType.info}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        message,
-        style: type == SnackBarType.error ? const TextStyle(color: Colors.white) : null,
+  try {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: type == SnackBarType.error ? const TextStyle(color: Colors.white) : null,
+        ),
+        backgroundColor: type == SnackBarType.error ? context.lichessColors.error : null,
       ),
-      backgroundColor: type == SnackBarType.error ? context.lichessColors.error : null,
-    ),
-  );
+    );
+  } catch (_) {}
 }

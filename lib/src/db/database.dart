@@ -53,9 +53,12 @@ Future<int?> _getDatabaseVersion(Database db) async {
 
 /// A provider that returns the size of the database file in bytes.
 final getDbSizeInBytesProvider = FutureProvider<int>((Ref ref) async {
-  final dbPath = join(await getDatabasesPath(), kLichessDatabaseName);
+  final dbPath = await _databasePath;
   final dbFile = File(dbPath);
 
+  if (!await dbFile.exists()) {
+    return 0;
+  }
   return await dbFile.length();
 }, name: 'GetDbSizeInBytesProvider');
 
@@ -64,7 +67,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
   return dbFactory.openDatabase(
     path,
     options: OpenDatabaseOptions(
-      version: 12,
+      version: 13,
       onConfigure: (db) async {
         final version = await _getDatabaseVersion(db);
         _logger.info('SQLite version: $version');
@@ -98,6 +101,7 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
         await batch.commit();
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+        _logger.info('Upgrading database schema from v$oldVersion to v$newVersion');
         final batch = db.batch();
         if (oldVersion == 1) {
           _createGameTableV2(batch);
@@ -161,8 +165,14 @@ Future<Database> openAppDatabase(DatabaseFactory dbFactory, String path) {
               'CREATE INDEX IF NOT EXISTS idx_srs_review_event_whenTimestamp ON $kTableSrsReviewEvent(whenTimestamp)',
             );
           }
+          if (oldVersion < 13) {
+            batch.execute(
+              'ALTER TABLE $kTableSrsReviewState ADD COLUMN difficulty REAL NOT NULL DEFAULT 5.0',
+            );
+          }
         }
         await batch.commit();
+        _logger.info('Database schema upgraded successfully to v$newVersion');
       },
       onDowngrade: onDatabaseDowngradeDelete,
     ),

@@ -98,7 +98,7 @@ void createSrsTables(Batch batch) {
       repetitionCount INTEGER NOT NULL DEFAULT 0,
       lapseCount INTEGER NOT NULL DEFAULT 0,
       stability REAL NOT NULL DEFAULT 0.0,
-      FOREIGN KEY (decisionId) REFERENCES $kTableSrsDecision(id) ON DELETE CASCADE
+      difficulty REAL NOT NULL DEFAULT 5.0
     );
   ''');
   batch.execute('''
@@ -113,8 +113,7 @@ void createSrsTables(Batch batch) {
       whenTimestamp TEXT NOT NULL,
       result TEXT NOT NULL,
       oldStateJson TEXT NOT NULL,
-      newStateJson TEXT NOT NULL,
-      FOREIGN KEY (decisionId) REFERENCES $kTableSrsDecision(id) ON DELETE CASCADE
+      newStateJson TEXT NOT NULL
     );
   ''');
   batch.execute('''

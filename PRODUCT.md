@@ -90,11 +90,19 @@ The application is not a general tactics trainer, an engine analysis cockpit, or
 
 ---
 
-## 5. UX & Design Principles (Dogmatic Minimalism & Lichess Professional Polish)
+## 5. Visual Identity
 
-- **The Product is Review**: The chessboard is the primary and dominant interface element. The app is built on the Lichess Mobile foundation (GPL-3.0 fork) and inherits its professional board, theme, and interaction patterns.
-- **Quiet & Fast Feedback**: Move confirmation is immediate with subtle tactile/audio feedback cues and clean status banners; incorrect moves reveal the expected line without modals.
-- **Lichess Design Standards**: Calibrated dark theme (`#161512` background, `#262421` surface, `#629924` accent), SVG chess pieces, chessground board, clean algebraic notation tree with variant folding, and responsive desktop split view.
+ChessSRS ships its own visual identity ("Diagram"), independent of Lichess Mobile's look. The full
+specification lives in `design/`:
+`design/docs/01-identity.md` (principles and voice), `design/docs/02-tokens.md` (colour, type, motion),
+`design/docs/03-components.md` (component specs), `design/docs/04-screens-and-flows.md` (screens and states).
+The visual identity is intentionally decoupled from Lichess Mobile's theme — see decision D016.
+
+Lichess Mobile remains the **technical** foundation only (board rendering via chessground, chess rules via
+dartchess, the Riverpod/domain architecture). See `CUT_PROPOSALS.md` for what technical foundation is kept.
+
+- **The Product is Review**: The chessboard is the primary and dominant interface element.
+- **Quiet & Fast Feedback**: Move confirmation is immediate with subtle tactile/audio feedback cues; incorrect moves reveal the expected line without modals.
 - **No Mandatory Session Boundary**: Review is an ongoing utility. Users can stop anytime without penalty.
 - **Restrained Visual Aesthetic**: Subtle typography, generous negative space, high-contrast board pieces, no gamer aesthetics.
 

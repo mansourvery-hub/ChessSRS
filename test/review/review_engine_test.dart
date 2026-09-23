@@ -904,5 +904,215 @@ void main() {
       expect(session.isComplete, isTrue);
       expect(session.currentPrompt, isNull);
     });
+
+    test('SRS review queue prioritizes overdue items by nextDueAt urgency', () {
+      final (study, chapter, decisions) = buildTestRepertoire();
+      final engine = ReviewEngine(clock: clock);
+      // decisions: [dec-1 (1. e4), dec-2 (2. Nf3), dec-3 (3. Bc4)]
+      // dec-3 is most overdue (due 5 days ago)
+      // dec-1 is slightly overdue (due 1 hour ago)
+      final states = {
+        decisions[0].id: ReviewState(
+          decisionId: decisions[0].id,
+          nextDueAt: baseTime.subtract(const Duration(hours: 1)),
+          repetitionCount: 1,
+        ),
+        decisions[1].id: ReviewState(
+          decisionId: decisions[1].id,
+          nextDueAt: baseTime.add(const Duration(days: 1)),
+          repetitionCount: 1,
+        ),
+        decisions[2].id: ReviewState(
+          decisionId: decisions[2].id,
+          nextDueAt: baseTime.subtract(const Duration(days: 5)),
+          repetitionCount: 1,
+        ),
+      };
+
+      final session = engine.createSession(
+        studies: [study],
+        chapters: [chapter],
+        decisions: decisions,
+        reviewStates: states,
+        mode: ReviewMode.srs,
+      );
+
+      // Most overdue (dec-3) should be served first!
+      expect(session.currentPrompt?.decision.id, decisions[2].id);
+    });
+
+    test('retryMove preserves state keyed by canonicalId on correct retry after lapse', () {
+      final (study, chapter, decisions) = buildTestRepertoire();
+      final engine = ReviewEngine(clock: clock);
+
+      const canonId = 'canonical-dec-1';
+      final d0 = decisions[0];
+      final dec1WithCanon = RepertoireDecision(
+        id: d0.id,
+        studyId: d0.studyId,
+        chapterId: d0.chapterId,
+        nodeId: d0.nodeId,
+        expectedMoves: d0.expectedMoves,
+        canonicalStateId: canonId,
+      );
+      final updatedDecisions = [dec1WithCanon, decisions[1], decisions[2]];
+
+      final states = {
+        canonId: ReviewState(
+          decisionId: canonId,
+          repetitionCount: 4,
+          stability: 15.0 * 86400000,
+          difficulty: 3.5,
+          nextDueAt: baseTime.subtract(const Duration(hours: 2)),
+        ),
+        decisions[1].id: ReviewState(
+          decisionId: decisions[1].id,
+          nextDueAt: baseTime.add(const Duration(days: 1)),
+        ),
+        decisions[2].id: ReviewState(
+          decisionId: decisions[2].id,
+          nextDueAt: baseTime.add(const Duration(days: 2)),
+        ),
+      };
+
+      final session = engine.createSession(
+        studies: [study],
+        chapters: [chapter],
+        decisions: updatedDecisions,
+        reviewStates: states,
+        mode: ReviewMode.srs,
+      );
+
+      // Play incorrect move first
+      final lapseResult = session.submitMove(from: 'd2', to: 'd4');
+      expect(lapseResult.isCorrect, isFalse);
+
+      // Now retry with correct move
+      final retryResult = session.retryMove(from: 'e2', to: 'e4');
+      expect(retryResult.isCorrect, isTrue);
+      // State should not be a fresh initial state (lapseCount: 0)
+      // but should preserve the updated state after the lapse (lapseCount: 1)
+      final stateAfterRetry = session.reviewStates[canonId]!;
+      expect(stateAfterRetry.lapseCount, 1);
+    });
+
+    test('due-aware opponent selection counts due decisions keyed by canonicalId in subtree', () {
+      final study = Study(
+        id: 'study-canon-test',
+        title: 'Canon Test',
+        createdAt: baseTime,
+        updatedAt: baseTime,
+      );
+
+      const nodeRoot = RepertoireNode(
+        id: 'root',
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        fenKey: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -',
+        children: [
+          RepertoireNode(
+            id: 'node-e4',
+            fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+            fenKey: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -',
+            incomingMove: RepertoireMove(from: 'e2', to: 'e4', san: 'e4'),
+            children: [
+              RepertoireNode(
+                id: 'node-e5',
+                fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2',
+                fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                incomingMove: RepertoireMove(from: 'e7', to: 'e5', san: 'e5'),
+                children: [
+                  RepertoireNode(
+                    id: 'node-nf3-e5',
+                    fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                    fenKey: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                    incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                  ),
+                ],
+              ),
+              RepertoireNode(
+                id: 'node-c5',
+                fen: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2',
+                fenKey: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -',
+                incomingMove: RepertoireMove(from: 'c7', to: 'c5', san: 'c5'),
+                children: [
+                  RepertoireNode(
+                    id: 'node-nf3-c5',
+                    fen: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+                    fenKey: 'rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -',
+                    incomingMove: RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      final chapter = Chapter(
+        id: 'ch-canon',
+        studyId: study.id,
+        sourceOrder: 0,
+        title: 'Main',
+        startingFen: nodeRoot.fen,
+        root: nodeRoot,
+      );
+
+      final dec1 = RepertoireDecision(
+        id: 'dec-1',
+        studyId: study.id,
+        chapterId: chapter.id,
+        nodeId: 'root',
+        expectedMoves: const [RepertoireMove(from: 'e2', to: 'e4', san: 'e4')],
+      );
+      final decE5 = RepertoireDecision(
+        id: 'dec-e5',
+        studyId: study.id,
+        chapterId: chapter.id,
+        nodeId: 'node-e5',
+        expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        canonicalStateId: 'canon-e5',
+      );
+      final decC5 = RepertoireDecision(
+        id: 'dec-c5',
+        studyId: study.id,
+        chapterId: chapter.id,
+        nodeId: 'node-c5',
+        expectedMoves: const [RepertoireMove(from: 'g1', to: 'f3', san: 'Nf3')],
+        canonicalStateId: 'canon-c5',
+      );
+
+      final engine = ReviewEngine(clock: clock);
+
+      // States keyed ONLY by canonicalId:
+      // dec-e5: NOT due (due in 5 days)
+      // dec-c5: DUE (due 1 hour ago)
+      final states = {
+        'dec-1': ReviewState.initial(decisionId: 'dec-1'),
+        'canon-e5': ReviewState(
+          decisionId: 'canon-e5',
+          nextDueAt: baseTime.add(const Duration(days: 5)),
+          repetitionCount: 2,
+        ),
+        'canon-c5': ReviewState(
+          decisionId: 'canon-c5',
+          nextDueAt: baseTime.subtract(const Duration(hours: 1)),
+          repetitionCount: 1,
+        ),
+      };
+
+      final session = engine.createSession(
+        studies: [study],
+        chapters: [chapter],
+        decisions: [dec1, decE5, decC5],
+        reviewStates: states,
+      );
+
+      expect(session.currentPrompt?.decision.id, 'dec-1');
+
+      // User plays 1. e4. Opponent must select 1... c5 because canon-c5 is due!
+      final stepResult = session.submitMove(from: 'e2', to: 'e4');
+      expect(stepResult.isCorrect, isTrue);
+      expect(stepResult.autoPlayedMoves.first.move.san, 'c5');
+    });
   });
 }

@@ -105,7 +105,7 @@ final httpClientFactoryProvider = Provider<HttpClientFactory>((Ref ref) {
     wrapper: (client) => _RegisterCallbackClient(
       client,
       onRequest: (request) async {
-        if (request.method == 'HEAD') return;
+        if (request.method == 'HEAD' || Platform.environment.containsKey('FLUTTER_TEST')) return;
         final httpLogStorage = await ref.read(httpLogStorageProvider.future);
         httpLogStorage.save(
           HttpLogEntry(
@@ -117,6 +117,7 @@ final httpClientFactoryProvider = Provider<HttpClientFactory>((Ref ref) {
         );
       },
       onResponse: (response) async {
+        if (Platform.environment.containsKey('FLUTTER_TEST')) return;
         if (response.request != null) {
           final httpLogStorage = await ref.read(httpLogStorageProvider.future);
           httpLogStorage.updateWithResponse(
@@ -127,7 +128,7 @@ final httpClientFactoryProvider = Provider<HttpClientFactory>((Ref ref) {
         }
       },
       onError: (request, error, [st]) async {
-        if (request.method == 'HEAD') return;
+        if (request.method == 'HEAD' || Platform.environment.containsKey('FLUTTER_TEST')) return;
         final httpLogStorage = await ref.read(httpLogStorageProvider.future);
         if (error is ClientException) {
           httpLogStorage.updateWithError(request.hashCode.toString(), errorMessage: error.message);

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'dart:isolate';
 
 import 'package:chess_srs/src/domain/chapter.dart';
 import 'package:chess_srs/src/domain/position_knowledge_state.dart';
@@ -11,18 +13,22 @@ import 'package:chess_srs/src/domain/repertoire_node.dart';
 import 'package:chess_srs/src/domain/study.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dartchess/dartchess.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:logging/logging.dart';
+
+final Logger _logger = Logger('StudyImporter');
 
 /// Computes a canonical SHA-256 fingerprint for PGN content based on its
 /// starting positions and move variation trees (Listudy tree_hash pattern).
 ///
 /// Strips volatile metadata tags (Event, Site, Date, Round, etc.) so that
 /// renaming a study or modifying PGN headers preserves the repertoire identity.
-String computePgnHash(String pgnText) {
+String computePgnHash(String pgnText, [List<PgnGame<PgnNodeData>>? games]) {
   try {
-    final games = PgnGame.parseMultiGamePgn(pgnText);
-    if (games.isNotEmpty) {
+    final parsed = games ?? PgnGame.parseMultiGamePgn(pgnText);
+    if (parsed.isNotEmpty) {
       final buffer = StringBuffer();
-      for (final game in games) {
+      for (final game in parsed) {
         final fen = game.headers['FEN'];
         if (fen != null && fen.trim().isNotEmpty) {
           buffer.write('FEN:${fenKey(fen)};');
@@ -40,6 +46,15 @@ String computePgnHash(String pgnText) {
   // Fallback if parsing fails
   final normalized = pgnText.trim();
   return sha256.convert(utf8.encode(normalized)).toString();
+}
+
+/// Asynchronously computes a canonical SHA-256 fingerprint for PGN content on a background isolate,
+/// avoiding UI thread hitching on large multi-megabyte PGN files.
+Future<String> computePgnHashAsync(String pgnText) {
+  if (kIsWeb || Platform.environment.containsKey('FLUTTER_TEST') || pgnText.length < 8192) {
+    return Future.value(computePgnHash(pgnText));
+  }
+  return Isolate.run(() => computePgnHash(pgnText));
 }
 
 void _appendPgnNodeMoves(PgnNode<PgnNodeData> node, StringBuffer buffer) {
@@ -171,29 +186,43 @@ ImportResult importPgn(
   String pgnText, {
   String studyTitle = 'Imported Study',
   Side? repertoireSide,
+  String? pgnHash,
+  List<PgnGame<PgnNodeData>>? parsedGames,
 }) {
-  final pgnHash = computePgnHash(pgnText);
+  final sw = Stopwatch()..start();
+  final hash =
+      pgnHash ??
+      (parsedGames != null ? computePgnHash(pgnText, parsedGames) : computePgnHash(pgnText));
+  _logger.info(
+    'Starting PGN import for "$studyTitle" (${pgnText.length} chars, hash: ${hash.substring(0, 8)})...',
+  );
 
   final List<PgnGame<PgnNodeData>> games;
-  try {
-    games = PgnGame.parseMultiGamePgn(pgnText);
-  } catch (e) {
-    // Catastrophic parse failure — return an empty result with one error.
-    final study = Study.create(title: studyTitle, pgnHash: pgnHash);
-    return ImportResult(
-      study: study,
-      chapters: const [],
-      decisions: const [],
-      errors: [ImportError(chapterTitle: studyTitle, moveIndex: -1, message: e.toString())],
-    );
+  if (parsedGames != null) {
+    games = parsedGames;
+  } else {
+    try {
+      games = PgnGame.parseMultiGamePgn(pgnText);
+    } catch (e) {
+      // Catastrophic parse failure — return an empty result with one error.
+      _logger.severe('Catastrophic PGN parse failure for "$studyTitle": $e');
+      final study = Study.create(title: studyTitle, pgnHash: hash);
+      return ImportResult(
+        study: study,
+        chapters: const [],
+        decisions: const [],
+        errors: [ImportError(chapterTitle: studyTitle, moveIndex: -1, message: e.toString())],
+      );
+    }
   }
 
   if (games.isEmpty) {
-    final study = Study.create(title: studyTitle, pgnHash: pgnHash);
+    _logger.warning('PGN import for "$studyTitle" found 0 games');
+    final study = Study.create(title: studyTitle, pgnHash: hash);
     return ImportResult(study: study, chapters: const [], decisions: const [], errors: const []);
   }
 
-  final study = Study.create(title: studyTitle, pgnHash: pgnHash);
+  final study = Study.create(title: studyTitle, pgnHash: hash);
   final chapters = <Chapter>[];
   final decisions = <RepertoireDecision>[];
   final errors = <ImportError>[];
@@ -249,12 +278,13 @@ ImportResult importPgn(
     // Derive decisions for this chapter.
     if (root != null) {
       final explicitTag = headers['Orientation']?.trim().toLowerCase();
-      final effectiveDecisionSide = repertoireSide ??
+      final effectiveDecisionSide =
+          repertoireSide ??
           (explicitTag == 'black'
               ? Side.black
               : explicitTag == 'white'
-                  ? Side.white
-                  : null);
+              ? Side.white
+              : chapterOrientation);
 
       _deriveDecisions(
         root,
@@ -267,7 +297,41 @@ ImportResult importPgn(
     }
   }
 
+  sw.stop();
+  _logger.info(
+    'PGN import completed for "$studyTitle": ${chapters.length} chapters, '
+    '${decisions.length} decisions, ${errors.length} errors in ${sw.elapsedMilliseconds}ms',
+  );
+  if (errors.isNotEmpty) {
+    _logger.warning(
+      'PGN import encountered ${errors.length} error(s): ${errors.take(5).join("; ")}',
+    );
+  }
+
   return ImportResult(study: study, chapters: chapters, decisions: decisions, errors: errors);
+}
+
+/// Asynchronously imports a multi-game PGN string on a background worker isolate,
+/// preventing frame drops on the main UI thread during heavy tree building and parsing.
+Future<ImportResult> importPgnAsync(
+  String pgnText, {
+  String studyTitle = 'Imported Study',
+  Side? repertoireSide,
+  String? pgnHash,
+}) {
+  if (kIsWeb || Platform.environment.containsKey('FLUTTER_TEST') || pgnText.length < 8192) {
+    return Future.value(
+      importPgn(pgnText, studyTitle: studyTitle, repertoireSide: repertoireSide, pgnHash: pgnHash),
+    );
+  }
+  return Isolate.run(
+    () => importPgn(
+      pgnText,
+      studyTitle: studyTitle,
+      repertoireSide: repertoireSide,
+      pgnHash: pgnHash,
+    ),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -294,8 +358,14 @@ Side resolveChapterOrientation(
 
   // 1. Explicit Orientation tag
   final orientationTag = headers['Orientation']?.trim().toLowerCase();
-  if (orientationTag == 'black') return Side.black;
-  if (orientationTag == 'white') return Side.white;
+  if (orientationTag == 'black') {
+    _logger.fine('Orientation resolved via explicit header: black');
+    return Side.black;
+  }
+  if (orientationTag == 'white') {
+    _logger.fine('Orientation resolved via explicit header: white');
+    return Side.white;
+  }
 
   // 2. Event / ChapterName / StudyName keyword heuristics
   final titleCandidates = [headers['ChapterName'], headers['Event'], headers['StudyName']];
@@ -311,9 +381,11 @@ Side resolveChapterOrientation(
   for (final candidate in titleCandidates) {
     if (candidate == null || candidate.trim().isEmpty) continue;
     if (blackKeywords.hasMatch(candidate)) {
+      _logger.fine('Orientation resolved via keyword in "$candidate": black');
       return Side.black;
     }
     if (whiteKeywords.hasMatch(candidate)) {
+      _logger.fine('Orientation resolved via keyword in "$candidate": white');
       return Side.white;
     }
   }
@@ -325,16 +397,20 @@ Side resolveChapterOrientation(
   final blackIsPlaceholder = black == null || black == '?' || black == '*' || black.isEmpty;
 
   if (whiteIsPlaceholder && !blackIsPlaceholder) {
+    _logger.fine('Orientation resolved via placeholder opponent: black');
     return Side.black;
   }
   if (blackIsPlaceholder && !whiteIsPlaceholder) {
+    _logger.fine('Orientation resolved via placeholder opponent: white');
     return Side.white;
   }
 
   if (black != null && black.toLowerCase().contains('repertoire')) {
+    _logger.fine('Orientation resolved via player tag "black": black');
     return Side.black;
   }
   if (white != null && white.toLowerCase().contains('repertoire')) {
+    _logger.fine('Orientation resolved via player tag "white": white');
     return Side.white;
   }
 

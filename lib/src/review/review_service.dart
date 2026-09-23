@@ -186,25 +186,29 @@ class ReviewService {
         stability: result.updatedState.stability,
         difficulty: result.updatedState.difficulty,
       );
-      await repository.savePositionKnowledgeState(kState);
-      if (result.event != null) {
-        await repository.saveReviewEvent(result.event!);
-      }
+
+      final allKStates = <PositionKnowledgeState>[kState];
 
       // Persist any secondary states updated via graph effects (contagion, siblings, auto-traversal)
       for (final sideState in result.sideEffectStates) {
-        final sideKState = PositionKnowledgeState(
-          canonicalId: sideState.decisionId,
-          firstReviewedAt: sideState.firstReviewedAt,
-          lastReviewedAt: sideState.lastReviewedAt,
-          nextDueAt: sideState.nextDueAt,
-          repetitionCount: sideState.repetitionCount,
-          lapseCount: sideState.lapseCount,
-          stability: sideState.stability,
-          difficulty: sideState.difficulty,
+        allKStates.add(
+          PositionKnowledgeState(
+            canonicalId: sideState.decisionId,
+            firstReviewedAt: sideState.firstReviewedAt,
+            lastReviewedAt: sideState.lastReviewedAt,
+            nextDueAt: sideState.nextDueAt,
+            repetitionCount: sideState.repetitionCount,
+            lapseCount: sideState.lapseCount,
+            stability: sideState.stability,
+            difficulty: sideState.difficulty,
+          ),
         );
-        await repository.savePositionKnowledgeState(sideKState);
       }
+
+      await repository.saveAnswerBatch(
+        knowledgeStates: allKStates,
+        event: result.event,
+      );
     }
 
     return result;
