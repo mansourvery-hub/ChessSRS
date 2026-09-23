@@ -280,7 +280,10 @@ void main() {
       expect(page.items.isNotEmpty, isTrue);
       expect(page.items.first.loggerName, equals('DiagnosticTestLogger'));
       expect(page.items.first.levelName, equals('WARNING'));
-      expect(page.items.first.message, equals('Sample edge case warning trace for diagnostics audit'));
+      expect(
+        page.items.first.message,
+        equals('Sample edge case warning trace for diagnostics audit'),
+      );
     });
   });
 }

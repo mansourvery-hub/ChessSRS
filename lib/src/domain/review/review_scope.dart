@@ -3,21 +3,14 @@
 
 /// Scope filter for a review session.
 class ReviewScope {
-  const ReviewScope.all()
-      : studyId = null,
-        chapterId = null,
-        openingFamily = null;
+  const ReviewScope.all() : studyId = null, chapterId = null, openingFamily = null;
 
-  const ReviewScope.study(String this.studyId)
-      : chapterId = null,
-        openingFamily = null;
+  const ReviewScope.study(String this.studyId) : chapterId = null, openingFamily = null;
 
   const ReviewScope.chapter({required String this.studyId, required String this.chapterId})
-      : openingFamily = null;
+    : openingFamily = null;
 
-  const ReviewScope.opening(String this.openingFamily)
-      : studyId = null,
-        chapterId = null;
+  const ReviewScope.opening(String this.openingFamily) : studyId = null, chapterId = null;
 
   final String? studyId;
   final String? chapterId;
@@ -48,6 +41,5 @@ class ReviewScope {
   int get hashCode => Object.hash(studyId, chapterId, openingFamily);
 
   @override
-  String toString() =>
-      'ReviewScope(study: $studyId, chapter: $chapterId, opening: $openingFamily)';
+  String toString() => 'ReviewScope(study: $studyId, chapter: $chapterId, opening: $openingFamily)';
 }

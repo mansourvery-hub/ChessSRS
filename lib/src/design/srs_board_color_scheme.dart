@@ -9,10 +9,7 @@ ChessboardColorScheme srsBoardColorScheme(SrsColors c) {
   return ChessboardColorScheme(
     lightSquare: const Color(0x00000000),
     darkSquare: const Color(0x00000000),
-    background: _TransparentBackground(
-      lightSquare: c.squareLight,
-      darkSquare: c.squareDark,
-    ),
+    background: _TransparentBackground(lightSquare: c.squareLight, darkSquare: c.squareDark),
     whiteCoordBackground: _TransparentBackground(
       lightSquare: c.squareLight,
       darkSquare: c.squareDark,
@@ -29,10 +26,7 @@ ChessboardColorScheme srsBoardColorScheme(SrsColors c) {
 }
 
 class _TransparentBackground extends ChessboardBackground {
-  const _TransparentBackground({
-    required super.lightSquare,
-    required super.darkSquare,
-  });
+  const _TransparentBackground({required super.lightSquare, required super.darkSquare});
 
   @override
   Widget build(BuildContext context) {

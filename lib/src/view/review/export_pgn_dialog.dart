@@ -67,10 +67,7 @@ class ExportPgnDialog extends StatelessWidget {
       final fileName = _safeFileName;
       final result = await launchShareDialog(
         context,
-        ShareParams(
-          text: pgnText,
-          subject: fileName,
-        ),
+        ShareParams(text: pgnText, subject: fileName),
       );
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -88,7 +85,8 @@ class ExportPgnDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = defaultTargetPlatform == TargetPlatform.android ||
+    final isMobile =
+        defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS;
 
     return AlertDialog(

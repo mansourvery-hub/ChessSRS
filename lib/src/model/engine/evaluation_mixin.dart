@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/common/eval.dart';
@@ -11,6 +12,7 @@ import 'package:chess_srs/src/model/engine/evaluation_context.dart';
 import 'package:chess_srs/src/model/engine/evaluation_preferences.dart';
 import 'package:chess_srs/src/model/engine/position_evaluator.dart';
 import 'package:chess_srs/src/model/engine/work.dart';
+import 'package:chess_srs/src/network/http.dart';
 import 'package:chess_srs/src/network/socket.dart';
 import 'package:chess_srs/src/utils/json.dart';
 import 'package:chess_srs/src/utils/rate_limit.dart';
@@ -265,6 +267,15 @@ mixin EngineEvaluationMixin<T extends EvaluationMixinState<T>> on AnyNotifier<As
         )
         .toIList();
 
+    _applyCloudEval(path: path, depth: depth, nodes: nodes, pvs: pvs);
+  }
+
+  void _applyCloudEval({
+    required UciPath path,
+    required int depth,
+    required int nodes,
+    required IList<PvData> pvs,
+  }) {
     bool isSameEvalString = true;
     positionTree.updateAt(path, (node) {
       final eval = CloudEval(depth: depth, nodes: nodes, pvs: pvs, position: node.position);
@@ -281,6 +292,45 @@ mixin EngineEvaluationMixin<T extends EvaluationMixinState<T>> on AnyNotifier<As
 
     if (state.requireValue.currentPath == path) {
       onCurrentPathEvalChanged(isSameEvalString);
+    }
+  }
+
+  Future<void> _fetchCloudEvalHttp({
+    required String fen,
+    required UciPath path,
+    required int multiPv,
+    Rule rule = Rule.chess,
+  }) async {
+    try {
+      final client = ref.read(defaultClientProvider);
+      final uri = lichessUri('/api/cloud-eval', {
+        'fen': fen,
+        'multiPv': multiPv.toString(),
+        if (rule != Rule.chess) 'variant': Variant.fromRule(rule).name,
+      });
+      final response = await client.get(uri);
+      if (response.statusCode == 200 && ref.mounted) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        if (data is Map<String, dynamic>) {
+          final depth = (data['depth'] as num?)?.toInt() ?? 0;
+          final knodes = (data['knodes'] as num?)?.toInt() ?? 0;
+          final rawPvs = data['pvs'] as List<dynamic>?;
+          if (rawPvs != null && depth > 0) {
+            final pvs = rawPvs.map((p) {
+              final pvMap = p as Map<String, dynamic>;
+              final movesStr = pvMap['moves'] as String? ?? '';
+              return PvData(
+                moves: movesStr.split(' ').where((s) => s.isNotEmpty).toIList(),
+                cp: (pvMap['cp'] as num?)?.toInt(),
+                mate: (pvMap['mate'] as num?)?.toInt(),
+              );
+            }).toIList();
+            _applyCloudEval(path: path, depth: depth, nodes: knodes * 1000, pvs: pvs);
+          }
+        }
+      }
+    } catch (_) {
+      // Graceful fallback to local engine
     }
   }
 
@@ -314,14 +364,24 @@ mixin EngineEvaluationMixin<T extends EvaluationMixinState<T>> on AnyNotifier<As
     final curPosition = state.requireValue.currentPosition;
     if (curPosition == null) return;
     final numEvalLines = evaluationPrefs.numEvalLines;
+    final currentPath = state.requireValue.currentPath;
 
     socketClient?.send('evalGet', {
       'fen': curPosition.fen,
-      'path': state.requireValue.currentPath.value,
+      'path': currentPath.value,
       'mpv': numEvalLines,
       if (curPosition.rule != Rule.chess) 'variant': Variant.fromRule(curPosition.rule).name,
       'up': true,
     });
+
+    unawaited(
+      _fetchCloudEvalHttp(
+        fen: curPosition.fen,
+        path: currentPath,
+        multiPv: numEvalLines,
+        rule: curPosition.rule,
+      ),
+    );
   }
 
   void _startEngineEval({bool goDeeper = false}) {

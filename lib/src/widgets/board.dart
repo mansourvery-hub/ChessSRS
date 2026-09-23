@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:chess_srs/src/design/board_background.dart';
+import 'package:chess_srs/src/design/tokens.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chessground/chessground.dart';
@@ -47,6 +49,8 @@ class BoardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final srsColors = SrsTheme.maybeOf(context);
+
     final board = Chessboard(
       key: boardKey,
       controller: controller,
@@ -60,11 +64,35 @@ class BoardWidget extends StatelessWidget {
 
     final overlay = boardOverlay ?? (error != null ? _ErrorWidget(errorMessage: error!) : null);
 
+    // When the SRS design system is active, layer the hatched board
+    // background beneath chessground (which draws transparent squares).
+    final Widget boardWithBackground;
+    if (srsColors != null) {
+      final base = Stack(
+        children: [
+          SrsBoardBackground(size: size),
+          board,
+        ],
+      );
+      if (settings.enableCoordinates) {
+        boardWithBackground = SrsBoardWithCoordinates(
+          size: size,
+          board: base,
+          outside: false,
+          whiteAtBottom: orientation == Side.white,
+        );
+      } else {
+        boardWithBackground = base;
+      }
+    } else {
+      boardWithBackground = board;
+    }
+
     if (overlay != null) {
       return Stack(
         clipBehavior: Clip.none,
         children: [
-          board,
+          boardWithBackground,
           Positioned(
             left: 16.0,
             right: 16.0,
@@ -78,7 +106,7 @@ class BoardWidget extends StatelessWidget {
       );
     }
 
-    return board;
+    return boardWithBackground;
   }
 }
 

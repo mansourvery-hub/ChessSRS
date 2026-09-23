@@ -32,44 +32,34 @@ void main() {
       await tester.tap(find.text('Spaced repetition (SRS)'));
       await tester.pumpAndSettle();
 
-      // We are now on SrsSettingsScreen
-      expect(find.text('SRS scheduling algorithm'), findsOneWidget);
+      // We are now on SrsSettingsScreen (Diagram design layout)
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Daily limit'), findsOneWidget);
+      expect(find.text('Target retention'), findsOneWidget);
 
-      // Ease and scaling tiles are hidden when simple algorithm is selected
-      expect(find.text('Initial ease factor'), findsNothing);
-      expect(find.text('Growth rate scaling'), findsNothing);
-
-      // Tap to switch scheduler algorithm
-      await tester.tap(find.text('SRS scheduling algorithm'));
+      // Expand Advanced section
+      await tester.ensureVisible(find.text('Advanced'));
+      await tester.tap(find.text('Advanced'));
       await tester.pumpAndSettle();
 
-      // Select Parametric Scaling (chessrs)
-      await tester.tap(find.text('Parametric Scaling (chessrs)'));
+      // Verify advanced controls are visible
+      expect(find.text('Scheduling algorithm'), findsOneWidget);
+      expect(find.text('FSRS'), findsOneWidget);
+      expect(find.text('Simple'), findsOneWidget);
+      expect(find.text('Ease'), findsOneWidget);
+
+      // Switch to FSRS algorithm
+      await tester.ensureVisible(find.text('FSRS'));
+      await tester.tap(find.text('FSRS'));
       await tester.pumpAndSettle();
 
-      // Verify Parametric is now selected
-      expect(find.text('Parametric Scaling (chessrs)'), findsOneWidget);
-
-      // Ease factor and growth rate tiles are now visible
-      expect(find.text('Initial ease factor'), findsOneWidget);
-      expect(find.text('2.5x'), findsOneWidget);
-      expect(find.text('Growth rate scaling'), findsOneWidget);
-      expect(find.text('1.5x'), findsOneWidget);
-
-      // Progression preview is displayed
-      expect(find.text('Interval progression preview'), findsOneWidget);
-      expect(find.text('1d → 2.5d → 3.8d → 5.6d → 8.4d'), findsOneWidget);
-
-      // Tap to change initial ease factor
-      await tester.tap(find.text('Initial ease factor'));
+      // Navigate back to SettingsScreen
+      await tester.tap(find.text('Review'));
       await tester.pumpAndSettle();
 
-      // Select 3.0x
-      await tester.tap(find.text('3.0x (interval after first success)'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('3.0x'), findsOneWidget);
-      expect(find.text('1d → 3d → 4.5d → 6.8d → 10.1d'), findsOneWidget);
+      // Verify SettingsScreen updated scheduler label
+      expect(find.text('Spaced repetition (SRS)'), findsOneWidget);
+      expect(find.text('ChessFSRS (DSR Power-Law)'), findsOneWidget);
     },
   );
 }

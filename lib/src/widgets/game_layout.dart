@@ -1,4 +1,5 @@
 import 'package:chess_srs/src/constants.dart';
+import 'package:chess_srs/src/design/tokens.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/game/game_board_params.dart';
 import 'package:chess_srs/src/model/settings/board_preferences.dart';
@@ -372,8 +373,9 @@ class _GameLayoutState extends ConsumerState<GameLayout> {
             : Orientation.portrait;
         final isTablet = isTabletOrLarger(context);
 
+        final srsColors = SrsTheme.maybeOf(context);
         final defaultSettings = boardPrefs
-            .toBoardSettings(variant)
+            .toBoardSettings(variant, srsColors: srsColors)
             .copyWith(
               borderRadius: isTablet ? Styles.boardBorderRadius : BorderRadius.zero,
               boxShadow: isTablet ? boardShadows : const <BoxShadow>[],

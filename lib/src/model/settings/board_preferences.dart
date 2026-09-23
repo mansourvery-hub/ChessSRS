@@ -1,4 +1,7 @@
 import 'package:chess_srs/l10n/l10n.dart';
+import 'package:chess_srs/src/design/piece_set.dart';
+import 'package:chess_srs/src/design/srs_board_color_scheme.dart';
+import 'package:chess_srs/src/design/tokens.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/styles/styles.dart';
@@ -213,14 +216,15 @@ sealed class BoardPrefs with _$BoardPrefs implements Serializable {
   bool get hasColorAdjustments =>
       brightness != kBoardDefaultBrightnessFilter || hue != kBoardDefaultHueFilter;
 
-  ChessboardSettings toBoardSettings(Variant variant) {
+  ChessboardSettings toBoardSettings(Variant variant, {SrsColors? srsColors}) {
+    final colorScheme = srsColors != null ? srsBoardColorScheme(srsColors) : boardTheme.colors;
     return ChessboardSettings(
-      pieceAssets: pieceSet.assets,
-      colorScheme: boardTheme.colors,
+      pieceAssets: srsColors != null ? srsPieceAssets(dark: srsColors.isDark) : pieceSet.assets,
+      colorScheme: colorScheme,
       brightness: brightness,
       hue: hue,
       border: showBorder
-          ? BoardBorder(color: darken(boardTheme.colors.darkSquare, 0.2), width: 16.0)
+          ? BoardBorder(color: darken(colorScheme.darkSquare, 0.2), width: 16.0)
           : null,
       showValidMoves: showLegalMoves,
       showLastMove: boardHighlights,

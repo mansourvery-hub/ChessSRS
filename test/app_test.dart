@@ -6,7 +6,6 @@ import 'package:chess_srs/src/model/auth/auth_controller.dart';
 import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:chess_srs/src/model/settings/preferences_storage.dart';
 import 'package:chess_srs/src/network/http.dart';
-import 'package:chess_srs/src/tab_scaffold.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,16 +82,19 @@ void main() {
     expect(container.read(authControllerProvider), isNull);
   }, variant: kPlatformVariant);
 
-  testWidgets('Bottom navigation', variant: kPlatformVariant, (tester) async {
-    final app = await makeTestProviderScope(tester, child: const Application());
+  testWidgets(
+    'Root screen has no bottom navigation and mounts ReviewScreen',
+    variant: kPlatformVariant,
+    (tester) async {
+      final app = await makeTestProviderScope(tester, child: const Application());
 
-    await tester.pumpWidget(app);
+      await tester.pumpWidget(app);
 
-    expect(find.byType(MainTabScaffold), findsOneWidget);
-
-    expect(find.text('Review'), findsWidgets);
-    expect(find.text('More'), findsOneWidget);
-  });
+      expect(find.byType(ReviewScreen), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(BottomNavigationBar), findsNothing);
+    },
+  );
 
   testWidgets('language support', (tester) async {
     for (final locale in AppLocalizations.supportedLocales) {

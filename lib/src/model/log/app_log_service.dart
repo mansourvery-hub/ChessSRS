@@ -104,7 +104,10 @@ class AppLogService {
           try {
             ref
                 .read(appLogStorageProvider.future)
-                .then((storage) => storage.save(AppLogEntry.fromLogRecord(record)), onError: (_) {});
+                .then(
+                  (storage) => storage.save(AppLogEntry.fromLogRecord(record)),
+                  onError: (_) {},
+                );
           } catch (_) {}
         });
       }

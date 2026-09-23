@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:chess_srs/l10n/l10n.dart';
 import 'package:chess_srs/src/constants.dart';
 import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/design/design.dart';
 import 'package:chess_srs/src/model/account/account_preferences.dart';
 import 'package:chess_srs/src/model/analysis/opening_service.dart';
 import 'package:chess_srs/src/model/auth/auth_controller.dart';
@@ -98,22 +99,25 @@ class _FakeAppState extends ConsumerState<_FakeApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // Mirror production (see app.dart): [AppLocalizations.localizationsDelegates] would pull in
-      // the `flutter_localizations` delegates, which localize the Flutter material and cupertino
-      // libraries rather than the `material_ui` and `cupertino_ui` ones the app is built with.
-      // Using them here would hide from tests any code that wrongly depends on Flutter's own
-      // MaterialLocalizations.
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-        MaterialLocalizationsEo.delegate,
-        CupertinoLocalizationsEo.delegate,
-      ],
-      home: widget.home,
-      // Mirror production (see app.dart) so navigation logic relying on the
-      // route stack observer behaves the same in tests.
-      navigatorObservers: [rootNavRouteStackObserver],
+    return SrsTheme(
+      colors: SrsColors.forBrightness(Brightness.light, kSrsDefaultAccent),
+      child: MaterialApp(
+        // Mirror production (see app.dart): [AppLocalizations.localizationsDelegates] would pull in
+        // the `flutter_localizations` delegates, which localize the Flutter material and cupertino
+        // libraries rather than the `material_ui` and `cupertino_ui` ones the app is built with.
+        // Using them here would hide from tests any code that wrongly depends on Flutter's own
+        // MaterialLocalizations.
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+          MaterialLocalizationsEo.delegate,
+          CupertinoLocalizationsEo.delegate,
+        ],
+        home: widget.home,
+        // Mirror production (see app.dart) so navigation logic relying on the
+        // route stack observer behaves the same in tests.
+        navigatorObservers: [rootNavRouteStackObserver],
+      ),
     );
   }
 }

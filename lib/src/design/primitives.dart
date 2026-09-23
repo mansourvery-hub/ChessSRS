@@ -2,6 +2,7 @@
 // control, switch, keyboard chip, accent dots.
 // Only package:flutter/widgets.dart.
 // Adapted from design/flutter/primitives.dart.
+import 'package:chess_srs/src/design/hatch.dart';
 import 'package:chess_srs/src/design/tokens.dart';
 import 'package:flutter/widgets.dart';
 
@@ -19,8 +20,7 @@ class SrsPressable extends StatefulWidget {
     this.semanticsToggled,
   });
   final VoidCallback? onPressed;
-  final Widget Function(BuildContext context, bool hovered, bool pressed)
-      builder;
+  final Widget Function(BuildContext context, bool hovered, bool pressed) builder;
   final String? semanticLabel;
   final double radius;
   final double pressScale;
@@ -46,51 +46,49 @@ class _SrsPressableState extends State<SrsPressable> {
       label: widget.semanticLabel,
       child: FocusableActionDetector(
         enabled: enabled,
-        mouseCursor:
-            enabled ? SystemMouseCursors.click : MouseCursor.defer,
+        mouseCursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
         onShowHoverHighlight: (v) => setState(() => _hover = v),
         onShowFocusHighlight: (v) => setState(() => _focus = v),
         actions: {
-          ActivateIntent:
-              CallbackAction<ActivateIntent>(onInvoke: (_) {
-            widget.onPressed?.call();
-            return null;
-          }),
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onPressed?.call();
+              return null;
+            },
+          ),
         },
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown:
-              enabled ? (_) => setState(() => _down = true) : null,
+          onTapDown: enabled ? (_) => setState(() => _down = true) : null,
           onTapCancel: () => setState(() => _down = false),
           onTapUp: (_) => setState(() => _down = false),
           onTap: widget.onPressed,
-          child: Stack(clipBehavior: Clip.none, children: [
-            AnimatedScale(
-              scale: _down ? widget.pressScale : 1,
-              duration:
-                  SrsMotion.resolve(context, SrsMotion.press),
-              curve: SrsMotion.ease,
-              child: widget.builder(context, _hover, _down),
-            ),
-            if (_focus)
-              Positioned(
-                left: -2,
-                top: -2,
-                right: -2,
-                bottom: -2,
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        widget.radius + 2,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedScale(
+                scale: _down ? widget.pressScale : 1,
+                duration: SrsMotion.resolve(context, SrsMotion.press),
+                curve: SrsMotion.ease,
+                child: widget.builder(context, _hover, _down),
+              ),
+              if (_focus)
+                Positioned(
+                  left: -2,
+                  top: -2,
+                  right: -2,
+                  bottom: -2,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(widget.radius + 2),
+                        border: Border.all(color: c.accent, width: 2),
                       ),
-                      border:
-                          Border.all(color: c.accent, width: 2),
                     ),
                   ),
                 ),
-              ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
@@ -101,12 +99,7 @@ class _SrsPressableState extends State<SrsPressable> {
 // SrsPillButton — filled ink pill, 46dp tall
 // ---------------------------------------------------------------------------
 class SrsPillButton extends StatelessWidget {
-  const SrsPillButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.shortcut,
-  });
+  const SrsPillButton({super.key, required this.label, required this.onPressed, this.shortcut});
   final String label;
   final VoidCallback? onPressed;
   final String? shortcut;
@@ -120,17 +113,14 @@ class SrsPillButton extends StatelessWidget {
       pressScale: SrsMotion.pressScale,
       builder: (_, _, _) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 22),
-        decoration: BoxDecoration(
-          color: c.ink,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(label, style: SrsText.button(c.ground)),
-          if (shortcut != null) ...[
-            const SizedBox(width: 12),
-            SrsKbd(shortcut!, onInk: true),
+        decoration: BoxDecoration(color: c.ink, borderRadius: BorderRadius.circular(999)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: SrsText.button(c.ground)),
+            if (shortcut != null) ...[const SizedBox(width: 12), SrsKbd(shortcut!, onInk: true)],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -140,12 +130,7 @@ class SrsPillButton extends StatelessWidget {
 // SrsTextButton — borderless text action
 // ---------------------------------------------------------------------------
 class SrsTextButton extends StatelessWidget {
-  const SrsTextButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.shortcut,
-  });
+  const SrsTextButton({super.key, required this.label, required this.onPressed, this.shortcut});
   final String label;
   final VoidCallback? onPressed;
   final String? shortcut;
@@ -158,29 +143,19 @@ class SrsTextButton extends StatelessWidget {
       semanticLabel: label,
       radius: 10,
       builder: (_, hover, _) => Container(
-        constraints: const BoxConstraints(
-          minHeight: SrsLayout.minTouchTarget,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
+        constraints: const BoxConstraints(minHeight: SrsLayout.minTouchTarget),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: hover
-              ? c.hairlineSoft
-              : const Color(0x00000000),
+          color: hover ? c.hairlineSoft : const Color(0x00000000),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(
-            label,
-            style: SrsText.textButton(hover ? c.ink : c.ink2),
-          ),
-          if (shortcut != null) ...[
-            const SizedBox(width: 10),
-            SrsKbd(shortcut!),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: SrsText.textButton(hover ? c.ink : c.ink2)),
+            if (shortcut != null) ...[const SizedBox(width: 10), SrsKbd(shortcut!)],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -201,13 +176,9 @@ class SrsKbd extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: onInk
-            ? c.ground.withValues(alpha: 0.16)
-            : c.hairlineSoft,
+        color: onInk ? c.ground.withValues(alpha: 0.16) : c.hairlineSoft,
         borderRadius: BorderRadius.circular(5),
-        border: onInk
-            ? null
-            : Border.all(color: c.hairline, width: 1),
+        border: onInk ? null : Border.all(color: c.hairline, width: 1),
       ),
       child: Text(text, style: SrsText.kbd(fg)),
     );
@@ -238,38 +209,31 @@ class SrsSegmented<T> extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: c.hairline, width: 1),
       ),
-      child: Wrap(children: [
-        for (final e in options.entries)
-          SrsPressable(
-            onPressed: () => onChanged(e.key),
-            semanticLabel: e.value,
-            semanticsToggled: e.key == value,
-            builder: (_, hover, _) => Container(
-              constraints: const BoxConstraints(minWidth: 38),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 13,
-                vertical: 8,
-              ),
-              decoration: BoxDecoration(
-                color: e.key == value
-                    ? c.ink
-                    : const Color(0x00000000),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Center(
-                widthFactor: 1,
-                child: Text(
-                  e.value,
-                  style: SrsText.seg(
-                    e.key == value
-                        ? c.ground
-                        : (hover ? c.ink : c.ink2),
+      child: Wrap(
+        children: [
+          for (final e in options.entries)
+            SrsPressable(
+              onPressed: () => onChanged(e.key),
+              semanticLabel: e.value,
+              semanticsToggled: e.key == value,
+              builder: (_, hover, _) => Container(
+                constraints: const BoxConstraints(minWidth: 38),
+                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                decoration: BoxDecoration(
+                  color: e.key == value ? c.ink : const Color(0x00000000),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Center(
+                  widthFactor: 1,
+                  child: Text(
+                    e.value,
+                    style: SrsText.seg(e.key == value ? c.ground : (hover ? c.ink : c.ink2)),
                   ),
                 ),
               ),
             ),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -309,8 +273,7 @@ class SrsSwitch extends StatelessWidget {
         child: AnimatedAlign(
           duration: d,
           curve: SrsMotion.ease,
-          alignment:
-              value ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.all(3),
             child: Container(
@@ -319,9 +282,7 @@ class SrsSwitch extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: value ? c.ground : c.surface,
-                border: value
-                    ? null
-                    : Border.all(color: c.hairline, width: 1),
+                border: value ? null : Border.all(color: c.hairline, width: 1),
               ),
             ),
           ),
@@ -335,11 +296,7 @@ class SrsSwitch extends StatelessWidget {
 // SrsAccentDots — accent colour picker
 // ---------------------------------------------------------------------------
 class SrsAccentDots extends StatelessWidget {
-  const SrsAccentDots({
-    super.key,
-    required this.value,
-    required this.onChanged,
-  });
+  const SrsAccentDots({super.key, required this.value, required this.onChanged});
   final SrsAccent value;
   final ValueChanged<SrsAccent> onChanged;
 
@@ -353,55 +310,123 @@ class SrsAccentDots extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: c.hairline, width: 1),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        for (final a in SrsAccent.values) ...[
-          SrsPressable(
-            onPressed: () => onChanged(a),
-            semanticLabel: a.name,
-            semanticsToggled: a == value,
-            builder: (_, _, _) {
-              final color = c.isDark
-                  ? kSrsAccents[a]!.dark
-                  : kSrsAccents[a]!.light;
-              return SizedBox(
-                width: 24,
-                height: 24,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final a in SrsAccent.values) ...[
+            SrsPressable(
+              onPressed: () => onChanged(a),
+              semanticLabel: a.name,
+              semanticsToggled: a == value,
+              builder: (_, _, _) {
+                final color = c.isDark ? kSrsAccents[a]!.dark : kSrsAccents[a]!.light;
+                return SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                         ),
                       ),
-                    ),
-                    if (a == value)
-                      Positioned(
-                        left: -3.5,
-                        top: -3.5,
-                        right: -3.5,
-                        bottom: -3.5,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: c.ink,
-                              width: 1.5,
+                      if (a == value)
+                        Positioned(
+                          left: -3.5,
+                          top: -3.5,
+                          right: -3.5,
+                          bottom: -3.5,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: c.ink, width: 1.5),
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-          if (a != SrsAccent.values.last)
-            const SizedBox(width: 8),
+                    ],
+                  ),
+                );
+              },
+            ),
+            if (a != SrsAccent.values.last) const SizedBox(width: 8),
+          ],
         ],
-      ]),
+      ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// SrsLogoMark — 22x22 geometric ChessSRS square mark with diagonal hatching
+// ---------------------------------------------------------------------------
+class SrsLogoMark extends StatelessWidget {
+  const SrsLogoMark({super.key, this.size = 22, this.color});
+
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    final markColor = color ?? c.ink;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _SrsLogoPainter(color: markColor)),
+    );
+  }
+}
+
+class _SrsLogoPainter extends CustomPainter {
+  const _SrsLogoPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / 22.0;
+    final strokeWidth = 1.5 * scale;
+
+    final borderPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    final half = strokeWidth / 2;
+    canvas.drawRect(
+      Rect.fromLTWH(half, half, size.width - strokeWidth, size.height - strokeWidth),
+      borderPaint,
+    );
+
+    final qW = 9.5 * scale;
+    final qH = 9.5 * scale;
+
+    final trRect = Rect.fromLTWH(11.0 * scale, 1.5 * scale, qW, qH);
+    canvas.save();
+    canvas.clipRect(trRect);
+    paintHatch(
+      canvas,
+      Size(size.width, size.height),
+      color: color,
+      gap: 2.4 * scale,
+      width: 0.9 * scale,
+    );
+    canvas.restore();
+
+    final blRect = Rect.fromLTWH(1.5 * scale, 11.0 * scale, qW, qH);
+    canvas.save();
+    canvas.clipRect(blRect);
+    paintHatch(
+      canvas,
+      Size(size.width, size.height),
+      color: color,
+      gap: 2.4 * scale,
+      width: 0.9 * scale,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_SrsLogoPainter old) => old.color != color;
 }

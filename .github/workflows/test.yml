@@ -1,0 +1,61 @@
+name: Tests
+
+on:
+  push:
+    paths:
+      - 'lib/**'
+      - '!lib/l10n/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/test.yml'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'lib/**'
+      - '!lib/l10n/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/test.yml'
+    branches:
+      - main
+  workflow_dispatch:
+
+# Declare default permissions as read only.
+permissions: read-all
+
+jobs:
+  unit-test:
+    name: Unit tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: 🐦 Install flutter
+        uses: subosito/flutter-action@v2.23.0
+        with:
+          cache: true
+          flutter-version-file: pubspec.yaml
+
+      - name: Install requirements for sqflite_common_ffi package
+        run: sudo apt-get -y install libsqlite3-0 libsqlite3-dev
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Code generation
+        run: dart run build_runner build
+
+      - name: Verify formatting
+        run: |
+          dart format --output=none --set-exit-if-changed $(find lib/src -name "*.dart" -not \( -name "*.*freezed.dart" -o -name "*.*g.dart" -o -name "*lichess_icons.dart" \) )
+          dart format --output=none --set-exit-if-changed $(find test -name "*.dart" -not \( -name "*.*freezed.dart" -o -name "*.*g.dart" \) )
+
+      - name: Analyze project source
+        run: flutter analyze
+
+      - name: Run unit tests
+        run: flutter test

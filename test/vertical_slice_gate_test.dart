@@ -85,8 +85,8 @@ void main() {
         await tester.pumpWidget(app);
         await pumpAsync(tester, 200);
 
-        expect(find.text('Welcome to ChessSRS'), findsOneWidget);
-        expect(find.text('Import Repertoire PGN'), findsWidgets);
+        expect(find.text('Bring your repertoire.'), findsOneWidget);
+        expect(find.text('Choose file'), findsWidgets);
 
         // -----------------------------------------------------------------------
         // Step 2: Import real PGN into database
@@ -128,7 +128,7 @@ void main() {
         expect(find.byType(Chessboard), findsOneWidget);
         expect(find.text('All Studies'), findsOneWidget);
         expect(find.text('Repertoire vs Opponent'), findsOneWidget);
-        expect(find.text('Your move (White)'), findsOneWidget);
+        expect(find.text('White to play'), findsOneWidget);
 
         // -----------------------------------------------------------------------
         // Step 4: Play correct move 1. e4

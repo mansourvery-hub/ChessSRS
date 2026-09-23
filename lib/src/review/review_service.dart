@@ -205,10 +205,7 @@ class ReviewService {
         );
       }
 
-      await repository.saveAnswerBatch(
-        knowledgeStates: allKStates,
-        event: result.event,
-      );
+      await repository.saveAnswerBatch(knowledgeStates: allKStates, event: result.event);
     }
 
     return result;

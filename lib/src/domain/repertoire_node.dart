@@ -29,11 +29,7 @@ class RepertoireNode {
   });
 
   /// Creates a root node (no incoming move, no parent).
-  factory RepertoireNode.root({
-    required String fen,
-    required String fenKey,
-    String? comment,
-  }) {
+  factory RepertoireNode.root({required String fen, required String fenKey, String? comment}) {
     return RepertoireNode(
       id: newId(),
       fen: fen,
@@ -126,8 +122,7 @@ class RepertoireNode {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RepertoireNode && other.id == id && other.fenKey == fenKey;
+      identical(this, other) || other is RepertoireNode && other.id == id && other.fenKey == fenKey;
 
   @override
   int get hashCode => Object.hash(id, fenKey);

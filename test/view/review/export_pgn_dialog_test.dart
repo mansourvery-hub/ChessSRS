@@ -84,11 +84,8 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
-              onPressed: () => ExportPgnDialog.show(
-                context,
-                title: 'King Gambit',
-                pgnText: '1. e4 e5 2. f4 *',
-              ),
+              onPressed: () =>
+                  ExportPgnDialog.show(context, title: 'King Gambit', pgnText: '1. e4 e5 2. f4 *'),
               child: const Text('Open Export'),
             ),
           ),
@@ -127,9 +124,7 @@ void main() {
       await db.close();
     });
 
-    testWidgets('ReviewScopeDrawer study options sheet provides Export PGN option', (
-      tester,
-    ) async {
+    testWidgets('ReviewScopeDrawer study options sheet provides Export PGN option', (tester) async {
       const pgn = '''
 [Event "French Defense: Winawer"]
 [Site "ChessSRS"]
@@ -202,10 +197,7 @@ void main() {
 
       final app = await makeTestProviderScopeApp(
         tester,
-        home: StudyChaptersScreen(
-          study: importResult.study,
-          chapters: importResult.chapters,
-        ),
+        home: StudyChaptersScreen(study: importResult.study, chapters: importResult.chapters),
         overrides: {
           srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
           databaseProvider: databaseProvider.overrideWith((ref) => db),
@@ -228,11 +220,17 @@ void main() {
       expect(find.byType(ExportPgnDialog), findsOneWidget);
       expect(find.text('2 chapters'), findsNWidgets(2));
       expect(
-        find.descendant(of: find.byType(ExportPgnDialog), matching: find.textContaining('Najdorf Variation')),
+        find.descendant(
+          of: find.byType(ExportPgnDialog),
+          matching: find.textContaining('Najdorf Variation'),
+        ),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: find.byType(ExportPgnDialog), matching: find.textContaining('Classical Variation')),
+        find.descendant(
+          of: find.byType(ExportPgnDialog),
+          matching: find.textContaining('Classical Variation'),
+        ),
         findsOneWidget,
       );
 

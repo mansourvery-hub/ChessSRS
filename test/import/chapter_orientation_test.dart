@@ -35,10 +35,7 @@ void main() {
     });
 
     test('detects orientation when player contains repertoire keyword', () {
-      expect(
-        resolveChapterOrientation({'ChapterName': "King's Indian [Black]"}),
-        Side.black,
-      );
+      expect(resolveChapterOrientation({'ChapterName': "King's Indian [Black]"}), Side.black);
       expect(
         resolveChapterOrientation({'White': 'White Repertoire', 'Black': 'Karpov'}),
         Side.white,

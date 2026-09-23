@@ -4,12 +4,7 @@ import 'package:chess_srs/src/design/tokens.dart';
 import 'package:flutter/widgets.dart';
 
 class SrsMoveArrow extends StatelessWidget {
-  const SrsMoveArrow({
-    super.key,
-    required this.from,
-    required this.to,
-    this.whiteAtBottom = true,
-  });
+  const SrsMoveArrow({super.key, required this.from, required this.to, this.whiteAtBottom = true});
   final String from;
   final String to;
   final bool whiteAtBottom;
@@ -26,14 +21,7 @@ class SrsMoveArrow extends StatelessWidget {
         curve: SrsMotion.ease,
         builder: (context, t, _) => SizedBox.expand(
           child: CustomPaint(
-            painter: _ArrowPainter(
-              from,
-              to,
-              color,
-              t,
-              whiteAtBottom,
-              duration == Duration.zero,
-            ),
+            painter: _ArrowPainter(from, to, color, t, whiteAtBottom, duration == Duration.zero),
           ),
         ),
       ),
@@ -42,14 +30,7 @@ class SrsMoveArrow extends StatelessWidget {
 }
 
 class _ArrowPainter extends CustomPainter {
-  _ArrowPainter(
-    this.from,
-    this.to,
-    this.color,
-    this.t,
-    this.white,
-    this.instant,
-  );
+  _ArrowPainter(this.from, this.to, this.color, this.t, this.white, this.instant);
   final String from;
   final String to;
   final Color color;
@@ -115,8 +96,7 @@ class _ArrowPainter extends CustomPainter {
     );
 
     // Head: fade in from 170/260 of the animation.
-    final headT =
-        instant ? 1.0 : ((t - 170 / 260) / (120 / 260)).clamp(0, 1);
+    final headT = instant ? 1.0 : ((t - 170 / 260) / (120 / 260)).clamp(0, 1);
     if (headT <= 0) return;
 
     final tipTangent = metric.getTangentForOffset(tipDist)!;
@@ -143,9 +123,5 @@ class _ArrowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ArrowPainter old) =>
-      old.from != from ||
-      old.to != to ||
-      old.color != color ||
-      old.t != t ||
-      old.white != white;
+      old.from != from || old.to != to || old.color != color || old.t != t || old.white != white;
 }

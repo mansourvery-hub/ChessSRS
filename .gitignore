@@ -52,4 +52,6 @@ repomix*
 *.zip
 chesssrs-design-package/
 .agents/
+.agent/
+*.html
 skills-lock.json

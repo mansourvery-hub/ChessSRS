@@ -1,273 +1,582 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import 'package:chess_srs/src/domain/chess_fsrs_scheduler.dart';
+import 'dart:math' as math;
+
+import 'package:chess_srs/src/db/database.dart';
+import 'package:chess_srs/src/design/design.dart';
+import 'package:chess_srs/src/model/settings/board_preferences.dart';
+import 'package:chess_srs/src/model/settings/general_preferences.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
-import 'package:chess_srs/src/utils/navigation.dart';
 import 'package:chess_srs/src/view/settings/app_log_settings_screen.dart';
-import 'package:chess_srs/src/widgets/adaptive_choice_picker.dart';
-import 'package:chess_srs/src/widgets/list.dart';
-import 'package:chess_srs/src/widgets/platform.dart';
-import 'package:chess_srs/src/widgets/settings.dart';
+import 'package:chess_srs/src/view/settings/board_settings_screen.dart';
+import 'package:chess_srs/src/view/settings/engine_settings_screen.dart';
+import 'package:chess_srs/src/view/settings/http_log_screen.dart';
+import 'package:chess_srs/src/view/settings/sound_settings_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
-class SrsSettingsScreen extends ConsumerWidget {
+/// Diagram visual settings screen with unified daily limits, target retention,
+/// study display toggles, theme, accent swatches, and advanced FSRS algorithms.
+class SrsSettingsScreen extends ConsumerStatefulWidget {
   const SrsSettingsScreen({super.key});
 
   static Route<dynamic> buildRoute() {
-    return buildScreenRoute(screen: const SrsSettingsScreen());
+    return MaterialPageRoute<void>(builder: (_) => const SrsSettingsScreen());
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prefs = ref.watch(studyPreferencesProvider);
+  ConsumerState<SrsSettingsScreen> createState() => _SrsSettingsScreenState();
+}
 
-    return PlatformScaffold(
-      appBar: PlatformAppBar(title: const Text('Spaced Repetition (SRS)')),
-      body: ListView(
-        children: [
-          ListSection(
-            header: const SettingsSectionTitle('Algorithm & Intervals'),
-            hasLeading: true,
-            children: [
-              SettingsListTile(
-                icon: const Icon(Symbols.calendar_today_rounded),
-                settingsLabel: const Text('Daily review limit'),
-                settingsValue: prefs.maxDailyReviews == 0
-                    ? 'Unlimited'
-                    : '${prefs.maxDailyReviews} positions / day',
-                onTap: () {
-                  showChoicePicker<int>(
-                    context,
-                    choices: const [25, 50, 100, 150, 200, 0],
-                    selectedItem: prefs.maxDailyReviews,
-                    labelBuilder: (v) => Text(
-                      v == 0
-                          ? 'Unlimited'
-                          : v == 100
-                          ? '$v positions / day (Default)'
-                          : '$v positions / day',
-                    ),
-                    onSelectedItemChanged: (int? value) {
-                      if (value != null) {
-                        ref.read(studyPreferencesProvider.notifier).setMaxDailyReviews(value);
-                      }
-                    },
-                  );
-                },
-              ),
-              SettingsListTile(
-                icon: const Icon(Symbols.schedule_rounded),
-                settingsLabel: const Text('SRS scheduling algorithm'),
-                settingsValue: prefs.schedulerType.label,
-                onTap: () {
-                  showChoicePicker<SchedulerType>(
-                    context,
-                    choices: SchedulerType.values,
-                    selectedItem: prefs.schedulerType,
-                    labelBuilder: (t) => Text(t.label),
-                    onSelectedItemChanged: (SchedulerType? value) {
-                      if (value != null) {
-                        ref.read(studyPreferencesProvider.notifier).setSchedulerType(value);
-                      }
-                    },
-                  );
-                },
-              ),
-              if (prefs.schedulerType == SchedulerType.fsrs) ...[
-                SettingsListTile(
-                  icon: const Icon(Symbols.target),
-                  settingsLabel: const Text('Target recall retention'),
-                  settingsValue: '${(prefs.targetRetention * 100).round()}%',
-                  onTap: () {
-                    showChoicePicker<double>(
-                      context,
-                      choices: const [0.80, 0.85, 0.88, 0.90, 0.95],
-                      selectedItem: prefs.targetRetention,
-                      labelBuilder: (v) => Text(
-                        '${(v * 100).round()}% ${v >= 0.95
-                            ? "(Tournament mode)"
-                            : v == 0.88
-                            ? "(Default)"
-                            : ""}',
+class _SrsSettingsScreenState extends ConsumerState<SrsSettingsScreen> {
+  bool _advancedOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    final mediaQuery = MediaQuery.of(context);
+    final studyPrefs = ref.watch(studyPreferencesProvider);
+    final studyNotifier = ref.read(studyPreferencesProvider.notifier);
+    final generalPrefs = ref.watch(generalPreferencesProvider);
+    final generalNotifier = ref.read(generalPreferencesProvider.notifier);
+    final boardPrefs = ref.watch(boardPreferencesProvider);
+    final dbSize = ref.watch(getDbSizeInBytesProvider);
+    final accent = ref.watch(srsAccentProvider);
+
+    final isDark =
+        generalPrefs.themeMode == BackgroundThemeMode.dark ||
+        generalPrefs.themeMode == BackgroundThemeMode.amoled;
+    final isSoundOn = generalPrefs.isSoundEnabled;
+
+    final headlineSize = math.max(38.0, math.min(mediaQuery.size.width * 0.08, 56.0));
+
+    return Scaffold(
+      backgroundColor: c.ground,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top head with Review back button
+            Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              alignment: Alignment.centerLeft,
+              child: SrsPressable(
+                onPressed: () => Navigator.of(context).pop(),
+                semanticLabel: 'Review',
+                radius: 10,
+                builder: (context, hovered, _) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: hovered ? c.hairlineSoft : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CustomPaint(
+                        size: const Size(16, 16),
+                        painter: _ChevronLeftPainter(color: c.ink),
                       ),
-                      onSelectedItemChanged: (double? value) {
-                        if (value != null) {
-                          ref.read(studyPreferencesProvider.notifier).setTargetRetention(value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Symbols.timeline_rounded, size: 20),
-                  title: const Text(
-                    'FSRS interval progression preview',
-                    style: TextStyle(fontSize: 12.0),
-                  ),
-                  subtitle: Builder(
-                    builder: (context) {
-                      final intervals = fsrsIntervalProgressionPreview(
-                        targetRetention: prefs.targetRetention,
-                      );
-                      String fmt(double d) =>
-                          d >= 10 ? '${d.round()}d' : '${d.toStringAsFixed(1)}d';
-                      return Text(
-                        intervals.map(fmt).join(' → '),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Review',
                         style: TextStyle(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
+                          fontFamily: SrsText.ui,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: c.ink,
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
-              ],
-              if (prefs.schedulerType == SchedulerType.simple) ...[
-                const ListTile(
-                  dense: true,
-                  leading: Icon(Symbols.timeline_rounded, size: 20),
-                  title: Text('Simple doubling interval preview', style: TextStyle(fontSize: 12.0)),
-                  subtitle: Text(
-                    '1d → 2d → 4d → 8d → 16d',
+              ),
+            ),
+
+            // Scrollable settings body
+            Expanded(
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 660),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 6, 24, 56),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Settings',
+                            style: TextStyle(
+                              fontFamily: SrsText.ui,
+                              fontSize: headlineSize,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: -0.04 * headlineSize,
+                              height: 1.0,
+                              color: c.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Settings group
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border(top: BorderSide(color: c.hairline)),
+                            ),
+                            child: Column(
+                              children: [
+                                // 1. Daily limit
+                                _SettingRow(
+                                  label: 'Daily limit',
+                                  help: 'Positions reviewed per day.',
+                                  control: SrsSegmented<int>(
+                                    options: const {
+                                      25: '25',
+                                      50: '50',
+                                      100: '100',
+                                      150: '150',
+                                      200: '200',
+                                      0: 'None',
+                                    },
+                                    value: studyPrefs.maxDailyReviews,
+                                    onChanged: (val) => studyNotifier.setMaxDailyReviews(val),
+                                  ),
+                                ),
+
+                                // 2. Target retention
+                                _SettingRow(
+                                  label: 'Target retention',
+                                  help:
+                                      'Higher means more reviews. 88% suits most players; 95% is for tournament preparation.',
+                                  control: SrsSegmented<double>(
+                                    options: {
+                                      0.80: '80%',
+                                      0.85: '85%',
+                                      0.88: '88%',
+                                      0.90: '90%',
+                                      0.95: '95%',
+                                    },
+                                    value: studyPrefs.targetRetention,
+                                    onChanged: (val) => studyNotifier.setTargetRetention(val),
+                                  ),
+                                ),
+
+                                // 3. Show notes after a move
+                                _SettingRow(
+                                  label: 'Show notes after a move',
+                                  help: 'Comments from your study appear once you have answered.',
+                                  control: SrsSwitch(
+                                    value: studyPrefs.showPgnComments,
+                                    semanticLabel: 'Show notes after a move',
+                                    onChanged: (_) => studyNotifier.togglePgnComments(),
+                                  ),
+                                ),
+
+                                // 4. Show arrows and circles
+                                _SettingRow(
+                                  label: 'Show arrows and circles',
+                                  help: 'Drawn from your study, only after you answer.',
+                                  control: SrsSwitch(
+                                    value: studyPrefs.showAnnotations,
+                                    semanticLabel: 'Show arrows and circles',
+                                    onChanged: (_) => studyNotifier.toggleAnnotations(),
+                                  ),
+                                ),
+
+                                // 5. Theme
+                                _SettingRow(
+                                  label: 'Theme',
+                                  control: SrsSegmented<bool>(
+                                    options: const {false: 'Light', true: 'Dark'},
+                                    value: isDark,
+                                    onChanged: (dark) => generalNotifier.setBackgroundThemeMode(
+                                      dark ? BackgroundThemeMode.dark : BackgroundThemeMode.light,
+                                    ),
+                                  ),
+                                ),
+
+                                // 6. Accent
+                                _SettingRow(
+                                  label: 'Accent',
+                                  help: 'Colour of the correct move arrow and selection.',
+                                  control: SrsAccentDots(
+                                    value: accent,
+                                    onChanged: (newAccent) {
+                                      ref.read(srsAccentProvider.notifier).accent = newAccent;
+                                    },
+                                  ),
+                                ),
+
+                                // 7. Sound
+                                _SettingRow(
+                                  label: 'Sound',
+                                  control: SrsSwitch(
+                                    value: isSoundOn,
+                                    semanticLabel: 'Sound',
+                                    onChanged: (_) => generalNotifier.toggleSoundEnabled(),
+                                  ),
+                                ),
+
+                                // 8. Sound & Audio Details
+                                _NavRow(
+                                  label: 'Sound & audio details',
+                                  help: 'Sound theme and master volume slider.',
+                                  value:
+                                      '${soundThemeL10n(context, generalPrefs.soundTheme)} (${volumeLabel(generalPrefs.masterVolume)})',
+                                  onTap: () =>
+                                      Navigator.of(context).push(SoundSettingsScreen.buildRoute()),
+                                ),
+
+                                // 9. Board & Pieces
+                                _NavRow(
+                                  label: 'Board & pieces',
+                                  help: 'Board themes, piece sets, and move coordinates.',
+                                  value:
+                                      '${boardPrefs.boardTheme.label} / ${boardPrefs.pieceSet.label}',
+                                  onTap: () =>
+                                      Navigator.of(context).push(BoardSettingsScreen.buildRoute()),
+                                ),
+
+                                // 10. Chess Engine
+                                _NavRow(
+                                  label: 'Chess engine',
+                                  help: 'Threads, hash memory, search time, and multi-PV lines.',
+                                  onTap: () =>
+                                      Navigator.of(context).push(EngineSettingsScreen.buildRoute()),
+                                ),
+
+                                // 11. Advanced (Collapsible)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border(bottom: BorderSide(color: c.hairlineSoft)),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      SrsPressable(
+                                        onPressed: () =>
+                                            setState(() => _advancedOpen = !_advancedOpen),
+                                        semanticLabel: 'Advanced',
+                                        radius: 8,
+                                        builder: (context, hovered, _) => Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 18),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Advanced',
+                                                style: TextStyle(
+                                                  fontFamily: SrsText.ui,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: c.ink,
+                                                ),
+                                              ),
+                                              AnimatedRotation(
+                                                turns: _advancedOpen ? 0.5 : 0.0,
+                                                duration: SrsMotion.toggle,
+                                                curve: SrsMotion.ease,
+                                                child: CustomPaint(
+                                                  size: const Size(14, 14),
+                                                  painter: _ChevronDownPainter(color: c.ink3),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      if (_advancedOpen) ...[
+                                        _SettingRow(
+                                          label: 'Scheduling algorithm',
+                                          help:
+                                              'FSRS adapts to how well you remember each position.',
+                                          control: SrsSegmented<SchedulerType>(
+                                            options: const {
+                                              SchedulerType.fsrs: 'FSRS',
+                                              SchedulerType.simple: 'Simple',
+                                              SchedulerType.easeScaling: 'Ease',
+                                            },
+                                            value: studyPrefs.schedulerType,
+                                            onChanged: (algo) =>
+                                                studyNotifier.setSchedulerType(algo),
+                                          ),
+                                        ),
+                                        _SettingRow(
+                                          label: 'Diagnostics',
+                                          help: 'Show memory metrics during review.',
+                                          control: SrsSwitch(
+                                            value: studyPrefs.srsDiagnostics,
+                                            semanticLabel: 'Diagnostics',
+                                            onChanged: (_) => studyNotifier.toggleSrsDiagnostics(),
+                                          ),
+                                        ),
+                                        _SettingRow(
+                                          label: 'Local database size',
+                                          help: 'Storage used by local database files.',
+                                          control: Text(
+                                            dbSize.hasValue && dbSize.value != null
+                                                ? '${(dbSize.value! / (1024 * 1024)).toStringAsFixed(2)} MB'
+                                                : '...',
+                                            style: TextStyle(
+                                              fontFamily: SrsText.ui,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: c.ink2,
+                                            ),
+                                          ),
+                                        ),
+                                        _NavRow(
+                                          label: 'HTTP network logs',
+                                          help: 'Inspect raw HTTP requests and responses.',
+                                          onTap: () => Navigator.of(
+                                            context,
+                                          ).push(HttpLogScreen.buildRoute()),
+                                        ),
+                                        _NavRow(
+                                          label: 'App diagnostics logs',
+                                          help: 'Application error and debug traces.',
+                                          onTap: () => Navigator.of(
+                                            context,
+                                          ).push(AppLogSettingsScreen.buildRoute()),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingRow extends StatelessWidget {
+  const _SettingRow({required this.label, this.help, required this.control});
+
+  final String label;
+  final String? help;
+  final Widget control;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.hairlineSoft)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 520;
+          final textColumn = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: SrsText.ui,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: c.ink,
+                ),
+              ),
+              if (help != null) ...[
+                const SizedBox(height: 3),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: Text(
+                    help!,
                     style: TextStyle(
-                      fontSize: 12.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      fontFamily: SrsText.ui,
+                      fontSize: 14,
+                      color: c.ink2,
+                      height: 1.4,
                     ),
                   ),
                 ),
               ],
-              if (prefs.schedulerType == SchedulerType.easeScaling) ...[
-                SettingsListTile(
-                  icon: const Icon(Symbols.tune_rounded),
-                  settingsLabel: const Text('Initial ease factor'),
-                  settingsValue: '${prefs.schedulerEase}x',
-                  onTap: () {
-                    showChoicePicker<double>(
-                      context,
-                      choices: const [1.5, 2.0, 2.5, 3.0, 3.5],
-                      selectedItem: prefs.schedulerEase,
-                      labelBuilder: (v) => Text('${v}x (interval after first success)'),
-                      onSelectedItemChanged: (double? value) {
-                        if (value != null) {
-                          ref.read(studyPreferencesProvider.notifier).setSchedulerEase(value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                SettingsListTile(
-                  icon: const Icon(Symbols.trending_up_rounded),
-                  settingsLabel: const Text('Growth rate scaling'),
-                  settingsValue: '${prefs.schedulerScaling}x',
-                  onTap: () {
-                    showChoicePicker<double>(
-                      context,
-                      choices: const [1.2, 1.3, 1.5, 1.8, 2.0],
-                      selectedItem: prefs.schedulerScaling,
-                      labelBuilder: (v) => Text('${v}x (multiplier on subsequent reviews)'),
-                      onSelectedItemChanged: (double? value) {
-                        if (value != null) {
-                          ref.read(studyPreferencesProvider.notifier).setSchedulerScaling(value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Symbols.timeline_rounded, size: 20),
-                  title: const Text(
-                    'Interval progression preview',
-                    style: TextStyle(fontSize: 12.0),
-                  ),
-                  subtitle: Builder(
-                    builder: (context) {
-                      final ease = prefs.schedulerEase;
-                      final scaling = prefs.schedulerScaling;
-                      const r1 = 1.0;
-                      final r2 = r1 * ease;
-                      final r3 = r2 * scaling;
-                      final r4 = r3 * scaling;
-                      final r5 = r4 * scaling;
-                      String fmt(double d) =>
-                          d == d.roundToDouble() ? '${d.toInt()}d' : '${d.toStringAsFixed(1)}d';
-                      return Text(
-                        '${fmt(r1)} → ${fmt(r2)} → ${fmt(r3)} → ${fmt(r4)} → ${fmt(r5)}',
+            ],
+          );
+
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [textColumn, const SizedBox(height: 12), control],
+            );
+          }
+
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: textColumn),
+              const SizedBox(width: 24),
+              control,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ChevronLeftPainter extends CustomPainter {
+  const _ChevronLeftPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(size.width * 0.62, size.height * 0.2)
+      ..lineTo(size.width * 0.32, size.height * 0.5)
+      ..lineTo(size.width * 0.62, size.height * 0.8);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ChevronLeftPainter oldDelegate) => color != oldDelegate.color;
+}
+
+class _ChevronDownPainter extends CustomPainter {
+  const _ChevronDownPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(size.width * 0.22, size.height * 0.38)
+      ..lineTo(size.width * 0.5, size.height * 0.66)
+      ..lineTo(size.width * 0.78, size.height * 0.38);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ChevronDownPainter oldDelegate) => color != oldDelegate.color;
+}
+
+class _ChevronRightPainter extends CustomPainter {
+  const _ChevronRightPainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..moveTo(size.width * 0.35, size.height * 0.22)
+      ..lineTo(size.width * 0.65, size.height * 0.5)
+      ..lineTo(size.width * 0.35, size.height * 0.78);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_ChevronRightPainter oldDelegate) => color != oldDelegate.color;
+}
+
+class _NavRow extends StatelessWidget {
+  const _NavRow({required this.label, this.help, this.value, required this.onTap});
+
+  final String label;
+  final String? help;
+  final String? value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.hairlineSoft)),
+      ),
+      child: SrsPressable(
+        onPressed: onTap,
+        radius: 8,
+        builder: (context, hovered, _) => Container(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          color: hovered ? c.page : Colors.transparent,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: SrsText.ui,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: c.ink,
+                      ),
+                    ),
+                    if (help != null) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        help!,
                         style: TextStyle(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
+                          fontFamily: SrsText.ui,
+                          fontSize: 14,
+                          color: c.ink2,
+                          height: 1.4,
                         ),
-                      );
-                    },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              if (value != null) ...[
+                Text(
+                  value!,
+                  style: TextStyle(
+                    fontFamily: SrsText.ui,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: c.ink2,
                   ),
                 ),
+                const SizedBox(width: 8),
               ],
-            ],
-          ),
-          ListSection(
-            header: const SettingsSectionTitle('Review Experience'),
-            hasLeading: true,
-            children: [
-              SwitchListTile.adaptive(
-                secondary: const Icon(Symbols.smart_toy_rounded),
-                title: const Text('Animate opponent moves'),
-                subtitle: const Text('Play opponent’s previous move when starting a new line'),
-                value: prefs.animateOpponentPreMove,
-                onChanged: (_) =>
-                    ref.read(studyPreferencesProvider.notifier).toggleAnimateOpponentPreMove(),
-              ),
-              SwitchListTile.adaptive(
-                secondary: const Icon(Symbols.comment_rounded),
-                title: const Text('Show move notes & comments'),
-                subtitle: const Text('Display study explanations after guessing moves'),
-                value: prefs.showPgnComments,
-                onChanged: (_) => ref.read(studyPreferencesProvider.notifier).togglePgnComments(),
-              ),
-              SwitchListTile.adaptive(
-                secondary: const Icon(Symbols.draw_rounded),
-                title: const Text('Show board arrows & shapes'),
-                subtitle: const Text(
-                  'Display visual arrows and circle highlights from study notes',
-                ),
-                value: prefs.showAnnotations,
-                onChanged: (_) => ref.read(studyPreferencesProvider.notifier).toggleAnnotations(),
+              CustomPaint(
+                size: const Size(14, 14),
+                painter: _ChevronRightPainter(color: c.ink3),
               ),
             ],
           ),
-          ListSection(
-            header: const SettingsSectionTitle('Diagnostics'),
-            hasLeading: true,
-            children: [
-              SwitchListTile.adaptive(
-                secondary: const Icon(Symbols.bug_report_rounded),
-                title: const Text('Developer / SRS diagnostics'),
-                subtitle: const Text(
-                  'Show mathematical memory metrics (DSR) and graph effects during review',
-                ),
-                value: prefs.srsDiagnostics,
-                onChanged: (_) =>
-                    ref.read(studyPreferencesProvider.notifier).toggleSrsDiagnostics(),
-              ),
-              SettingsListTile(
-                icon: const Icon(Symbols.receipt_long_rounded),
-                settingsLabel: const Text('View in-app diagnostic logs'),
-                settingsValue: 'SRS & Engine Traces',
-                onTap: () {
-                  Navigator.of(
-                    context,
-                  ).push(AppLogSettingsScreen.buildRoute(initialCategory: LogCategory.review));
-                },
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1,22 +1,22 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'dart:math' as math;
+
+import 'package:chess_srs/src/design/design.dart';
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/model/common/chess.dart';
-import 'package:chess_srs/src/model/game/game_board_params.dart';
 import 'package:chess_srs/src/model/settings/board_preferences.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/review/review_controller.dart';
-import 'package:chess_srs/src/styles/lichess_colors.dart';
-import 'package:chess_srs/src/styles/styles.dart';
+import 'package:chess_srs/src/view/review/library_sheet.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_scope_drawer.dart';
 import 'package:chess_srs/src/view/settings/srs_settings_screen.dart';
-import 'package:chess_srs/src/widgets/feedback.dart';
-import 'package:chess_srs/src/widgets/game_layout.dart';
+import 'package:chess_srs/src/widgets/board.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
-import 'package:fast_immutable_collections/fast_immutable_collections.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,150 +30,178 @@ class ReviewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reviewStateAsync = ref.watch(reviewControllerProvider);
+    final c = context.srs;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Symbols.menu_rounded),
-            tooltip: 'Studies & Scope',
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: reviewStateAsync.maybeWhen(
-          data: (state) => _AppBarTitle(state: state),
-          orElse: () => const Text('Review'),
-        ),
-        actions: [
-          const _AnnotationsQuickToggle(),
-          IconButton(
-            icon: const Icon(Symbols.tune_rounded),
-            tooltip: 'SRS settings',
-            onPressed: () => Navigator.of(context).push(SrsSettingsScreen.buildRoute()),
-          ),
-          reviewStateAsync.maybeWhen(
-            data: (state) {
-              if (state.isPracticeMode) {
-                return TextButton.icon(
-                  icon: const Icon(Symbols.close_rounded, size: 18),
-                  label: const Text('Exit Practice'),
-                  onPressed: () => ref.read(reviewControllerProvider.notifier).exitPracticeMode(),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-            orElse: () => const SizedBox.shrink(),
-          ),
-        ],
-      ),
-      drawer: const ReviewScopeDrawer(),
-      body: reviewStateAsync.when(
-        skipLoadingOnReload: true,
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Symbols.error_rounded, size: 48, color: LichessColors.red),
-                const SizedBox(height: 16.0),
-                Text('Error loading review: $err', textAlign: TextAlign.center),
-                const SizedBox(height: 16.0),
-                FilledButton(
-                  onPressed: () => ref.read(reviewControllerProvider.notifier).reload(),
-                  child: const Text('Retry'),
-                ),
-              ],
+      backgroundColor: c.ground,
+      body: SafeArea(
+        child: reviewStateAsync.when(
+          data: (state) {
+            if (state.studies.isEmpty) {
+              return const _NoStudiesView();
+            }
+            if (state.isComplete) {
+              return _NothingDueView(state: state);
+            }
+            return _ActiveReviewView(state: state, prompt: state.currentPrompt!);
+          },
+          loading: () => Center(child: CircularProgressIndicator(strokeWidth: 2, color: c.ink)),
+          error: (err, stack) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'Failed to load review: $err',
+                style: SrsText.body(false, c.ink),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ),
-        data: (state) {
-          if (!state.hasStudies) {
-            return const _FirstLaunchEmptyView();
-          }
-
-          if (state.isComplete || state.currentPrompt == null || state.boardPosition == null) {
-            return _AllCaughtUpView(state: state);
-          }
-
-          return _ActiveReviewView(state: state);
-        },
       ),
     );
   }
 }
 
-class _AppBarTitle extends StatelessWidget {
-  const _AppBarTitle({required this.state});
+class _NoStudiesView extends StatefulWidget {
+  const _NoStudiesView();
 
-  final ReviewScreenState state;
+  @override
+  State<_NoStudiesView> createState() => _NoStudiesViewState();
+}
+
+class _NoStudiesViewState extends State<_NoStudiesView> {
+  Side? _trainSide;
 
   @override
   Widget build(BuildContext context) {
-    final String title;
-    if (state.scope.openingFamily != null) {
-      title = state.scope.openingFamily!;
-    } else if (state.scope.studyId != null) {
-      final study = state.studies.firstWhere(
-        (s) => s.id == state.scope.studyId,
-        orElse: () => const Study(id: '', title: 'Study'),
-      );
-      if (state.scope.chapterId != null && state.currentPrompt?.chapterTitle != null) {
-        title = '${study.title} • ${state.currentPrompt!.chapterTitle}';
-      } else {
-        title = study.title;
-      }
-    } else {
-      title = 'All Studies';
-    }
+    final c = context.srs;
+    final mediaQuery = MediaQuery.of(context);
+    final isWide = mediaQuery.size.width >= 900;
+    final headlineSize = math.max(38.0, math.min(mediaQuery.size.width * 0.08, 56.0));
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+    final welcomeContent = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 500),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SrsLogoMark(size: 22),
+              const SizedBox(width: 10),
+              Text('ChessSRS', style: SrsText.wordmark(c.ink)),
+            ],
           ),
-        ),
-        if (state.isPracticeMode) ...[
-          const SizedBox(width: 6.0),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.tertiaryContainer,
-              borderRadius: BorderRadius.circular(8.0),
+          const SizedBox(height: 32.0),
+          Text(
+            'Bring your repertoire.',
+            style: TextStyle(
+              fontFamily: SrsText.ui,
+              fontSize: headlineSize,
+              fontWeight: FontWeight.w400,
+              letterSpacing: -0.04 * headlineSize,
+              height: 1.0,
+              color: c.ink,
             ),
-            child: Text(
-              'Practice',
-              style: TextStyle(
-                fontSize: 11.0,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onTertiaryContainer,
+          ),
+          const SizedBox(height: 16.0),
+          Text(
+            'Import a PGN or a Lichess study. Everything stays on this device, and reviews work offline.',
+            style: TextStyle(fontFamily: SrsText.ui, fontSize: 17, height: 1.45, color: c.ink2),
+          ),
+          const SizedBox(height: 28.0),
+          CustomPaint(
+            painter: _DashedBorderPainter(color: c.ink3, strokeWidth: 1.5, radius: 14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Drop a PGN file here',
+                    style: TextStyle(fontFamily: SrsText.ui, fontSize: 15.5, color: c.ink),
+                  ),
+                  const SizedBox(height: 16.0),
+                  SrsPillButton(
+                    label: 'Choose file',
+                    onPressed: () => RepertoireImportDialog.show(
+                      context,
+                      initialSource: ImportSource.file,
+                      initialSide: _trainSide,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-        const SizedBox(width: 8.0),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-          decoration: BoxDecoration(
-            color: state.totalDueCount > 0
-                ? Theme.of(context).colorScheme.primaryContainer
-                : Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10.0),
+          const SizedBox(height: 16.0),
+          Wrap(
+            spacing: 22.0,
+            runSpacing: 8.0,
+            children: [
+              SrsTextButton(
+                label: 'Paste PGN text',
+                onPressed: () => RepertoireImportDialog.show(
+                  context,
+                  initialSource: ImportSource.file,
+                  initialSide: _trainSide,
+                ),
+              ),
+              SrsTextButton(
+                label: 'Import a Lichess study',
+                onPressed: () => RepertoireImportDialog.show(
+                  context,
+                  initialSource: ImportSource.lichess,
+                  initialSide: _trainSide,
+                ),
+              ),
+            ],
           ),
-          child: Text(
-            '${state.totalDueCount}',
-            style: TextStyle(
-              fontSize: 12.0,
-              fontWeight: FontWeight.bold,
-              color: state.totalDueCount > 0
-                  ? Theme.of(context).colorScheme.onPrimaryContainer
-                  : Theme.of(context).colorScheme.onSurfaceVariant,
+          const SizedBox(height: 24.0),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Train as',
+                style: TextStyle(fontFamily: SrsText.ui, fontSize: 14, color: c.ink2),
+              ),
+              const SizedBox(width: 12.0),
+              SrsSegmented<Side?>(
+                options: const {null: 'Auto', Side.white: 'White', Side.black: 'Black'},
+                value: _trainSide,
+                onChanged: (val) => setState(() => _trainSide = val),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      children: [
+        SrsTopBar(
+          scopeTitle: 'ChessSRS',
+          dueCount: 0,
+          onScopePressed: () => ReviewScopeDrawer.show(context),
+          onOverflowPressed: () => _showOverflowSheet(context),
+        ),
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 40.0 : 24.0, vertical: 24.0),
+              child: isWide
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        welcomeContent,
+                        const SizedBox(width: 64.0),
+                        _AmbientFirstBoard(side: _trainSide),
+                      ],
+                    )
+                  : welcomeContent,
             ),
           ),
         ),
@@ -182,195 +210,419 @@ class _AppBarTitle extends StatelessWidget {
   }
 }
 
-/// First launch view when no studies have been imported yet (PRODUCT.md Journey 2).
-class _FirstLaunchEmptyView extends StatelessWidget {
-  const _FirstLaunchEmptyView();
+class _AmbientFirstBoard extends ConsumerWidget {
+  const _AmbientFirstBoard({required this.side});
+  final Side? side;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.srs;
+    final boardPrefs = ref.watch(boardPreferencesProvider);
+    final orientation = side ?? Side.white;
+    const boardSize = 380.0;
+
+    final chessboardSettings = StaticChessboardSettings(
+      pieceAssets: boardPrefs.pieceSet.assets,
+      colorScheme: srsBoardColorScheme(c),
+      brightness: boardPrefs.brightness,
+      hue: boardPrefs.hue,
+      enableCoordinates: false,
+    );
+
+    final board = Stack(
+      children: [
+        const SrsBoardBackground(size: boardSize),
+        StaticChessboard(
+          size: boardSize,
+          fen: kInitialFEN,
+          orientation: orientation,
+          settings: chessboardSettings,
+        ),
+      ],
+    );
+
+    return SrsBoardWithCoordinates(
+      size: boardSize,
+      board: board,
+      outside: true,
+      whiteAtBottom: orientation == Side.white,
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.radius,
+  });
+
+  final Color color;
+  final double strokeWidth;
+  final double radius;
+  static const double dashLength = 6.0;
+  static const double gapLength = 4.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    final half = strokeWidth / 2;
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(half, half, size.width - strokeWidth, size.height - strokeWidth),
+      Radius.circular(radius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final len = math.min(dashLength, metric.length - distance);
+        final extract = metric.extractPath(distance, distance + len);
+        canvas.drawPath(extract, paint);
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth || old.radius != radius;
+}
+
+class _NothingDueView extends ConsumerWidget {
+  const _NothingDueView({required this.state});
+
+  final ReviewScreenState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.srs;
+    final mediaQuery = MediaQuery.of(context);
+    final progress = state.activeScopeProgress;
+    final totalDecisions = progress?.totalDecisions ?? 0;
+    final learnedDecisions = progress?.learnedDecisions ?? 0;
+    final dueDecisions = progress?.dueDecisions ?? 0;
+    final retained = (learnedDecisions - dueDecisions).clamp(0, totalDecisions);
+    final learning = dueDecisions;
+    final fresh = (totalDecisions - learnedDecisions).clamp(0, totalDecisions);
+
+    final displayTitle = state.isDailyLimitReached ? 'Daily Goal Reached!' : 'Nothing due.';
+    final headlineSize = math.max(44.0, math.min(mediaQuery.size.width * 0.09, 72.0));
+
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyP): () {
+          ref.read(reviewControllerProvider.notifier).startPracticeMode();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Column(
+          children: [
+            SrsTopBar(
+              scopeTitle: _computeScopeTitle(state),
+              dueCount: 0,
+              isPracticeMode: state.isPracticeMode,
+              onScopePressed: () => ReviewScopeDrawer.show(context),
+              onOverflowPressed: () => _showOverflowSheet(context),
+              onExitPractice: state.isPracticeMode
+                  ? () => ref.read(reviewControllerProvider.notifier).exitPracticeMode()
+                  : null,
+            ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 36.0),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 560),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          displayTitle,
+                          style: TextStyle(
+                            fontFamily: SrsText.ui,
+                            fontSize: headlineSize,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: -0.045 * headlineSize,
+                            height: 0.98,
+                            color: c.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 18.0),
+                        if (state.isDailyLimitReached)
+                          Text.rich(
+                            TextSpan(
+                              style: TextStyle(fontFamily: SrsText.ui, fontSize: 18, color: c.ink2),
+                              children: [
+                                const TextSpan(text: 'Daily review limit reached ('),
+                                TextSpan(
+                                  text: '${state.dailyReviewedCount}/${state.maxDailyReviews}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: c.ink,
+                                    fontFeatures: SrsText.tabular,
+                                  ),
+                                ),
+                                const TextSpan(text: ' positions reviewed today).'),
+                              ],
+                            ),
+                          )
+                        else if (state.timeUntilNextReview != null)
+                          Text.rich(
+                            TextSpan(
+                              style: TextStyle(fontFamily: SrsText.ui, fontSize: 18, color: c.ink2),
+                              children: [
+                                const TextSpan(text: 'Next review '),
+                                TextSpan(
+                                  text: state.timeUntilNextReview,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: c.ink,
+                                    fontFeatures: SrsText.tabular,
+                                  ),
+                                ),
+                                const TextSpan(text: '.'),
+                              ],
+                            ),
+                          )
+                        else
+                          Text(
+                            'Next review will appear automatically.',
+                            style: TextStyle(fontFamily: SrsText.ui, fontSize: 18, color: c.ink2),
+                          ),
+                        const SizedBox(height: 38.0),
+                        SrsMemoryBar(
+                          retained: retained,
+                          learning: learning,
+                          fresh: fresh,
+                          height: 10,
+                          gap: 3,
+                          radius: 2,
+                        ),
+                        const SizedBox(height: 14.0),
+                        Wrap(
+                          spacing: 22,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            _LegendItem(
+                              shape: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: c.ink,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              count: retained,
+                              label: 'retained',
+                            ),
+                            _LegendItem(
+                              shape: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(color: c.ink3, width: 1),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(1),
+                                  child: CustomPaint(
+                                    painter: HatchPainter(color: c.ink, gap: 3.2, width: 1.2),
+                                  ),
+                                ),
+                              ),
+                              count: learning,
+                              label: 'learning',
+                            ),
+                            _LegendItem(
+                              shape: Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(color: c.ink3, width: 1),
+                                ),
+                              ),
+                              count: fresh,
+                              label: 'new',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 36.0),
+                        Wrap(
+                          spacing: 18.0,
+                          runSpacing: 10.0,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            SrsPillButton(
+                              label: 'Practice',
+                              shortcut: 'P',
+                              onPressed: () {
+                                ref.read(reviewControllerProvider.notifier).startPracticeMode();
+                              },
+                            ),
+                            SrsTextButton(
+                              label: 'Choose a repertoire',
+                              onPressed: () => ReviewScopeDrawer.show(context),
+                            ),
+                            if (state.isDailyLimitReached)
+                              SrsTextButton(
+                                label: 'Adjust Limit',
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const SrsSettingsScreen(),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 18.0),
+                        Text(
+                          'Practice never changes your schedule.',
+                          style: TextStyle(fontFamily: SrsText.ui, fontSize: 13.5, color: c.ink3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegendItem extends StatelessWidget {
+  const _LegendItem({required this.shape, required this.count, required this.label});
+
+  final Widget shape;
+  final int count;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Symbols.chess_rounded, size: 80, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 20.0),
-            const Text('Welcome to ChessSRS', style: Styles.title, textAlign: TextAlign.center),
-            const SizedBox(height: 12.0),
-            const Text(
-              'Memorize and retain your opening repertoire through active spaced repetition.',
-              style: Styles.subtitle,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 28.0),
-            FilledButton.icon(
-              icon: const Icon(Symbols.upload_file_rounded),
-              label: const Text('Import Repertoire PGN'),
-              onPressed: () => RepertoireImportDialog.show(context),
-            ),
-          ],
+    final c = context.srs;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        shape,
+        const SizedBox(width: 8),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '$count ',
+                style: TextStyle(
+                  fontFamily: SrsText.ui,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: c.ink,
+                  fontFeatures: SrsText.tabular,
+                ),
+              ),
+              TextSpan(
+                text: label,
+                style: TextStyle(fontFamily: SrsText.ui, fontSize: 14, color: c.ink2),
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
-/// Calm idle view when all items are caught up (PRODUCT.md Journey 1 §6).
-class _AllCaughtUpView extends ConsumerWidget {
-  const _AllCaughtUpView({required this.state});
+class _ActiveReviewView extends ConsumerStatefulWidget {
+  const _ActiveReviewView({required this.state, required this.prompt});
 
   final ReviewScreenState state;
+  final ReviewPrompt prompt;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              state.isDailyLimitReached
-                  ? Symbols.flag_circle_rounded
-                  : Symbols.check_circle_rounded,
-              size: 80,
-              color: state.isDailyLimitReached
-                  ? Theme.of(context).colorScheme.primary
-                  : LichessColors.secondary,
-            ),
-            const SizedBox(height: 20.0),
-            Text(
-              state.isDailyLimitReached ? 'Daily Goal Reached!' : 'All Caught Up!',
-              style: Styles.title,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10.0),
-            if (!state.isDailyLimitReached && state.timeUntilNextReview != null) ...[
-              Container(
-                margin: const EdgeInsets.only(bottom: 10.0),
-                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Symbols.schedule_rounded,
-                      size: 16.0,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 6.0),
-                    Text(
-                      'Next review ${state.timeUntilNextReview}',
-                      style: TextStyle(
-                        fontSize: 13.0,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            Text(
-              state.isDailyLimitReached
-                  ? 'Daily review limit reached (${state.dailyReviewedCount}/${state.maxDailyReviews} positions reviewed today).'
-                  : '0 positions due for review right now across this repertoire.',
-              style: Styles.subtitle,
-              textAlign: TextAlign.center,
-            ),
-            if (state.activeScopeProgress != null &&
-                state.activeScopeProgress!.totalDecisions > 0) ...[
-              const SizedBox(height: 16.0),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4.0),
-                child: LinearProgressIndicator(
-                  value: state.activeScopeProgress!.progressFraction,
-                  minHeight: 6.0,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                '${state.activeScopeProgress!.learnedDecisions}/${state.activeScopeProgress!.totalDecisions} positions mastered (${state.activeScopeProgress!.progressPercentage}%)',
-                style: TextStyle(fontSize: 13.0, color: textShade(context, Styles.subtitleOpacity)),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 28.0),
-            Wrap(
-              spacing: 12.0,
-              runSpacing: 12.0,
-              alignment: WrapAlignment.center,
-              children: [
-                FilledButton.icon(
-                  icon: const Icon(Symbols.fitness_center_rounded),
-                  label: const Text('Free Practice'),
-                  onPressed: () => ref.read(reviewControllerProvider.notifier).startPracticeMode(),
-                ),
-                OutlinedButton.icon(
-                  icon: const Icon(Symbols.menu_book_rounded),
-                  label: const Text('Repertoires'),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-                if (state.isDailyLimitReached)
-                  OutlinedButton.icon(
-                    icon: const Icon(Symbols.tune_rounded),
-                    label: const Text('Adjust Limit'),
-                    onPressed: () => Navigator.of(context).push(SrsSettingsScreen.buildRoute()),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
+  ConsumerState<_ActiveReviewView> createState() => _ActiveReviewViewState();
+}
+
+class _ActiveReviewViewState extends ConsumerState<_ActiveReviewView> {
+  ChessboardController? _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _initController();
+  }
+
+  void _initController() {
+    final gameData = _buildGameData();
+    _controller = ChessboardController(game: gameData);
+  }
+
+  @override
+  void didUpdateWidget(_ActiveReviewView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final ctrl = _controller;
+    if (ctrl == null) return;
+
+    final newGameData = _buildGameData();
+    ctrl.updatePosition(newGameData);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  GameData _buildGameData() {
+    final boardPrefs = ref.read(boardPreferencesProvider);
+    final pos = widget.state.boardPosition ?? Chess.initial;
+    final playerSide = widget.state.isAwaitingAdvance
+        ? PlayerSide.none
+        : (widget.state.boardOrientation == Side.white ? PlayerSide.white : PlayerSide.black);
+
+    return buildGameData(
+      fen: pos.fen,
+      variant: Variant.standard,
+      position: pos,
+      playerSide: playerSide,
+      castlingMethod: boardPrefs.castlingMethod,
+      boardHighlights: boardPrefs.boardHighlights,
+      lastMove: widget.state.lastMove,
     );
   }
-}
-
-extension on PgnCommentShape {
-  Shape get chessground {
-    final shapeColor = switch (color) {
-      CommentShapeColor.green => ShapeColor.green,
-      CommentShapeColor.red => ShapeColor.red,
-      CommentShapeColor.blue => ShapeColor.blue,
-      CommentShapeColor.yellow => ShapeColor.yellow,
-    };
-    return from != to
-        ? Arrow(color: shapeColor.color, orig: from, dest: to)
-        : Circle(color: shapeColor.color, orig: from);
-  }
-}
-
-/// Active review board view driven by GameLayout.
-class _ActiveReviewView extends ConsumerWidget {
-  const _ActiveReviewView({required this.state});
-
-  final ReviewScreenState state;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prompt = state.currentPrompt!;
-    final boardPosition = state.boardPosition!;
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final prompt = widget.prompt;
+    final boardPrefs = ref.watch(boardPreferencesProvider);
+    final srsColors = SrsTheme.maybeOf(context);
+
+    final showComments = ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments));
+    final showAnnotations = ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations));
+    final showDiagnostics = ref.watch(studyPreferencesProvider.select((p) => p.srsDiagnostics));
+
     final isLapse = state.feedback == ReviewFeedback.incorrect;
+    final isAnswerRevealed = isLapse || state.revealedComment != null || state.isAwaitingAdvance;
+
+    final rawComment = state.revealedComment ?? prompt.comment;
+    final comment = showComments && rawComment != null && rawComment.isNotEmpty
+        ? PgnComment.fromPgn(rawComment).text
+        : null;
 
     final shapes = <Shape>{};
-    if (isLapse && state.expectedMove != null) {
-      try {
-        final orig = Square.fromName(state.expectedMove!.from);
-        final dest = Square.fromName(state.expectedMove!.to);
-        shapes.add(Arrow(orig: orig, dest: dest, color: Colors.orangeAccent));
-      } catch (_) {}
-    }
-
-    final showAnnotations = ref.watch(studyPreferencesProvider.select((p) => p.showAnnotations));
-    final isAnswerRevealed = isLapse || state.revealedComment != null || state.isAwaitingAdvance;
-    // Commentary shapes are strictly hidden during active recall (before guess)
-    // and only revealed post-guess (on success or lapse) when annotations are enabled.
     if (showAnnotations && isAnswerRevealed) {
       if (prompt.comment != null && prompt.comment!.isNotEmpty) {
         final promptPgn = PgnComment.fromPgn(prompt.comment!);
@@ -386,254 +638,294 @@ class _ActiveReviewView extends ConsumerWidget {
       }
     }
 
-    final playerSide = state.boardOrientation == Side.white ? PlayerSide.white : PlayerSide.black;
+    void onContinue() {
+      if (state.isAwaitingAdvance) {
+        ref.read(reviewControllerProvider.notifier).continueAdvancement();
+      } else {
+        ref.read(reviewControllerProvider.notifier).acknowledgeLapse();
+      }
+    }
 
-    return GameLayout(
-      orientation: state.boardOrientation,
-      shapes: shapes.lock,
-      boardOverlay: state.isAwaitingAdvance
-          ? AspectRatio(
-              aspectRatio: 1.0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () => ref.read(reviewControllerProvider.notifier).continueAdvancement(),
+    void onSkip() => ref.read(reviewControllerProvider.notifier).skip();
+
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.space): () {
+            if (state.isAwaitingAdvance) onContinue();
+          },
+          const SingleActivator(LogicalKeyboardKey.keyS): () {
+            if (!state.isAwaitingAdvance) onSkip();
+          },
+        },
+        child: SrsReviewLayout(
+          whiteAtBottom: state.boardOrientation == Side.white,
+          topBar: SrsTopBar(
+            scopeTitle: _computeScopeTitle(state),
+            dueCount: state.totalDueCount,
+            isPracticeMode: state.isPracticeMode,
+            onScopePressed: () => ReviewScopeDrawer.show(context),
+            onOverflowPressed: () => _showOverflowSheet(context),
+            onExitPractice: state.isPracticeMode
+                ? () => ref.read(reviewControllerProvider.notifier).exitPracticeMode()
+                : null,
+          ),
+          board: (context, size, wide) => Stack(
+            clipBehavior: Clip.none,
+            children: [
+              BoardWidget(
+                size: size,
+                orientation: state.boardOrientation,
+                settings: boardPrefs
+                    .toBoardSettings(Variant.standard, srsColors: srsColors)
+                    .copyWith(enableCoordinates: false),
+                controller: _controller!,
+                onMove: (move, {viaDragAndDrop}) {
+                  ref.read(reviewControllerProvider.notifier).onUserMove(move);
+                },
+                shapes: shapes,
               ),
-            )
-          : null,
-      boardParams: GameBoardParams.interactive(
-        variant: Variant.standard,
-        position: boardPosition,
-        playerSide: playerSide,
-        onMove: (move, {viaDragAndDrop}) {
-          ref.read(reviewControllerProvider.notifier).onUserMove(move);
-        },
-        lastMove: state.lastMove,
+              if (isLapse && state.expectedMove != null)
+                Positioned.fill(
+                  child: SrsMoveArrow(
+                    from: state.expectedMove!.from,
+                    to: state.expectedMove!.to,
+                    whiteAtBottom: state.boardOrientation == Side.white,
+                  ),
+                ),
+              if (state.isAwaitingAdvance)
+                Positioned.fill(
+                  child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: onContinue),
+                ),
+            ],
+          ),
+          side: (context, wide, appWidth) => SrsReviewSide(
+            wide: wide,
+            lineFontSize: wide ? 28.0 : 22.0,
+            meta: _MetaView(
+              contextLabel: prompt.chapterTitle ?? prompt.studyTitle ?? '',
+              orientation: state.boardOrientation,
+              wide: wide,
+            ),
+            line: SrsNotationLine(
+              moves: prompt.moveHistory,
+              answerSan: isAnswerRevealed ? prompt.expectedMoves.firstOrNull?.san : null,
+              showBlank: !isAnswerRevealed,
+              wide: wide,
+              wideWidth: appWidth,
+            ),
+            slot: _buildSlotContent(
+              context,
+              wide: wide,
+              isLapse: isLapse,
+              expectedMoveSan: prompt.expectedMoves.firstOrNull?.san ?? state.expectedMove?.san,
+              comment: comment,
+              showDiagnostics: showDiagnostics,
+              state: state,
+            ),
+            actions: _buildActions(
+              context,
+              isAwaitingAdvance: state.isAwaitingAdvance,
+              onSkip: onSkip,
+              onContinue: onContinue,
+            ),
+          ),
+        ),
       ),
-      topTable: _TopReviewInfo(prompt: prompt, orientation: state.boardOrientation),
-      bottomTable: _BottomReviewFeedback(
-        state: state,
-        onContinue: () {
-          if (state.isAwaitingAdvance) {
-            ref.read(reviewControllerProvider.notifier).continueAdvancement();
-          } else {
-            ref.read(reviewControllerProvider.notifier).acknowledgeLapse();
-          }
-        },
-        onSkip: () => ref.read(reviewControllerProvider.notifier).skip(),
-      ),
+    );
+  }
+
+  Widget _buildSlotContent(
+    BuildContext context, {
+    required bool wide,
+    required bool isLapse,
+    required String? expectedMoveSan,
+    required String? comment,
+    required bool showDiagnostics,
+    required ReviewScreenState state,
+  }) {
+    Widget content = const SizedBox.shrink();
+
+    if (isLapse && expectedMoveSan != null) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _AnswerSlot(san: expectedMoveSan, wide: wide),
+          if (comment != null && comment.trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _NoteSlot(comment: comment.trim(), wide: wide),
+          ],
+        ],
+      );
+    } else if (state.isAwaitingAdvance && comment != null && comment.trim().isNotEmpty) {
+      content = _NoteSlot(comment: comment.trim(), wide: wide);
+    }
+
+    if (showDiagnostics) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SrsDiagnosticsOverlay(state: state),
+          if (content is! SizedBox) ...[const SizedBox(height: 12), content],
+        ],
+      );
+    }
+
+    return content;
+  }
+
+  Widget _buildActions(
+    BuildContext context, {
+    required bool isAwaitingAdvance,
+    required VoidCallback onSkip,
+    required VoidCallback onContinue,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (!isAwaitingAdvance)
+          SrsTextButton(label: 'Skip', shortcut: 'S', onPressed: onSkip)
+        else
+          const SizedBox.shrink(),
+        if (isAwaitingAdvance)
+          SrsPillButton(label: 'Continue', shortcut: 'Space', onPressed: onContinue)
+        else
+          const SizedBox.shrink(),
+      ],
     );
   }
 }
 
-class _TopReviewInfo extends StatelessWidget {
-  const _TopReviewInfo({required this.prompt, required this.orientation});
+class _MetaView extends StatelessWidget {
+  const _MetaView({required this.contextLabel, required this.orientation, required this.wide});
 
-  final ReviewPrompt prompt;
+  final String contextLabel;
   final Side orientation;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
-    final title = prompt.chapterTitle ?? prompt.studyTitle ?? '';
+    final c = context.srs;
+    final isWhite = orientation == Side.white;
+    final turnText = isWhite ? 'White to play' : 'Black to play';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          SideToPlayPiece(side: orientation),
-          const SizedBox(width: 8.0),
-          Expanded(
-            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Styles.bold),
+    final turnWidget = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isWhite ? const Color(0x00000000) : c.ink,
+            border: Border.all(color: c.ink, width: 1.5),
           ),
+        ),
+        const SizedBox(width: 8),
+        Text(turnText, style: SrsText.meta(c.ink2)),
+      ],
+    );
+
+    final labelWidget = Text(
+      contextLabel,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: SrsText.meta(c.ink2),
+    );
+
+    if (wide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [labelWidget, const SizedBox(height: 8), turnWidget],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(child: labelWidget),
+        const SizedBox(width: 12),
+        turnWidget,
+      ],
+    );
+  }
+}
+
+class _AnswerSlot extends StatelessWidget {
+  const _AnswerSlot({required this.san, required this.wide});
+
+  final String san;
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SrsSan(san, style: SrsText.answerMove(wide, c.accent)),
+        const SizedBox(height: 8),
+        Text(
+          'Play this move to continue. (Repertoire was $san). The position will come back soon.',
+          style: SrsText.answerHelp(wide, c.ink2),
+        ),
+      ],
+    );
+  }
+}
+
+class _NoteSlot extends StatelessWidget {
+  const _NoteSlot({required this.comment, required this.wide});
+
+  final String comment;
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    return Container(
+      padding: const EdgeInsets.only(left: 16),
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: c.accentMid, width: 2.0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(comment, style: SrsText.note(c.ink)),
+          const SizedBox(height: 10),
+          Text('From your study', style: SrsText.noteSource(c.ink3)),
         ],
       ),
     );
   }
 }
 
-class _BottomReviewFeedback extends ConsumerWidget {
-  const _BottomReviewFeedback({
-    required this.state,
-    required this.onContinue,
-    required this.onSkip,
-  });
+void _showOverflowSheet(BuildContext context) {
+  SrsLibrarySheet.show(context);
+}
 
-  final ReviewScreenState state;
-  final VoidCallback onContinue;
-  final VoidCallback onSkip;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final showComments = ref.watch(studyPreferencesProvider.select((p) => p.showPgnComments));
-    final showDiagnostics = ref.watch(studyPreferencesProvider.select((p) => p.srsDiagnostics));
-    final isLapse = state.feedback == ReviewFeedback.incorrect;
-    final rawComment = state.revealedComment;
-    final comment = showComments && rawComment != null ? PgnComment.fromPgn(rawComment).text : null;
-
-    final Widget feedbackCard;
-    if (state.isAwaitingAdvance) {
-      feedbackCard = Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Symbols.lightbulb_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20.0,
-                ),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    'Move Explanation',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.0,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                  ),
-                  icon: const Icon(Symbols.arrow_forward_rounded, size: 18),
-                  label: const Text('Continue'),
-                  onPressed: onContinue,
-                ),
-              ],
-            ),
-            if (comment != null && comment.trim().isNotEmpty) ...[
-              const SizedBox(height: 8.0),
-              Text(
-                comment.trim(),
-                maxLines: 6,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.0,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ] else ...[
-              const SizedBox(height: 4.0),
-              Text(
-                'Tap board or Continue when ready.',
-                style: TextStyle(
-                  fontSize: 12.0,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    } else if (isLapse) {
-      feedbackCard = Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Symbols.info_rounded, color: Theme.of(context).colorScheme.onErrorContainer),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    state.expectedMove?.san != null
-                        ? 'Repertoire was ${state.expectedMove!.san} — try it on the board!'
-                        : 'Not in repertoire — try another move!',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.0,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  icon: const Icon(Symbols.skip_next_rounded, size: 18),
-                  label: const Text('Skip'),
-                  onPressed: onContinue,
-                ),
-              ],
-            ),
-            if (comment != null && comment.trim().isNotEmpty) ...[
-              const SizedBox(height: 6.0),
-              Text(
-                comment.trim(),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.0,
-                  color: Theme.of(context).colorScheme.onErrorContainer.withValues(alpha: 0.9),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    } else {
-      // Default quiet idle prompt (no "Good move!" message clutter)
-      feedbackCard = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Your move (${state.boardOrientation == Side.white ? 'White' : 'Black'})',
-                  style: Styles.subtitle,
-                ),
-                TextButton.icon(
-                  icon: const Icon(Symbols.skip_next_rounded),
-                  label: const Text('Skip'),
-                  onPressed: onSkip,
-                ),
-              ],
-            ),
-            if (comment != null && comment.trim().isNotEmpty) ...[
-              const SizedBox(height: 4.0),
-              Text(
-                comment.trim(),
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                style: Styles.formDescription,
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    if (!showDiagnostics) {
-      return feedbackCard;
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SrsDiagnosticsOverlay(state: state),
-        feedbackCard,
-      ],
-    );
+String _computeScopeTitle(ReviewScreenState state) {
+  if (state.scope.openingFamily != null) {
+    return state.scope.openingFamily!;
   }
+  if (state.scope.studyId != null) {
+    final study = state.studies.firstWhere(
+      (s) => s.id == state.scope.studyId,
+      orElse: () => const Study(id: '', title: 'Study'),
+    );
+    if (state.scope.chapterId != null && state.currentPrompt?.chapterTitle != null) {
+      return '${study.title} • ${state.currentPrompt!.chapterTitle}';
+    }
+    return study.title;
+  }
+  return 'All Studies';
 }
 
 class _SrsDiagnosticsOverlay extends StatelessWidget {
@@ -676,7 +968,6 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
     }
     final rPercent = (retrievability * 100).round();
 
-    final isTransposed = dec.canonicalStateId != null && dec.canonicalStateId != dec.id;
     final isPractice = state.isPracticeMode;
     final lastResult = state.lastStepResult;
     final expectedMovesStr = prompt.expectedMoves
@@ -716,36 +1007,32 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 1.0),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withValues(alpha: 0.2),
+                    color: Colors.orangeAccent.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                   child: const Text(
-                    'Practice (No SRS Writes)',
+                    'PRACTICE',
                     style: TextStyle(
                       fontSize: 9.0,
                       fontWeight: FontWeight.bold,
-                      color: Colors.purple,
+                      color: Colors.orange,
                     ),
                   ),
                 ),
               const Spacer(),
-              if (isTransposed)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 1.0),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4.0),
-                  ),
-                  child: const Text(
-                    'Transposition',
-                    style: TextStyle(fontSize: 9.0, color: Colors.blue),
-                  ),
+              Text(
+                'node: $shortNodeId',
+                style: TextStyle(
+                  fontSize: 10.0,
+                  fontFamily: 'monospace',
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
+              ),
             ],
           ),
-          const SizedBox(height: 3.0),
+          const SizedBox(height: 4.0),
           Text(
-            'Target: $expectedMovesStr  ·  Node: $shortNodeId',
+            'Expected: $expectedMovesStr',
             style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w500,
@@ -787,29 +1074,6 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
             const SizedBox(height: 3.0),
             Builder(
               builder: (context) {
-                if (isPractice) {
-                  // Simulate what the scheduler WOULD produce
-                  final simulated = session?.scheduler.schedule(
-                    previous: reviewState ?? ReviewState.initial(decisionId: dec.canonicalId),
-                    result: lastResult.isCorrect ? ReviewResult.correct : ReviewResult.incorrect,
-                    now: now,
-                  );
-                  final simDays = (simulated?.stability ?? 0) / 86400000;
-                  final simStr = simDays >= 10
-                      ? '${simDays.round()}d'
-                      : '${simDays.toStringAsFixed(1)}d';
-                  return Text(
-                    lastResult.isCorrect
-                        ? 'Practice Pass → Simulated next interval: $simStr (No DB write)'
-                        : 'Practice Lapse → Simulated reset to 0.35d (No DB write)',
-                    style: TextStyle(
-                      fontSize: 10.0,
-                      color: lastResult.isCorrect ? Colors.purple : Colors.redAccent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  );
-                }
-
                 return Text(
                   lastResult.isCorrect
                       ? 'Last: Pass → Next due in ${(lastResult.updatedState.stability / 86400000).toStringAsFixed(1)}d'
@@ -830,37 +1094,16 @@ class _SrsDiagnosticsOverlay extends StatelessWidget {
   }
 }
 
-class _AnnotationsQuickToggle extends ConsumerWidget {
-  const _AnnotationsQuickToggle();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prefs = ref.watch(studyPreferencesProvider);
-    final areAnnotationsActive = prefs.showAnnotations || prefs.showPgnComments;
-
-    return IconButton(
-      icon: Icon(
-        areAnnotationsActive ? Symbols.visibility_rounded : Symbols.visibility_off_rounded,
-      ),
-      tooltip: areAnnotationsActive ? 'Hide annotations' : 'Show annotations',
-      onPressed: () async {
-        final notifier = ref.read(studyPreferencesProvider.notifier);
-        if (areAnnotationsActive) {
-          if (prefs.showAnnotations) {
-            await notifier.toggleAnnotations();
-          }
-          if (prefs.showPgnComments) {
-            await notifier.togglePgnComments();
-          }
-        } else {
-          if (!prefs.showAnnotations) {
-            await notifier.toggleAnnotations();
-          }
-          if (!prefs.showPgnComments) {
-            await notifier.togglePgnComments();
-          }
-        }
-      },
-    );
+extension on PgnCommentShape {
+  Shape get chessground {
+    final shapeColor = switch (color) {
+      CommentShapeColor.green => ShapeColor.green,
+      CommentShapeColor.red => ShapeColor.red,
+      CommentShapeColor.blue => ShapeColor.blue,
+      CommentShapeColor.yellow => ShapeColor.yellow,
+    };
+    return from != to
+        ? Arrow(color: shapeColor.color, orig: from, dest: to)
+        : Circle(color: shapeColor.color, orig: from);
   }
 }

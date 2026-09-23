@@ -15,10 +15,7 @@ class SrsBoardBackgroundPainter extends CustomPainter {
     final s = size.shortestSide;
     final sq = s / 8;
 
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, s, s),
-      Paint()..color = colors.squareLight,
-    );
+    canvas.drawRect(Rect.fromLTWH(0, 0, s, s), Paint()..color = colors.squareLight);
 
     // Dark squares: (file + rowFromTop) is odd. a1 (file 0, row 7) is dark.
     final dark = Path();
@@ -53,11 +50,7 @@ class SrsBoardBackgroundPainter extends CustomPainter {
 
 /// Static board background widget. Wrap in a RepaintBoundary for performance.
 class SrsBoardBackground extends StatelessWidget {
-  const SrsBoardBackground({
-    super.key,
-    required this.size,
-    this.frame = true,
-  });
+  const SrsBoardBackground({super.key, required this.size, this.frame = true});
 
   final double size;
   final bool frame;
@@ -69,6 +62,124 @@ class SrsBoardBackground extends StatelessWidget {
       child: CustomPaint(
         size: Size.square(size),
         painter: SrsBoardBackgroundPainter(colors: colors, frame: frame),
+      ),
+    );
+  }
+}
+
+/// Coordinates. Wide layouts draw them OUTSIDE the board (ink3, 11.5px); narrow layouts draw
+/// them INSIDE the edge squares (ink2, 9.5px, with a halo). [whiteAtBottom] flips the order.
+class SrsCoordinates {
+  static const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+}
+
+class SrsBoardWithCoordinates extends StatelessWidget {
+  const SrsBoardWithCoordinates({
+    super.key,
+    required this.size,
+    required this.board,
+    this.outside = true,
+    this.whiteAtBottom = true,
+  });
+  final double size;
+  final Widget board; // your Stack: background + chessboard + arrow overlay
+  final bool outside;
+  final bool whiteAtBottom;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.srs;
+    final files = whiteAtBottom ? SrsCoordinates.files : SrsCoordinates.files.reversed.toList();
+    final ranks = whiteAtBottom ? const [8, 7, 6, 5, 4, 3, 2, 1] : const [1, 2, 3, 4, 5, 6, 7, 8];
+
+    if (!outside) {
+      final style = TextStyle(
+        fontFamily: SrsText.ui,
+        fontSize: 9.5,
+        fontWeight: FontWeight.w500,
+        color: c.ink2,
+        fontFeatures: SrsText.tabular,
+        shadows: [
+          Shadow(color: c.halo, blurRadius: 3),
+          Shadow(color: c.halo, blurRadius: 3),
+        ],
+      );
+      final sq = size / 8;
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          children: [
+            board,
+            for (var i = 0; i < 8; i++)
+              Positioned(
+                left: i * sq,
+                top: 7 * sq,
+                width: sq,
+                height: sq,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 3, bottom: 2),
+                  child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(files[i], style: style),
+                  ),
+                ),
+              ),
+            for (var i = 0; i < 8; i++)
+              Positioned(
+                left: 0,
+                top: i * sq,
+                width: sq,
+                height: sq,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 3, top: 2),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Text('${ranks[i]}', style: style),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    final style = TextStyle(
+      fontFamily: SrsText.ui,
+      fontSize: 11.5,
+      color: c.ink3,
+      fontFeatures: SrsText.tabular,
+    );
+    final sq = size / 8;
+    const gutter = SrsLayout.coordGutter;
+    return SizedBox(
+      width: gutter + size,
+      height: size + gutter,
+      child: Stack(
+        children: [
+          Positioned(left: gutter, top: 0, child: board),
+          for (var i = 0; i < 8; i++)
+            Positioned(
+              left: 0,
+              top: i * sq,
+              width: gutter,
+              height: sq,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('${ranks[i]}', style: style),
+                ),
+              ),
+            ),
+          for (var i = 0; i < 8; i++)
+            Positioned(
+              left: gutter + i * sq,
+              top: size + 8,
+              width: sq,
+              child: Center(child: Text(files[i], style: style)),
+            ),
+        ],
       ),
     );
   }

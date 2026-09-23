@@ -551,6 +551,7 @@ class ReviewSession {
     final fenKey = node?.fenKey ?? fen;
     final side = _sideFromFen(fen);
     final parentNode = node != null ? _parentOfNode[node.id] : null;
+    final moveHistory = _moveHistoryForNode(node?.id);
 
     return ReviewPrompt(
       decision: decision,
@@ -567,7 +568,22 @@ class ReviewSession {
       studyTitle: study?.title,
       parentFen: parentNode?.fen,
       incomingMove: node?.incomingMove,
+      moveHistory: moveHistory,
     );
+  }
+
+  List<String> _moveHistoryForNode(String? nodeId) {
+    if (nodeId == null) return const [];
+    final moves = <String>[];
+    var current = _nodesById[nodeId];
+    while (current != null) {
+      final incoming = current.incomingMove;
+      if (incoming != null) {
+        moves.add(incoming.san ?? incoming.uci);
+      }
+      current = _parentOfNode[current.id];
+    }
+    return moves.reversed.toList();
   }
 
   RepertoireNode? _findChildForMove(RepertoireNode? node, RepertoireMove move) {

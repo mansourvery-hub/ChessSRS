@@ -16,75 +16,87 @@ void main() {
     await TestLichessBinding.instance.sharedPreferences.clear();
   });
 
-  testWidgets('SrsSettingsScreen renders all unified sections and toggles settings', (
-    tester,
-  ) async {
+  testWidgets('SrsSettingsScreen renders Diagram layout and updates preferences', (tester) async {
     final app = await makeTestProviderScopeApp(tester, home: const SrsSettingsScreen());
 
     await tester.pumpWidget(app);
     await tester.pumpAndSettle();
 
-    // Verify section titles
-    expect(find.text('Algorithm & Intervals'), findsOneWidget);
-    expect(find.text('Review Experience'), findsOneWidget);
+    // Verify title and back button
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Review'), findsOneWidget);
 
-    // Verify review switches are present
-    expect(find.text('Animate opponent moves'), findsOneWidget);
-    expect(find.text('Show move notes & comments'), findsOneWidget);
+    // Verify main rows exist
+    expect(find.text('Daily limit'), findsOneWidget);
+    expect(find.text('Target retention'), findsOneWidget);
+    expect(find.text('Show notes after a move'), findsOneWidget);
+    expect(find.text('Show arrows and circles'), findsOneWidget);
+    expect(find.text('Theme'), findsOneWidget);
+    expect(find.text('Accent'), findsOneWidget);
+    expect(find.text('Sound'), findsOneWidget);
+    expect(find.text('Advanced'), findsOneWidget);
 
-    // Scroll to Diagnostics
-    await tester.scrollUntilVisible(find.text('Diagnostics'), 100);
-    await tester.pumpAndSettle();
-    expect(find.text('Diagnostics'), findsOneWidget);
-    expect(find.text('Developer / SRS diagnostics'), findsOneWidget);
+    // Segmented daily limits
+    expect(find.text('25'), findsOneWidget);
+    expect(find.text('50'), findsOneWidget);
+    expect(find.text('100'), findsOneWidget);
+    expect(find.text('None'), findsOneWidget);
 
-    // Scroll back to top
-    await tester.scrollUntilVisible(find.text('Algorithm & Intervals'), -100);
-    await tester.pumpAndSettle();
-
-    // Verify Daily review limit tile
-    expect(find.text('Daily review limit'), findsOneWidget);
-    expect(find.text('100 positions / day'), findsOneWidget);
-
-    // Switch Daily review limit to 50
-    await tester.tap(find.text('Daily review limit'));
+    // Tap 50 daily limit
+    await tester.tap(find.text('50'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('50 positions / day'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('50 positions / day'), findsOneWidget);
-
-    // Switch to ChessFSRS algorithm
-    await tester.tap(find.text('SRS scheduling algorithm'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('ChessFSRS (DSR Power-Law)'));
-    await tester.pumpAndSettle();
-
-    // Verify FSRS options and preview appear
-    expect(find.text('Target recall retention'), findsOneWidget);
-    expect(find.text('88%'), findsOneWidget);
-    expect(find.text('FSRS interval progression preview'), findsOneWidget);
-
-    // Switch retention to 95% (Tournament mode)
-    await tester.tap(find.text('Target recall retention'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('95% (Tournament mode)'));
-    await tester.pumpAndSettle();
-
+    // Tap 95% retention
     expect(find.text('95%'), findsOneWidget);
+    await tester.tap(find.text('95%'));
+    await tester.pumpAndSettle();
+
+    // Toggle notes
+    await tester.tap(find.text('Show notes after a move'));
+    await tester.pumpAndSettle();
+
+    // Toggle arrows
+    await tester.tap(find.text('Show arrows and circles'));
+    await tester.pumpAndSettle();
+
+    // Toggle theme to Dark
+    await tester.ensureVisible(find.text('Dark'));
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    // Select violet accent dot
+    await tester.ensureVisible(find.bySemanticsLabel('violet'));
+    await tester.tap(find.bySemanticsLabel('violet'));
+    await tester.pumpAndSettle();
+
+    // Verify navigation links to legacy settings
+    expect(find.text('Board & pieces'), findsOneWidget);
+    expect(find.text('Sound & audio details'), findsOneWidget);
+    expect(find.text('Chess engine'), findsOneWidget);
+
+    // Expand Advanced section
+    await tester.ensureVisible(find.text('Advanced'));
+    await tester.tap(find.text('Advanced'));
+    await tester.pumpAndSettle();
+
+    // Verify advanced controls are now visible
+    expect(find.text('Scheduling algorithm'), findsOneWidget);
+    expect(find.text('FSRS'), findsOneWidget);
+    expect(find.text('Simple'), findsOneWidget);
+    expect(find.text('Ease'), findsOneWidget);
+    expect(find.text('Diagnostics'), findsOneWidget);
+    expect(find.text('Local database size'), findsOneWidget);
+    expect(find.text('HTTP network logs'), findsOneWidget);
+    expect(find.text('App diagnostics logs'), findsOneWidget);
+
+    // Switch algorithm to Simple
+    await tester.ensureVisible(find.text('Simple'));
+    await tester.tap(find.text('Simple'));
+    await tester.pumpAndSettle();
 
     // Toggle diagnostics
-    await tester.scrollUntilVisible(find.text('Developer / SRS diagnostics'), 100);
-    await tester.pumpAndSettle();
-    expect(find.text('View in-app diagnostic logs'), findsOneWidget);
-    await tester.tap(find.text('Developer / SRS diagnostics'));
-    await tester.pumpAndSettle();
-
-    // Toggle comments
-    await tester.tap(find.text('Show move notes & comments'));
+    await tester.ensureVisible(find.text('Diagnostics'));
+    await tester.tap(find.text('Diagnostics'));
     await tester.pumpAndSettle();
   });
 }

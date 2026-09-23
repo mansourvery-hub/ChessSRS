@@ -20,8 +20,7 @@ void paintHatch(
     ..isAntiAlias = true;
   const n = Offset(0.7071067811865476, 0.7071067811865476);
   const d = Offset(-0.7071067811865476, 0.7071067811865476);
-  final reach =
-      math.sqrt(size.width * size.width + size.height * size.height);
+  final reach = math.sqrt(size.width * size.width + size.height * size.height);
   for (double c = width / 2; c <= reach + gap; c += gap) {
     final base = n * c;
     canvas.drawLine(base - d * reach, base + d * reach, paint);
@@ -29,11 +28,7 @@ void paintHatch(
 }
 
 class HatchPainter extends CustomPainter {
-  const HatchPainter({
-    required this.color,
-    required this.gap,
-    required this.width,
-  });
+  const HatchPainter({required this.color, required this.gap, required this.width});
   final Color color;
   final double gap;
   final double width;

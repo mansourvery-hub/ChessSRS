@@ -1,6 +1,7 @@
 // Copyright (C) 2024 ChessSRS contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import 'package:chess_srs/src/design/design.dart';
 import 'package:chess_srs/src/domain/domain.dart';
 import 'package:chess_srs/src/import/pgn_importer.dart';
 import 'package:chess_srs/src/model/study/study_preferences.dart';
@@ -10,7 +11,8 @@ import 'package:chess_srs/src/review/review_service.dart';
 import 'package:chess_srs/src/view/analysis/analysis_screen.dart';
 import 'package:chess_srs/src/view/review/repertoire_import_dialog.dart';
 import 'package:chess_srs/src/view/review/review_screen.dart';
-import 'package:chess_srs/src/widgets/game_layout.dart';
+import 'package:chess_srs/src/view/settings/srs_settings_screen.dart';
+import 'package:chess_srs/src/widgets/board.dart';
 import 'package:chessground/chessground.dart';
 import 'package:dartchess/dartchess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,8 +77,8 @@ void main() {
       await tester.pumpWidget(app);
       await pumpAsync(tester, 500);
 
-      expect(find.text('Welcome to ChessSRS'), findsOneWidget);
-      expect(find.text('Import Repertoire PGN'), findsWidgets);
+      expect(find.text('Bring your repertoire.'), findsOneWidget);
+      expect(find.text('Choose file'), findsWidgets);
     });
 
     testWidgets('tapping import button opens RepertoireImportDialog', (tester) async {
@@ -95,7 +97,7 @@ void main() {
       await tester.pumpWidget(app);
       await pumpAsync(tester);
 
-      await tester.tap(find.text('Import Repertoire PGN').first);
+      await tester.tap(find.text('Choose file').first);
       await tester.pump();
       await pumpAsync(tester);
 
@@ -143,7 +145,7 @@ void main() {
       await pumpAsync(tester, 700);
 
       // Session is now complete (0 due)
-      expect(find.text('All Caught Up!'), findsOneWidget);
+      expect(find.text('Nothing due.'), findsOneWidget);
     });
 
     testWidgets('displays lapse feedback and allows user to reguess on the board', (tester) async {
@@ -185,14 +187,14 @@ void main() {
 
       // Re-prompted for the failed item (re-queued for practice)
       expect(find.byType(Chessboard), findsOneWidget);
-      expect(find.text('Your move (White)'), findsOneWidget);
+      expect(find.text('White to play'), findsOneWidget);
 
       // Play 1. d4 successfully on the re-test
       await playMove(tester, 'd2', 'd4');
       await pumpAsync(tester, 700);
 
       // Session is now complete (0 due)
-      expect(find.text('All Caught Up!'), findsOneWidget);
+      expect(find.text('Nothing due.'), findsOneWidget);
     });
 
     testWidgets('study options sheet opens AnalysisScreen via Analyze Study', (tester) async {
@@ -364,24 +366,24 @@ void main() {
         await tester.pumpWidget(app);
         await pumpAsync(tester);
 
-        // Before guessing: GameLayout has NO shapes (anti-spoiler)
-        var layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isEmpty);
+        // Before guessing: BoardWidget has NO shapes (anti-spoiler)
+        var board = tester.widget<BoardWidget>(find.byType(BoardWidget));
+        expect(board.shapes, isEmpty);
         expect(find.text('Attacks the center'), findsNothing);
 
         // Play incorrect move: d2 -> d4 instead of e2 -> e4
         await playMove(tester, 'd2', 'd4');
         await pumpAsync(tester, 100);
 
-        // After lapse: GameLayout displays the expected move arrow PLUS the comment shapes (arrow and circle)
-        layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isNotNull);
-        expect(layout.shapes!.isNotEmpty, isTrue);
+        // After lapse: displays SrsMoveArrow PLUS the comment shapes (arrow and circle) on BoardWidget
+        expect(find.byType(SrsMoveArrow), findsOneWidget);
+        board = tester.widget<BoardWidget>(find.byType(BoardWidget));
+        expect(board.shapes.isNotEmpty, isTrue);
         expect(
-          layout.shapes!.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
+          board.shapes.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
           isTrue,
         );
-        expect(layout.shapes!.any((s) => s is Circle && s.orig == Square.e5), isTrue);
+        expect(board.shapes.any((s) => s is Circle && s.orig == Square.e5), isTrue);
 
         // Clean comment text without raw [%cal ...] markup
         expect(find.text('Attacks the center'), findsOneWidget);
@@ -426,14 +428,14 @@ void main() {
         await playMove(tester, 'd2', 'd4');
         await pumpAsync(tester, 100);
 
-        // After lapse: only the expected move arrow is present; commentary shapes (Gf3e5, Re5) are NOT added
-        final layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isNotNull);
+        // After lapse: SrsMoveArrow is present, but commentary shapes (Gf3e5, Re5) are NOT added to BoardWidget
+        expect(find.byType(SrsMoveArrow), findsOneWidget);
+        final board = tester.widget<BoardWidget>(find.byType(BoardWidget));
         expect(
-          layout.shapes!.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
+          board.shapes.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
           isFalse,
         );
-        expect(layout.shapes!.any((s) => s is Circle && s.orig == Square.e5), isFalse);
+        expect(board.shapes.any((s) => s is Circle && s.orig == Square.e5), isFalse);
 
         // Text is still present (unless comments are disabled separately)
         expect(find.text('Attacks the center'), findsOneWidget);
@@ -514,23 +516,23 @@ void main() {
       await tester.pumpWidget(app);
       await pumpAsync(tester);
 
-      // Initially 0 items due -> shows All Caught Up view
-      expect(find.text('All Caught Up!'), findsOneWidget);
+      // Initially 0 items due -> shows Nothing due view
+      expect(find.text('Nothing due.'), findsOneWidget);
 
-      // Tap 'Free Practice'
-      await tester.tap(find.text('Free Practice'));
+      // Tap 'Practice'
+      await tester.tap(find.widgetWithText(SrsPillButton, 'Practice'));
       await pumpAsync(tester);
 
-      // Now board is active in practice mode with Practice badge in AppBar!
+      // Now board is active in practice mode with Practice badge in TopBar!
       expect(find.byType(Chessboard), findsOneWidget);
       expect(find.text('Practice'), findsOneWidget);
 
-      // Exit practice mode via AppBar button
+      // Exit practice mode via TopBar button
       await tester.tap(find.text('Exit Practice'));
       await pumpAsync(tester);
 
-      // Returned to All Caught Up view
-      expect(find.text('All Caught Up!'), findsOneWidget);
+      // Returned to Nothing due view
+      expect(find.text('Nothing due.'), findsOneWidget);
     });
 
     testWidgets('Opening Hubs section appears in drawer and filters review scope', (tester) async {
@@ -642,7 +644,7 @@ void main() {
       await pumpAsync(tester);
 
       // Study is deleted -> empty state
-      expect(find.text('Welcome to ChessSRS'), findsOneWidget);
+      expect(find.text('Bring your repertoire.'), findsOneWidget);
     });
 
     testWidgets(
@@ -674,32 +676,31 @@ void main() {
 
         // Before move: no shapes or comment
         expect(find.text('Attacks the center'), findsNothing);
-        expect(find.text('Move Explanation'), findsNothing);
+        expect(find.text('From your study'), findsNothing);
 
         // Play correct move: e2 -> e4
         await playMove(tester, 'e2', 'e4');
         await pumpAsync(tester, 100);
 
-        // Auto-advancement paused: shows Move Explanation and Continue button
-        expect(find.text('Move Explanation'), findsOneWidget);
+        // Auto-advancement paused: shows Note and Continue button
+        expect(find.text('From your study'), findsOneWidget);
         expect(find.text('Attacks the center'), findsOneWidget);
-        expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
+        expect(find.widgetWithText(SrsPillButton, 'Continue'), findsOneWidget);
 
         // Shapes are displayed on the board
-        final layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isNotNull);
+        final board = tester.widget<BoardWidget>(find.byType(BoardWidget));
         expect(
-          layout.shapes!.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
+          board.shapes.any((s) => s is Arrow && s.orig == Square.f3 && s.dest == Square.e5),
           isTrue,
         );
-        expect(layout.shapes!.any((s) => s is Circle && s.orig == Square.e5), isTrue);
+        expect(board.shapes.any((s) => s is Circle && s.orig == Square.e5), isTrue);
 
         // Tap Continue button
-        await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+        await tester.tap(find.widgetWithText(SrsPillButton, 'Continue'));
         await pumpAsync(tester, 700);
 
         // Queue advances (session caught up)
-        expect(find.text('All Caught Up!'), findsOneWidget);
+        expect(find.text('Nothing due.'), findsOneWidget);
       },
     );
 
@@ -734,19 +735,19 @@ void main() {
       await playMove(tester, 'e2', 'e4');
       await pumpAsync(tester, 100);
 
-      // Paused awaiting continue
-      expect(find.text('Move Explanation'), findsOneWidget);
+      // Paused awaiting continue (comment note is visible)
+      expect(find.text('Important center move'), findsOneWidget);
 
       // Tap on the chessboard
       await tester.tap(find.byType(Chessboard));
       await pumpAsync(tester, 700);
 
       // Successfully advanced to completion
-      expect(find.text('All Caught Up!'), findsOneWidget);
+      expect(find.text('Nothing due.'), findsOneWidget);
     });
 
     testWidgets(
-      'quick toggle action in AppBar toggles annotations and updates shapes/comments in real time',
+      'quick toggle action in overflow sheet toggles annotations and updates shapes/comments in real time',
       (tester) async {
         final importResult = importPgn(
           '1. e4 {[%cal Gf3e5] Attacks the center} *',
@@ -772,38 +773,37 @@ void main() {
         await tester.pumpWidget(app);
         await pumpAsync(tester);
 
-        // Initially, annotations are enabled
-        expect(find.byTooltip('Hide annotations'), findsOneWidget);
-
         // Play correct move: e2 -> e4
         await playMove(tester, 'e2', 'e4');
         await pumpAsync(tester, 100);
 
         // Shapes and commentary are visible
-        var layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isNotEmpty);
+        var board = tester.widget<BoardWidget>(find.byType(BoardWidget));
+        expect(board.shapes, isNotEmpty);
         expect(find.text('Attacks the center'), findsOneWidget);
 
-        // Tap the quick toggle button in AppBar
-        await tester.tap(find.byTooltip('Hide annotations'));
-        await pumpAsync(tester);
-
-        // Tooltip changes to 'Show annotations'
-        expect(find.byTooltip('Show annotations'), findsOneWidget);
+        // Tap the quick toggle button in overflow sheet
+        await tester.tap(find.byTooltip('Library and settings'));
+        await tester.pumpAndSettle();
+        expect(find.text('Hide annotations'), findsOneWidget);
+        await tester.tap(find.text('Hide annotations'));
+        await tester.pumpAndSettle();
 
         // Shapes and comment text are hidden in real time!
-        layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isEmpty);
+        board = tester.widget<BoardWidget>(find.byType(BoardWidget));
+        expect(board.shapes, isEmpty);
         expect(find.text('Attacks the center'), findsNothing);
 
         // Tap the quick toggle again to re-enable
-        await tester.tap(find.byTooltip('Show annotations'));
-        await pumpAsync(tester);
+        await tester.tap(find.byTooltip('Library and settings'));
+        await tester.pumpAndSettle();
+        expect(find.text('Show annotations'), findsOneWidget);
+        await tester.tap(find.text('Show annotations'));
+        await tester.pumpAndSettle();
 
         // Shapes and comment text reappear
-        expect(find.byTooltip('Hide annotations'), findsOneWidget);
-        layout = tester.widget<GameLayout>(find.byType(GameLayout));
-        expect(layout.shapes, isNotEmpty);
+        board = tester.widget<BoardWidget>(find.byType(BoardWidget));
+        expect(board.shapes, isNotEmpty);
         expect(find.text('Attacks the center'), findsOneWidget);
       },
     );
@@ -853,11 +853,10 @@ void main() {
       await playMove(tester, 'g1', 'f3');
       await pumpAsync(tester, 700);
 
-      // All Caught Up view: shows 2/2 positions mastered (100%) and progress bar
-      expect(find.text('All Caught Up!'), findsOneWidget);
+      // Nothing due view: shows memory bar and next review time
+      expect(find.text('Nothing due.'), findsOneWidget);
       expect(find.textContaining('Next review in 1 day'), findsOneWidget);
-      expect(find.text('2/2 positions mastered (100%)'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.byType(SrsMemoryBar), findsOneWidget);
 
       // Open drawer again: shows 2/2 learned (100%)
       await tester.tap(find.byTooltip('Studies & Scope'));
@@ -1018,18 +1017,23 @@ void main() {
       expect(find.textContaining('D: 5.0/10'), findsOneWidget);
     });
 
-    testWidgets('tapping SRS settings action in AppBar opens SrsSettingsScreen', (tester) async {
+    testWidgets('tapping SRS settings action opens SrsSettingsScreen', (tester) async {
       final app = await makeTestProviderScopeApp(tester, home: const ReviewScreen());
 
       await tester.pumpWidget(app);
       await pumpAsync(tester);
 
-      expect(find.byTooltip('SRS settings'), findsOneWidget);
-      await tester.tap(find.byTooltip('SRS settings'));
+      expect(find.byTooltip('Library and settings'), findsOneWidget);
+      await tester.tap(find.byTooltip('Library and settings'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Spaced Repetition (SRS)'), findsOneWidget);
-      expect(find.text('Algorithm & Intervals'), findsOneWidget);
+      expect(find.text('SRS Settings'), findsOneWidget);
+      await tester.tap(find.text('SRS Settings'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SrsSettingsScreen), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Daily limit'), findsOneWidget);
     });
 
     testWidgets('ReviewScopeDrawer search filters repertoires and opening hubs by query', (
@@ -1164,8 +1168,58 @@ void main() {
         await tester.pumpAndSettle();
 
         // Navigates to SrsSettingsScreen
-        expect(find.text('Spaced Repetition (SRS)'), findsOneWidget);
-        expect(find.text('Daily review limit'), findsOneWidget);
+        expect(find.byType(SrsSettingsScreen), findsOneWidget);
+        expect(find.text('Settings'), findsOneWidget);
+        expect(find.text('Daily limit'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'renders narrow layout without overflow and displays board with side column below',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        final study = importPgn(
+          '1. e4 e5 2. Nf3 Nc6 *',
+          studyTitle: 'Narrow Test Repertoire',
+          repertoireSide: Side.white,
+        );
+        await tester.runAsync(() async {
+          await repo.saveImportResult(study);
+        });
+
+        final app = await makeTestProviderScopeApp(
+          tester,
+          home: const ReviewScreen(),
+          overrides: {
+            srsStudyRepositoryProvider: srsStudyRepositoryProvider.overrideWith((ref) => repo),
+            clockProvider: clockProvider.overrideWithValue(clock),
+            reviewServiceProvider: reviewServiceProvider.overrideWith(
+              (ref) => ReviewService(repository: repo, clock: clock),
+            ),
+          },
+        );
+
+        await tester.pumpWidget(app);
+        await pumpAsync(tester);
+
+        expect(find.byType(SrsReviewLayout), findsOneWidget);
+        expect(find.byType(Chessboard), findsOneWidget);
+        expect(find.text('White to play'), findsOneWidget);
+        expect(find.byType(SrsNotationLine), findsOneWidget);
+        expect(find.widgetWithText(SrsTextButton, 'Skip'), findsOneWidget);
+
+        // Play 1. e4
+        await playMove(tester, 'e2', 'e4');
+        await pumpAsync(tester, 700);
+
+        // Verify no exceptions or overflow occurred
+        expect(tester.takeException(), isNull);
       },
     );
   });

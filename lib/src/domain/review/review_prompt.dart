@@ -23,6 +23,7 @@ class ReviewPrompt {
     this.chapterTitle,
     this.parentFen,
     this.incomingMove,
+    this.moveHistory = const [],
   });
 
   final RepertoireDecision decision;
@@ -39,6 +40,7 @@ class ReviewPrompt {
   final String? chapterTitle;
   final String? parentFen;
   final RepertoireMove? incomingMove;
+  final List<String> moveHistory;
 
   @override
   bool operator ==(Object other) =>

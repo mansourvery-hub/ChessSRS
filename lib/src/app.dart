@@ -18,8 +18,8 @@ import 'package:chess_srs/src/model/study/study_preferences.dart';
 import 'package:chess_srs/src/quick_actions.dart';
 import 'package:chess_srs/src/shared_pgn_service.dart';
 import 'package:chess_srs/src/tab_navigation.dart';
-import 'package:chess_srs/src/tab_scaffold.dart';
 import 'package:chess_srs/src/utils/screen.dart';
+import 'package:chess_srs/src/view/review/review_screen.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
@@ -157,17 +157,12 @@ class _AppState extends ConsumerState<Application> {
         ? Brightness.dark
         : switch (generalPrefs.themeMode) {
             BackgroundThemeMode.light => Brightness.light,
-            BackgroundThemeMode.dark ||
-            BackgroundThemeMode.amoled =>
-              Brightness.dark,
-            BackgroundThemeMode.system =>
-              MediaQuery.platformBrightnessOf(context),
+            BackgroundThemeMode.dark || BackgroundThemeMode.amoled => Brightness.dark,
+            BackgroundThemeMode.system => MediaQuery.platformBrightnessOf(context),
           };
 
-    // Build design-system colours (accent defaults to ultramarine for now;
-    // accent preference will be added in a later phase).
-    final srsColors =
-        SrsColors.forBrightness(brightness, kSrsDefaultAccent);
+    final accent = ref.watch(srsAccentProvider);
+    final srsColors = SrsColors.forBrightness(brightness, accent);
 
     // Material ThemeData bridge for un-migrated screens.
     final theme = srsThemeData(srsColors);
@@ -192,20 +187,11 @@ class _AppState extends ConsumerState<Application> {
               ? null
               : NavigationBarTheme.of(
                   context,
-                ).copyWith(
-                  height:
-                      isShortVerticalScreen(context) ? 60 : null,
-                ),
+                ).copyWith(height: isShortVerticalScreen(context) ? 60 : null),
         ),
-        builder: (context, child) => SrsTheme(
-          colors: srsColors,
-          child: child!,
-        ),
-        home: const MainTabScaffold(),
-        navigatorObservers: [
-          rootNavPageRouteObserver,
-          rootNavRouteStackObserver,
-        ],
+        builder: (context, child) => SrsTheme(colors: srsColors, child: child!),
+        home: const ReviewScreen(),
+        navigatorObservers: [rootNavPageRouteObserver, rootNavRouteStackObserver],
       ),
     );
   }
